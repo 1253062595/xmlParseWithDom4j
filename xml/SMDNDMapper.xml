@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.smsc.mapper.SMDNDMapper">
+	<select id="selectKhIds" parameterType="map" resultType="map" >
+		select ta.khid "khid", ta.khxm "khxm", ta.gtsj "gtsj", ta.khly "khly", ta.khlx "khlx", tb.dxlimitflag "dxlimitflag"
+       		from crm.t_kh_xx ta left join crm.t_kh_lx_xx tb
+       		on ta.khid = tb.khid
+       		where
+       		<!-- kscztj 快速搜索条件 -->
+       		<if test=" kscztj != null ">       		
+       			${kscztj}
+       		</if>
+       		
+       		<!-- clientType 客户类型 -->
+       		<if test=" clientType != null ">
+       			and ta.khlx = #{clientType}
+       		</if>
+       		
+       		<!-- clientSource 客户来源 -->
+       		<if test=" clientSource != null ">
+       			and ta.khly = #{clientSource}
+       		</if>
+       		
+       		<!-- branchNo 渠道 -->
+       		<if test="branchNo!=null">
+				and ta.orgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+	</select>
+<select id="findkh" parameterType="map" resultType="map">
+	SELECT KHID "khid" ,ORGID "jgid" from T_KH_XX WHERE khid in 
+	<foreach collection="khids" item="id" separator="," open="(" close=")">
+	${id}
+	</foreach>
+ORDER BY ORGID
+	</select>
+	<!-- 更新==启用=选中客户的短信免打扰标志 -->
+	<!-- 更新机构可发送条数 -->
+	<update id="updateDXDNDFlagEnable" parameterType="map">
+		update
+		crm.t_kh_lx_xx
+		set
+		dxlimitflag = 1
+		where khid = #{khid}
+	</update>
+<!-- 	根据电话号码获取客户信息 -->
+	<select id="selectCustInfoByphoneNumber" parameterType = "String" 
+					resultType = "com.linkstec.smsc.dto.BlacklistCust">
+SELECT
+		T .KHID,
+		T .KHXM,
+		T .ORGID,
+		T .GTSJ,
+		t1.ORG_NAME
+	FROM
+		T_KH_XX T
+	LEFT JOIN L_ORGANIZATION t1 ON T .ORGID = T1.ORG_ID
+
+	WHERE
+		T.GTSJ = #{sjhm} and not exists (select  LXHM from T_XXFW_DXHMD b where b.JLZT='0' and b.HMDLX='0' and t.khid = b.khid)
+</select>
+	<!-- 更新==禁用=选中客户的短信免打扰标志 -->
+	<update id="updateDXDNDFlagDisable" parameterType="map">
+		update crm.t_kh_lx_xx
+		set
+		dxlimitflag = 0
+		where khid = #{khid}
+	</update>
+	 <select id="getCustForBlack" resultType="com.linkstec.smsc.dto.SMS600101Dto" parameterType="map">
+		SELECT
+			AA.KHID,AA.KHXM XM,AA.GTSJ FWSJHM,
+			CC.ORG_NAME AS ORGNAME
+		FROM
+			T_KH_XX /*LT*/ AA
+		LEFT JOIN L_ORGANIZATION CC ON CC.ORG_ID = AA.ORGID
+		WHERE
+		exists(
+			select 1 from T_KH_LX_XX BB where  AA.KHID = BB.KHID
+			and (BB.DXLIMITFLAG IS NULL	OR BB.DXLIMITFLAG != 0)
+		)
+		AND NOT exists (
+			SELECT KHID FROM t_xxfw_dxhmd x where x.khid = AA.khid
+		)
+		<if test="gtsj !=null and gtsj != ''">
+			AND AA.fullgtsj LIKE #{gtsj}
+		</if>
+		<if test="orgId != null and orgId !=''">
+			AND CC.ORG_ID = #{orgId}
+		</if>
+		<if test="khid != null and khid != ''">
+			AND AA.KHID = #{khid}
+		</if>
+		order by AA.khid
+	</select>
+	
+	
+	<select id="selectHmdList" parameterType="map" resultType="com.linkstec.smsc.dto.SMS500102SDto">
+	
+	SELECT
+	T .lsh,
+	T .khid,
+	t3.khxm,
+	T1.ORG_NAME orgName,
+	T .LXHM sjhm,
+	T2.member_name czyxm,
+	T .sjc,
+	T .bz
+FROM
+	T_XXFW_DXHMD T
+LEFT JOIN T_KH_XX t3 ON T .khid = T3.khid
+LEFT JOIN L_ORGANIZATION T1 ON T .JGID = T1.ORG_ID
+LEFT JOIN L_MEMBER T2 ON T2.member_id = T .czyid
+WHERE
+	T .JLZT = '0'
+AND T .HMDLX = '0'
+	<if test="gtsj !=null and gtsj != ''">
+			AND t.LXHM LIKE '%${gtsj}%'
+		</if>
+		<if test="orgId != null and orgId !=''">
+			AND T .JGID = #{orgId}
+		</if>
+		<if test="khid != null and khid != ''">
+			AND t.KHID = #{khid}
+		</if>
+		
+order by T.khid		
+	</select>
+</mapper>

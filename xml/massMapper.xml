@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.massManage.mapper.massMapper">
+	<select id="selectMassManage" parameterType="map"
+		resultType="com.linkstec.crm.massManage.dto.Ma100101Dto">
+		select t.* from t_mass_manage /*LT*/ t
+		<where>
+			<if test="ryid!=null">
+				and t.ryid = #{ryid}
+			</if>
+			<if test="jgid!=null">
+				and t.jgid = #{jgid}
+			</if>
+			<if test="applyDateStart!=null">
+				and to_char(t.apply_date,'yyyymmdd') >=#{applyDateStart}
+			</if>
+			<if test="applyDateEnd!=null">
+				and to_char(t.apply_date,'yyyymmdd') &lt;=#{applyDateEnd}
+			</if>
+			<if test="massTitle!=null">
+				and t.mass_Title like '%'|| #{massTitle} ||'%'
+			</if>
+			<if test="massType!=null">
+				and t.mass_Type = #{massType}
+			</if>
+			<if test="insStatus!=null">
+				and t.ins_Status = #{insStatus}
+			</if>
+
+		</where>
+		order by t.apply_date desc
+	</select>
+	<select id="selectRyInfo" parameterType="java.lang.Long"
+		resultType="com.linkstec.crm.massManage.dto.RyInfoDto">
+		select jbxx.ryid,jbxx.xm ryxm,jbxx.jgid,org.jg_name
+		from
+		t_ehr_jjr_jbxx
+		jbxx left join l_organization_expand org
+		on jbxx.jgid =org.jgid
+		where
+		jbxx.current_type not in ('15','16')
+		<if test="_parameter!=null">
+			and jbxx.ryid = #{ryid}
+		</if>
+
+	</select>
+
+	<select id="selectAllRyInfo" resultType="java.lang.String">
+		select jbxx.ryid
+		from
+		t_ehr_jjr_jbxx jbxx
+		where
+		jbxx.current_type not in ('15','16')
+	</select>
+
+
+	<select id="selectJgInfo" resultType="com.linkstec.crm.system.po.LOrganizationExpand"
+		parameterType="map">
+		select * from l_organization_expand
+		<where>
+			<if test="jgid!=null">
+				jgid = #{jgid}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 查询所有人员 除去虚拟经纪人 无权限 -->
+	<select id="findAllRYNoAuth" parameterType="map"
+		resultType="map">
+		SELECT
+		"TO_CHAR"("ryid") "ryid",
+		"membername",
+		"jgid",
+		"orgname"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		ygztid,
+		current_type,
+		XM ||
+		'(' || ryid || ')' "membername",
+		JGID
+		"jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		)
+		"orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		A
+		) A
+		WHERE
+		1 = 1 and ygztid in ('1','4') and current_type not in ('15','16')
+		<if test="xm!=null">
+			and ("membername" like '%'||trim(' ' FROM #{xm})||'%' or "ryid" like
+			'%'||trim(' ' FROM #{xm})||'%')
+		</if>
+		<if test="orgName!=null">
+			and ("orgname" like '%'||trim(' ' FROM #{orgName})||'%' or "jgid" like
+			'%'||trim(' ' FROM #{orgName})||'%')
+		</if>
+		<if test="ryid!=null">
+			and "ryid" = #{ryid}
+		</if>
+		<if test="by!=null">
+			and "ryid" != #{by}
+		</if>
+	</select>
+	<select id="selectUserInfoByMemberId" parameterType="java.lang.Long" resultType="map">
+		select user_id, user_name, t2.member_name
+		  from l_user t1, l_member t2
+		 where t1.member_id = #{memberId}
+		   and t1.member_id = t2.member_id	
+	</select>
+</mapper>

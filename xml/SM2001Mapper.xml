@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.linkstec.smsc.mapper.SM2001Mapper">
+	<select id="selectParamTmpltInfoById" parameterType="String" resultType="com.linkstec.smsc.dto.ParamTmpltInfo">
+		SELECT 
+			t.INFO_MSG_TMPLT_ID, 
+			t.INFO_CONTENTS,
+		  	t.TMPLT_TYPE,
+		  	t.PARAM_TYPE 
+		FROM T_INFO_MSG_TMPLT t
+		WHERE t.INFO_MSG_TMPLT_ID = #{infoMsgTmpltId}
+	</select>
+
+	<select id="selectMsgTmpltByBranchId" resultType="com.linkstec.smsc.dto.InfoMsgTmpltDto"
+		parameterType="map">
+		select s.* ,T2.STRATEGY_NAME AS POLICY_NAME,
+		m.MEMBER_NAME EMP_NAME
+		from (
+		SELECT du_T1.BRANCH_ID,
+		T3.JGMC AS BRANCH_NAME,
+		du_T1.POLICY_ID,
+		du_T1.INFO_MSG_TMPLT_ID,
+		du_T1.INFO_TMPLT_NAME,
+		du_T1.BUSINESS_NO,
+		du_T1.POLICY_SEQ,
+		du_T1.INFO_CONTENTS,
+		du_t1.TMPLT_RANGE,
+		du_t1.TMPLT_TYPE,
+		du_t1.PARAM_TYPE,
+		du_t1.SHZT,
+		du_t1.GEN_USER_ID,
+		du_T1.SYFW,du_t1.start_time,du_t1.end_time
+		FROM
+		T_INFO_MSG_TMPLT du_T1
+		left join T_JG /*LT*/ T3 on
+		du_T1.BRANCH_ID = T3.JGID
+		ORDER BY
+		du_t1.TMPLT_RANGE,du_T1.BRANCH_ID
+		)s
+		LEFT JOIN L_MEMBER m on
+		s.GEN_USER_ID = m.MEMBER_ID
+		LEFT JOIN E_STRATEGY T2 ON S.POLICY_ID =
+		T2.STRATEGY_ID
+		where 1=1 AND s.SHZT in ('1','6')
+		 and ((sysdate between start_time and end_time) or start_time is null)
+		<!--  总部公司，不再区分TMPLT_RANGE
+		<if test="branchId != null and branchId != ''">
+		and ((s.BRANCH_ID = #{branchId} and s.TMPLT_RANGE = '02') or s.TMPLT_RANGE = '01')
+		</if> 
+		-->
+		<if test="businessNo!=null and businessNo != ''">
+			and s.BUSINESS_NO = #{businessNo}
+		</if>
+		<if test="tmpltName!=null and tmpltName != ''">
+			and s.INFO_TMPLT_NAME like CONCAT(CONCAT('%',
+			#{tmpltName}),'%')
+		</if>
+		<if test="strategyId != null and strategyId != ''">
+			and s.POLICY_ID = #{strategyId}
+		</if>
+		<if test="tmpltType != null and tmpltType != ''">
+			and s.TMPLT_TYPE = #{tmpltType}
+		</if>
+		
+		ORDER BY s.BRANCH_ID,s.INFO_TMPLT_NAME
+	</select>
+</mapper>

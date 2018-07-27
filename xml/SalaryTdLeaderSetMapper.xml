@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.linkstec.lmspcom.salary.mapper.SalaryTdLeaderSetMapper">
+
+	<!-- 查询人员 -->
+	<select id="findTdLeaderSet"
+		parameterType="map"
+		resultType="com.linkstec.lmspcom.salary.dto.FindTdLeaderSetDto">
+		SELECT
+		"EXP".ITEM_EXP_NAME,tdxx.*,USR.REC_GEN_TIME,USR.SALARY_EXP_ID,USR.SALARY_EXP_PARAM,CREATOR,USR.ID ,jydy.jydyName,jydy.jydyId
+		FROM T_XCITEM_USE /*LT*/ usr
+		LEFT JOIN T_XCITEM_EXP exp on USR.SALARY_EXP_ID = "EXP"."ID"
+		inner JOIN (SELECT td.JYDY_NAME tdName,td.JYDY_ID tdId ,jjr.ryid memberId,jjr.xm memberName FROM
+		L_MEMBER_TD_REL tdRel INNER JOIN T_JYDY_XX td ON
+		TDREL.JYDY_ID=td.JYDY_ID
+		INNER JOIN T_EHR_JJR_JBXX jjr ON tdRel.member_Id = jjr.ryid
+		WHERE td.JYDY_CJ = 2) tdxx ON tdxx.memberId= usr.salary_user
+		INNER JOIN (SELECT jydy.JYDY_NAME jydyName,jydy.JYDY_ID jydyId,jydyRel.member_id memberId FROM
+		L_MEMBER_JYDY_REL jydyRel INNER JOIN T_JYDY_XX jydy ON	jydyRel.JYDY_ID=jydy.JYDY_ID
+		WHERE jydy.JYDY_CJ = 1) jydy ON jydy.memberId= usr.salary_user
+		WHERE
+		SALARY_USR_TYPE IS NULL
+		AND SALARY_USR_LEVEL IS NULL
+		AND SALARY_USER IS NOT NULL
+		AND SALARY_CODE = 10014
+		<if test="memberName!=null">
+			AND (tdxx.memberName LIKE '%'||#{memberName}||'%'
+			or  usr.salary_user like #{memberName}
+			)
+		</if>
+		<if test="tdId!=null">
+			AND tdxx.tdId = #{tdId}
+		</if>
+		<if test="jydyId!=null">
+			AND jydy.jydyId = #{jydyId}
+		</if>
+	</select>
+
+
+</mapper>

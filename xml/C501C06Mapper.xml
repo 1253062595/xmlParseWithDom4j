@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.customer.mapper.C501C06Mapper">
+
+	<insert id="insertIntoTGxglGxmx" parameterType="map">
+		INSERT INTO T_GXGL_GXMX
+		(REC_GEN_TIME,KHID,RYID,ORGID,KHFLDM,BL_FC,KHRQ,FPRQ,BZ,FJ,GXZT,GXLY,SHZT,RYXM,KHXM,ZGX_FLAG) 
+		values
+		(SYSDATE,#{khid},#{ryid},#{orgid},#{khfldm},#{blfc},#{khrq},#{fprq},#{bz},#{fj},#{gxzt},#{gxly},#{shzt},#{ryxm},#{khxm},#{zgxflag})
+	</insert>
+	<update id="UpTGxglGxmx" parameterType="map">
+	UPDATE T_GXGL_GXMX 
+	SET INSID=#{insId},REC_UPD_TIME = SYSDATE
+	where KHID=#{khid} and RYID=#{ryid}
+	</update>
+	<update id="updateTGxglGxmx" parameterType="map">
+		UPDATE T_GXGL_GXMX SET
+		REC_UPD_TIME = SYSDATE
+		<if test="shzt!=null">
+			,SHZT=#{shzt}
+		</if>
+		<if test="ryid!=null">
+			,RYID=#{ryid}
+		</if>
+		<if test="fpsj!=null">
+			,FPSJ=#{fpsj}
+		</if>
+		<if test="gxzt!=null">
+			,GXZT = #{gxzt}
+		</if>
+		<if test="gxryid!=null">
+			,GXRYID = #{gxryid}
+		</if>
+		<if test="insId!=null">
+		,insid = #{insId}
+		</if>
+		WHERE 1=1
+		<if test="khid!=null">
+	and 	 KHID=#{khid}
+		</if>
+		<if test="khids!=null">
+		and khid in (${khids})
+		</if>
+		and GXLXBH = #{gxlxbh}
+	</update>
+	<select id="selectMember" resultType="com.linkstec.crm.customer.dto.MemberDto" parameterType="map">
+		SELECT 
+			MEM.MEMBER_ID, 
+			MEM.MEMBER_NAME
+		FROM 
+			L_MEMBER MEM
+		INNER JOIN 
+			T_EHR_JJR_JBXX jbxx
+		ON 
+			MEM.MEMBER_ID = jbxx.RYID
+		WHERE
+			1 = 1
+			<if test="memberType != null">
+			 AND jbxx.CURRENT_TYPE = #{memberType}
+		   </if>
+	</select>
+	<update id="updateTGxglGxmx5" parameterType="map">
+		UPDATE T_GXGL_GXMX SET
+		REC_UPD_TIME = SYSDATE,
+		<if test="gxzt!=null">
+			GXZT =#{gxzt},
+		</if>
+		<if test="shzt!=null">
+			SHZT=#{shzt}
+		</if>
+		<if test="insId!=null">
+		,insid = #{insId}
+		</if>
+		<!-- <if test="gxzt!=null">
+			,GXZT = #{gxzt}
+		</if> -->
+		WHERE 
+		 khid = #{khid} and ryid = #{ryid} and gxlxbh = #{gxlxbh}
+		
+	</update>
+	<!-- A-wangxw-20140829-start -->
+	<select id="khgxxzqlxForGxcx" parameterType="map" resultType="map">
+		SELECT
+			A.KHID khid,
+			A.JGID jgid,
+			A.KHXM khxm,
+			TO_CHAR (A.RYID) ryid,
+			A.GXLXBH gxlxbh,
+			A.GXZT gxzt,
+			A.FPRQ fprq,
+			A.GXRYID gxryid,
+			A.SHZT shzt,
+			A.GXLY gxly,
+			A.INSID insid,
+			B.XM memberName,
+			D.DD_VALUE memberType,
+			c.ORG_NAME orgName,
+			E.SINGLEFLAG singleFlag,
+			E.ZHZT zhzt
+		FROM
+			LMSP_DATADICT D,
+			(
+		SELECT
+			*
+		FROM
+			T_GXGL_GXMX /*LT*/
+			A
+		WHERE
+			(
+				(A .GXZT = 1 AND A .SHZT = 2)
+				OR A .GXZT = 2
+				OR (A .GXZT = 3 AND A .SHZT != 2)
+			)
+		AND A .gxlxbh != 5
+	) A
+		INNER JOIN T_KH_XX /*LT*/ E ON A.KHID = E.KHID
+		LEFT JOIN T_EHR_JJR_JBXX b ON A.RYID = B.RYID
+		LEFT JOIN L_ORGANIZATION c ON A.JGID = c.ORG_ID
+		WHERE
+			D.DD_TYPE = 'employeeType'
+		AND TO_CHAR (D.DD_KEY) = TO_CHAR (b.CURRENT_TYPE)
+		<if test="khid!=null">
+			and a.KHID like '%'||#{khid}||'%'
+		</if>
+		<if test="khxm!=null">
+			and a.khxm like '%'||#{khxm}||'%'
+		</if>
+		<if test="ryxm!=null">
+			and B.XM like '%'||#{ryxm}||'%'
+		</if>
+		<if test="ryid!=null">
+			and TO_CHAR (A .RYID) = #{ryid} 
+		</if>
+		<if test="gxlxbh!=null">
+			and A.GXLXBH = #{gxlxbh}
+		</if>
+		<if test="orgId != null">
+			and A.JGID = #{orgId}
+		</if>
+		<if test="zhzt != null">
+			and E .ZHZT = #{zhzt}
+		</if>
+		order by A.FPRQ desc nulls last
+	</select>
+	<delete id="delMxByRyid" parameterType="map">
+		delete from T_GXGL_GXMX  WHERE RYID = #{memberId}
+		<if test="gxlxbh!=null">
+			and GXLXBH = #{gxlxbh}
+		</if> 
+	</delete>
+	
+	<delete id="delMx2" parameterType="map">
+		delete from T_GXGL_GXMX /*LT*/ WHERE KHID in
+		<foreach collection="khids" open="(" close=")" item="khid" separator=",">
+			${khid}
+		</foreach>
+		and GXLXBH = #{gxlxbh}
+	</delete>
+</mapper>

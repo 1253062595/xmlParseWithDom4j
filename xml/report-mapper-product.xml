@@ -1,0 +1,1444 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.report.mapper.product">
+
+	<!-- 产品分类新老客户统计表 -->
+	<select id="S_ProductTypeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto"
+		resultType="map">
+		select
+		crm.fn_get_dictvalue('CP_fund_company',x.fund_company) as fund_company, /*基金公司*/
+		crm.fn_get_producttype(x.product_type) as product_type, /*产品类型*/
+		count(distinct x.client_id) as buy_users, 	/*申购客户数*/
+		sum(x.buy_amount) as buy_balance, 		/*销售额*/
+		count(distinct case when x.first_trade_date between
+			to_number(to_char(#{beginDate},'yyyyMMdd')) and
+			to_number(to_char(#{endDate},'yyyyMMdd')) then x.client_id else null
+			end) as new_buy_users,		 /*新申购客户数*/
+		count(distinct case when not(x.first_trade_date between
+			to_number(to_char(#{beginDate},'yyyyMMdd')) and
+			to_number(to_char(#{endDate},'yyyyMMdd'))) then x.client_id else null
+			end) as old_buy_users,		/*老申购客户数*/
+		sum(case when x.first_trade_date between
+			to_number(to_char(#{beginDate},'yyyyMMdd')) and
+			to_number(to_char(#{endDate},'yyyyMMdd')) then x.buy_amount else 0
+			end) as new_buy_balance 	 /*新销售额*/
+		,sum(case when not(x.first_trade_date between
+			to_number(to_char(#{beginDate},'yyyyMMdd')) and
+			to_number(to_char(#{endDate},'yyyyMMdd'))) then x.buy_amount else 0
+			end) as old_buy_balance 	 /*老客户销售额*/
+		from(
+			select h.*, c.first_trade_date
+			from jhdc.hisclient_product_trade h inner join productProperty 
+			/*LT*/ p on p.product_type =h.product_type and p.product_code = h.product_code , jhdc.clientinfox c
+			where
+			h.client_id = c.client_id and <![CDATA[h.buy_amount <> 0]]>
+			<if test="beginDate!=null and endDate!=null">
+				and h.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+			</if>
+			<if test="branchNo!=null">
+				and c.branch_no in
+				<foreach collection="branchNo" open="(" separator="," close=")"
+					item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="clientType!=null">
+				and c.client_type=#{clientType}
+			</if>
+			<if test="clientSource!=null">
+				and c.client_source=#{clientSource}
+			</if>
+			<if test="productType!=null">
+				and h.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="fundCompany!=null">
+				and h.fund_company = #{fundCompany}
+			</if>
+		) x
+		group by x.fund_company, x.product_type
+		order by x.product_type
+	</select>
+	<!-- 产品交易信息统计表 -->
+	<select id="S_KHtradeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+		select g.*,
+	       crm.fn_get_dictvalue('CP_business_flag',t.opbusiness_flag) opbusiness_flag,
+	       t.product_code,
+	       t.product_name,
+	       t.init_date,
+	       to_date(to_char(t.curr_date||lpad( t.curr_time,6,'0')),'yyyyMMdd hh24:mi:ss')  currDate,
+	       t.curr_date,
+	       t.curr_time,
+	       t.deal_balance,
+	       t.deal_shares,
+	       crm.fn_get_branchname(j.jgid) branch_no,crm.fn_get_branchname(g.orgid) kh_branch_no,
+	       t.khl
+	  from crm.t_ehr_jjr_jbxx j
+	 inner join (select g.ryid, g.ryxm, g.khid, k.khxm,g.orgid,crm.fn_get_dictvalue('clientGrade',k.khdj) khdj  from crm.t_gxgl_gxmx g inner join crm.t_Kh_Xx_Zh k on g.khid=k.khid
+	 	where 1=1
+	 	<if test="ryid != null">
+	 		and g.ryid = trim(' ' FROM #{agent}) 
+	 	</if>
+	 	<if test="ryxm != null">
+	 		and  g.ryxm like '%'|| trim(' ' FROM #{agent}) ||'%'
+	 	</if>
+	 	<if test="khdj != null"> 
+			 	and k.khdj = #{khdj}
+			 </if>
+	 	) g
+	    on g.ryid = j.ryid
+	  left join (select j.client_id,
+	                j.opbusiness_flag ,
+                    j.product_code,
+                    j.product_name,
+                    j.curr_date,
+                    j.curr_time,
+                    j.init_date,
+                    j.deal_balance,
+                    j.deal_shares,
+                    j.product_type,
+                    j.branch_no,
+                    j.bs_flag,
+<!--                     pp.sub_type, -->
+<!--                     pp.setup_date, -->
+<!--                     pp.product_term, -->
+<!--                     pp.up_product_type, -->
+                    
+                    (case
+                      when j.product_type = 'xs' and j.bs_flag = 'B' then
+                       j.deal_balance
+                      when j.product_type = 'xv' and j.bs_flag = 'B' then
+                       (j.deal_balance * 3 / 12) 
+                      when pp.up_product_type = 'w' and
+                           j.product_type not in ('xs', 'xv', 'F8', 'F9','F0') and
+                           j.product_code not in
+                           ('F00497',
+                            'F00218',
+                            'F00221',
+                            'F00230',
+                            'F00452',
+                            'YA0001',
+                            'YA0002') and j.bs_flag = 'B' then
+                       (j.deal_balance / 12) 
+                      when j.product_type = 'op' and j.bs_flag = 'B' then
+                       (j.deal_balance * pp.product_term / 365) 
+                      when pp.up_product_type = 'hn' and j.bs_flag = 'B' then
+                       (j.deal_balance * pp.product_term / 365) 
+                     when j.product_type = 'F0' and j.bs_flag = 'B' then
+                       (j.deal_balance * 2) 
+                      else
+                       0
+                    end) khl   
+               from jhdc.histradeinfojour j  left join   jhdc.productproperty pp
+                    ON j.product_code = pp.product_code  and j.fund_company=pp.fund_company
+              where j.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+			 <if test="productType!=null">
+						and j.product_type in
+						<foreach collection="productType" open="(" separator=","
+							close=")" item="item">
+							#{item}
+						</foreach>
+			 </if>
+			 <if test="opbusflag != null">
+			 	and j.opbusiness_flag in
+		      <foreach collection="opbusflag" open="(" separator="," close=")"
+		    	item="item">
+			   #{item}
+		      </foreach>
+			 </if>
+			 <if test="bsFlag != null"> 
+			 	and j.bs_flag = #{bsFlag}
+			 </if>
+			 <if test="clientType != null"> 
+			 	and j.client_type = #{clientType}
+			 </if> ) t
+	    on t.client_id = to_char(g.khid)
+	 where 
+	 t.client_id is not null
+	 <if test="branchNo != null">
+	 	and j.jgid in
+		<foreach collection="branchNo" open="(" separator="," close=")"
+			item="item">
+			#{item}
+		</foreach>
+	 </if>
+	 <if test="jgids != null">
+	 	and g.orgid in
+		<foreach collection="jgids" open="(" separator="," close=")"
+			item="item">
+			#{item}
+		</foreach>
+	 </if>
+	 order by g.ryid,currDate desc
+	</select>
+	<!-- 爽活宝产品交易统计表 -->
+	<select id="S_SoPtTradeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+		select t.jefw,
+       nvl(t.buy_balance, 0) buy_balance,
+       nvl(t.buy_users, 0) buy_users,
+       nvl(t.back_users, 0) back_users,
+       nvl(t.back_balance, 0) back_balance,
+       nvl(abs(t.buy_balance - t.back_balance), 0) pback
+  		from ((select <![CDATA[sum(case when t.buy_amount <> 0 and t.buy_amount <= 1000 then t.buy_amount else 0 end) k_db,
+                sum(case when t.buy_amount <> 0 and t.buy_amount > 1000 and t.buy_amount <= 10000 then t.buy_amount else 0 end) k_10k_db,
+                sum(case when t.buy_amount <> 0 and t.buy_amount > 10000 and t.buy_amount <= 100000 then t.buy_amount else 0 end) k_100k_db,
+                sum(case when t.buy_amount <> 0 and t.buy_amount > 100000 and t.buy_amount <= 500000 then t.buy_amount else 0 end) k_500k_db,
+                count(distinct case when t.buy_amount <> 0 and t.buy_amount <= 1000 then client_id else null end) k_rs,
+                count(distinct case when t.buy_amount <> 0 and t.buy_amount > 1000 and t.buy_amount <= 10000 then t.client_id else null end) k_10k_rs,
+                count(distinct case when t.buy_amount <> 0 and t.buy_amount > 10000 and t.buy_amount <= 100000 then t.client_id else null end) k_100k_rs,
+                count(distinct case when t.buy_amount <> 0 and t.buy_amount > 100000 and t.buy_amount <= 500000 then t.client_id else null end) k_500k_rs,
+                count(distinct case when t.sell_amount <> 0 and t.sell_amount <= 1000 then t.client_id else null end) bk_rs,
+                count(distinct case when t.sell_amount <> 0 and t.sell_amount > 1000 and t.sell_amount <= 10000 then t.client_id else null end) bk_10k_rs,
+                count(distinct case when t.sell_amount <> 0 and t.sell_amount > 10000 and t.sell_amount <= 100000 then t.client_id else null end) bk_100k_rs,
+                count(distinct case when t.sell_amount <> 0 and t.sell_amount > 100000 and t.sell_amount <= 500000 then t.client_id else null end) bk_500k_rs,
+                sum(case when t.sell_amount <> 0 and t.sell_amount <= 1000 then t.sell_amount else 0 end) bk_db,
+                sum(case when t.sell_amount <> 0 and t.sell_amount > 1000 and t.sell_amount <= 10000 then t.sell_amount else 0 end) bk_10k_db,
+                sum(case when t.sell_amount <> 0 and t.sell_amount > 10000 and t.sell_amount <= 100000 then t.sell_amount else 0 end) bk_100k_db,
+                sum(case when t.sell_amount <> 0 and t.sell_amount > 100000 and t.sell_amount <= 500000 then t.sell_amount else 0 end) bk_500k_db]]>
+           from (select t.client_id,
+                        sum(t.buy_amount ) buy_amount,
+                        sum(t.sell_amount + t.cashed_amount) sell_amount
+                   from jhdc.hisclient_product_trade t
+                  where t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and 
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+                    and t.client_type in ('00', '01')
+                    
+          <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+                  group by t.init_date, t.client_id ) t)
+        unpivot((buy_balance, buy_users, back_users, back_balance) for
+                jefw in
+                ((k_db, k_rs, bk_rs, bk_db) as '1千以下',
+                 (k_10k_db, k_10k_rs, bk_10k_rs, bk_10k_db) as '1千至1万',
+                 (k_100k_db, k_100k_rs, bk_100k_rs, bk_100k_db) as '1万至10万',
+                 (k_500k_db, k_500k_rs, bk_500k_rs, bk_500k_db) as '10万至50万'))) t
+	</select>
+	<!-- 爽活宝交易地区统计表 -->
+	<select id="S_SoProvinceStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map" >
+		 select 
+			nvl(sum(t.buy),0) buy_balance,nvl(count(distinct t.client_id),0) buy_num,
+			nvl(sum(s.mvalue),0) mvalue,nvl(count(distinct s.client_id),0) stocknum,ct.name
+			,nvl(count(distinct case when c.client_type = '01' then t.client_id else null end),0) online_buy
+			,nvl(count(distinct case when c.client_type = '01' and s.mvalue is not null then s.client_id else null end),0) online_stock_num 
+			,nvl(sum(case when c.client_type = '01' then t.buy else 0 end),0) online_balance
+			,nvl(sum(case when c.client_type = '01' then s.mvalue else 0 end),0) online_stock
+		from (
+			select t.client_id,sum(t.buy_amount) buy from jhdc.hisclient_product_trade t 
+			where t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+			and <![CDATA[t.buy_times <>0]]> 
+			and t.client_type in('00','01')
+		  <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+			group by t.client_id) t
+			left join(select j.client_id,sum(j.market_value) mvalue from jhdc.hisstockjour j 
+			where j.current_share - j.back_share >0
+			and j.init_date = to_number(to_char(#{endDate},'yyyyMMdd'))
+<!-- 			(select max(j.init_date) from jhdc.hisstockjour j where j.init_date &lt;= to_number(to_char(#{endDate},'yyyyMMdd')) ) -->
+			and j.client_type in('00','01')
+		 <if test="productType == null">
+          	and j.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and j.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+			group by j.client_id
+			)s
+			on s.client_id = t.client_id
+			left join (select c.client_id,c.province_no,c.city,c.client_type from jhdc.clientinfox c
+			)c
+			on (c.client_id = t.client_id or c.client_id = s.client_id)
+			left join(select ct.name,ct.city_code from crm.t_sys_city ct where ct.parentid = 0)ct
+			on c.province_no = ct.city_code
+		group by ct.name
+		order by ct.name
+	</select>
+	<!-- 爽活宝产品持仓金额统计表 -->
+	<select id="S_SoStockStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+		select j.jefw,nvl(j.onlinep_sum,0) onlinep_sum,j.onlinep_num,nvl(j.agp_sum,0) agp_sum,j.agp_num,nvl(j.b_sum,0) b_sum,j.b_num
+			,nvl(j.onlinep_sum+ j.agp_sum,0)  psum, j.onlinep_num+j.agp_num pnum
+			,nvl(j.onlinep_sum+ j.agp_sum+j.b_sum,0) totalbalance, j.onlinep_num+j.agp_num+j.b_num totalnum
+		 from(
+			select
+			count(distinct case when j.client_type = '00' and j.market_value &lt;= 1000 then j.client_id else null end) ag_k_num
+			,count(distinct case when j.client_type = '00' and j.market_value > 1000 and j.market_value &lt;= 10000 then j.client_id else null end) ag_10k_num
+			,count(distinct case when j.client_type = '00' and j.market_value > 10000 and j.market_value &lt;= 100000 then j.client_id else null end) ag_100k_num
+			,count(distinct case when j.client_type = '00' and j.market_value > 100000 and j.market_value &lt;= 500000 then j.client_id else null end) ag_500k_num
+			,count(distinct case when j.client_type = '00' and j.market_value > 500000 then j.client_id else null end) ag_lt500k_num
+			
+			,count(distinct case when j.client_type = '01' and j.market_value &lt;= 1000 then j.client_id else null end) online_k_num
+			,count(distinct case when j.client_type = '01' and j.market_value > 1000 and j.market_value &lt;= 10000 then j.client_id else null end) online_10k_num
+			,count(distinct case when j.client_type = '01' and j.market_value > 10000 and j.market_value &lt;= 100000 then j.client_id else null end) online_100k_num
+			,count(distinct case when j.client_type = '01' and j.market_value > 100000 and j.market_value &lt;= 500000 then j.client_id else null end) online_500k_num
+			,count(distinct case when j.client_type = '01' and j.market_value > 500000 then j.client_id else null end) online_lt500k_num
+			
+			,count(distinct case when j.client_type in ('10','11') and j.market_value &lt;=1000 then j.client_id else null end) br_k_num
+			,count(distinct case when j.client_type in ('10','11') and j.market_value > 1000 and j.market_value &lt;= 10000 then j.client_id else null end) br_10k_num
+			,count(distinct case when j.client_type in ('10','11') and j.market_value > 10000 and j.market_value &lt;= 100000 then j.client_id else null end) br_100k_num
+			,count(distinct case when j.client_type in ('10','11') and j.market_value > 100000 and j.market_value &lt;= 500000 then j.client_id else null end) br_500k_num
+			,count(distinct case when j.client_type in ('10','11') and j.market_value > 500000 then j.client_id else null end) br_lt500k_num
+			
+			,sum(case when j.client_type = '00' and j.market_value &lt;= 1000 then j.market_value else 0 end) ag_k_sum
+			,sum(case when j.client_type = '00' and j.market_value > 1000 and j.market_value &lt;= 10000 then j.market_value else 0 end) ag_10k_sum
+			,sum(case when j.client_type = '00' and j.market_value > 10000 and j.market_value &lt;= 100000 then j.market_value else 0 end) ag_100k_sum
+			,sum(case when j.client_type = '00' and j.market_value > 100000 and j.market_value &lt;= 500000 then j.market_value else 0 end) ag_500k_sum
+			,sum(case when j.client_type = '00' and j.market_value > 500000 then j.market_value else 0 end) ag_lt500k_sum
+			
+			,sum(case when j.client_type in ('10','11') and j.market_value &lt;= 1000 then j.market_value else 0 end) br_k_sum
+			,sum(case when j.client_type in ('10','11') and j.market_value > 1000 and j.market_value &lt;= 10000 then j.market_value else 0 end) br_10k_sum
+			,sum(case when j.client_type in ('10','11') and j.market_value > 10000 and j.market_value &lt;= 100000 then j.market_value else 0 end) br_100k_sum
+			,sum(case when j.client_type in ('10','11') and j.market_value > 10000 and j.market_value &lt;= 500000 then j.market_value else 0 end) br_500k_sum
+			,sum(case when j.client_type in ('10','11') and j.market_value > 500000 then j.market_value else 0 end) br_lt500k_sum
+			
+			,sum(case when j.client_type = '01' and j.market_value &lt;= 1000 then j.market_value else 0 end) online_k_sum
+			,sum(case when j.client_type = '01' and j.market_value > 1000 and j.market_value &lt;= 10000 then j.market_value else 0 end) online_10k_sum
+			,sum(case when j.client_type = '01' and j.market_value > 10000 and j.market_value &lt;= 100000 then j.market_value else 0 end) online_100k_sum
+			,sum(case when j.client_type = '01' and j.market_value > 100000 and j.market_value &lt;= 500000 then j.market_value else 0 end) online_500k_sum
+			,sum(case when j.client_type = '01' and j.market_value > 500000 then j.market_value else 0 end) online_lt500k_sum
+			
+		 from (select sum(j.market_value ) market_value
+			,j.client_id,j.client_type
+			  from jhdc.hisstockjour j
+			 where j.init_date = to_number(to_char(#{endDate},'yyyyMMdd'))
+<!-- 			 j.init_date = (select max(j.init_date) -->
+<!-- 			                        from jhdc.hisstockjour j -->
+<!-- 			                       where j.init_date &lt;= to_number(to_char(#{endDate},'yyyyMMdd'))) -->
+			 and j.current_share - j.back_share >0
+			<if test="productType == null">
+          		and j.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+            </if>
+          	<if test="productType != null">
+          		and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          	</if>
+          	<if test="branchNo != null">
+          		and j.branch_no in
+				<foreach collection="branchNo" open="(" separator="," close=")"
+					item="item">
+					#{item}
+			</foreach> 
+          	</if>
+			 group by j.client_id,j.client_type ) j
+			 ) 
+		 unpivot(( onlinep_sum, onlinep_num, agp_sum, agp_num,b_sum, b_num ) for
+	          jefw in (
+	          (online_k_sum, online_k_num, ag_k_sum, ag_k_num, br_k_sum, br_k_num ) as '1千以下',
+	          (online_10k_sum, online_10k_num, ag_10k_sum, ag_10k_num, br_10k_sum, br_10k_num) as '1千至1万',
+	          (online_100k_sum, online_100k_num, ag_100k_sum, ag_100k_num, br_100k_sum, br_100k_num) as '1万至10万',
+	          (online_500k_sum, online_500k_num, ag_500k_sum, ag_500k_num, br_500k_sum, br_500k_num) as '10万至50万',
+	          (online_lt500k_sum, online_lt500k_num, ag_lt500k_sum, ag_lt500k_num, br_lt500k_sum, br_lt500k_num) as '50万以上'))j
+	</select>
+	<!-- 爽活宝净申赎统计表 -->
+	<select id="S_SoBbStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+		 select * from ((
+  			select <![CDATA[nvl(sum(case when j.buy_amount - j.sell_amount > 0 and j.buy_amount - j.sell_amount <= 10000 then j.buy_amount - j.sell_amount else 0 end), 0) w_sum,
+                count(case when j.buy_amount - j.sell_amount > 0 and j.buy_amount - j.sell_amount <= 10000 then j.client_id else null end) w_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount > 10000 and j.buy_amount - j.sell_amount <= 100000 then j.buy_amount - j.sell_amount else 0 end), 0) w10_sum,
+                count(case when j.buy_amount - j.sell_amount > 10000 and j.buy_amount - j.sell_amount <= 100000 then j.client_id else null end) w10_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount > 100000 and j.buy_amount - j.sell_amount <= 500000 then j.buy_amount - j.sell_amount else 0 end), 0) w50_sum,
+                count(case when j.buy_amount - j.sell_amount > 100000 and j.buy_amount - j.sell_amount <= 500000 then j.client_id else null end) w50_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount > 500000 and j.buy_amount - j.sell_amount <= 1000000 then j.buy_amount - j.sell_amount else 0 end), 0) w100_sum,
+                count(case when j.buy_amount - j.sell_amount > 500000 and j.buy_amount - j.sell_amount <= 1000000 then j.client_id else null end) w100_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount > 1000000 then j.buy_amount - j.sell_amount else 0 end), 0) wlt100_sum,
+                count(case when j.buy_amount - j.sell_amount > 1000000 then j.client_id else null end) wlt100_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount <= 0 and j.buy_amount - j.sell_amount > -10000 then j.buy_amount - j.sell_amount else 0 end), 0) pw_sum,
+                count(case when j.buy_amount - j.sell_amount <= 0 and j.buy_amount - j.sell_amount > -10000 then j.client_id else null end) pw_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount <= -10000 and j.buy_amount - j.sell_amount > -100000 then j.buy_amount - j.sell_amount else 0 end), 0) pw10_sum,
+                count(case when j.buy_amount - j.sell_amount <= -10000 and j.buy_amount - j.sell_amount > -100000 then j.client_id else null end) pw10_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount <= -100000 and j.buy_amount - j.sell_amount > -500000 then j.buy_amount - j.sell_amount else 0 end), 0) pw50_sum,
+                count(case when j.buy_amount - j.sell_amount <= -100000 and j.buy_amount - j.sell_amount > -500000 then j.client_id else null end) pw50_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount <= -500000 and j.buy_amount - j.sell_amount > -1000000 then j.buy_amount - j.sell_amount else 0 end), 0) pw100_sum,
+                count(case when j.buy_amount - j.sell_amount <= -500000 and j.buy_amount - j.sell_amount > -1000000 then  j.client_id else null end) pw100_num,
+                nvl(sum(case when j.buy_amount - j.sell_amount <= -1000000 then j.buy_amount - j.sell_amount else  0 end), 0) pwlt100_sum,
+                count(case when j.buy_amount - j.sell_amount <= -1000000 then j.client_id else null end) pwlt100_num ]]>
+           from ( select t.client_id,t.init_date,
+                   sum(t.buy_amount ) buy_amount,
+                   sum(t.sell_amount + t.cashed_amount) sell_amount
+                   from jhdc.hisclient_product_trade t
+                   where t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd'))
+                    and t.client_type in ('00', '01')
+                    <if test="productType == null">
+          				and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+		            </if>
+		          	<if test="productType != null">
+		          		and t.product_type in
+						<foreach collection="productType" open="(" separator=","
+							close=")" item="item">
+							#{item}
+						</foreach>
+		          	</if>
+		          	<if test="branchNo != null">
+		          		and t.branch_no in
+						<foreach collection="branchNo" open="(" separator="," close=")"
+							item="item">
+							#{item}
+					</foreach> 
+		          	</if>
+                  group by t.init_date, t.client_id                                      
+                     ) j )
+        unpivot((balance, user_num) for
+                jefw in ((pwlt100_sum, pwlt100_num) as '净申赎-100万以上',
+                         (pw100_sum, pw100_num) as '净申赎-50万至-100万',
+                         (pw50_sum, pw50_num) as '净申赎-10万至-50万',
+                         (pw10_sum, pw10_num) as '净申赎-10万至-1万',
+                         (pw_sum, pw_num) as '净申赎-1万至0',
+                         (w_sum, w_num) as '净申赎0至1万',
+                         (w10_sum, w10_num) as '净申赎1万至10万',
+                         (w50_sum, w50_num) as '净申赎10万至50万',
+                         (w100_sum, w100_num) as '净申赎50万至100万',
+                         (wlt100_sum, wlt100_num) as '净申购100万以上')))
+	</select>
+	
+	
+	<!-- 爽活宝产品各时间段购买、赎回情况 -->
+	<select id="S_SoTimeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+SELECT T.timeStat,NVL (T.buy_balance, 0) buy_balance,NVL (T.buy_times, 0) buy_times,NVL (T.back_balance, 0) back_balance,NVL (T.back_times, 0) back_times
+ FROM (( 
+ SELECT 
+   SUM (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0')>TO_NUMBER (TO_CHAR(090000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(120000))THEN T.deal_balance ELSE 0 END) n_t_db_sg, 
+   SUM (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(120000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(150000)) THEN T.deal_balance ELSE 0 END) t_f_db_sg, 
+   SUM (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(150000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(200000)) THEN T.deal_balance ELSE 0 END) f_ty_db_sg,
+   SUM (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(200000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(240000)) THEN T.deal_balance ELSE 0 END) ty_tyf_db_sg,
+   SUM (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &gt;=TO_NUMBER (TO_CHAR(0000000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(090000)) THEN T.deal_balance ELSE 0 END) z_n_db_sg,
+           
+   COUNT (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(090000)) AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(120000))THEN T.client_id ELSE NULL END) n_t_ci_sg, 
+   COUNT (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(120000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(150000))THEN T.client_id ELSE NULL END) t_f_ci_sg, 
+   COUNT (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(150000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(200000))THEN T.client_id ELSE NULL END) f_ty_ci_sg,
+   COUNT (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(200000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(240000)) THEN T.client_id ELSE NULL END) ty_tyf_ci_sg,
+   COUNT (CASE WHEN T.bs_flag = 'B' AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &gt;=TO_NUMBER (TO_CHAR(000000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(090000))THEN T.client_id ELSE NULL END) z_n_ci_sg,
+        
+  COUNT (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(090000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(120000)) THEN T.client_id ELSE NULL END) n_t_ci_sh,
+  COUNT (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(120000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(150000)) THEN T.client_id ELSE NULL END) t_f_ci_sh, 
+  COUNT (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(150000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(200000)) THEN T.client_id ELSE NULL END) f_ty_ci_sh,
+  COUNT (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(200000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(240000)) THEN T.client_id ELSE NULL END) ty_tyf_ci_sh,
+  COUNT (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0')  &gt;=TO_NUMBER (TO_CHAR(000000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(090000)) THEN T.client_id ELSE NULL END) z_n_ci_sh,
+  
+  SUM (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(090000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(120000))THEN T.deal_balance ELSE 0 END) n_t_db_sh,
+  SUM (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(120000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(150000))THEN T.deal_balance ELSE 0 END) t_f_db_sh,
+  SUM (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(150000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(200000))THEN T.deal_balance ELSE 0 END) f_ty_db_sh,
+  SUM (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0') >TO_NUMBER (TO_CHAR(200000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(240000))THEN T.deal_balance ELSE 0 END) ty_tyf_db_sh,
+  SUM (CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)AND lpad(SUBSTR(T.curr_time,1,6),6,'0')  &gt;=TO_NUMBER (TO_CHAR(000000))AND lpad(SUBSTR(T.curr_time,1,6),6,'0') &lt;=TO_NUMBER (TO_CHAR(090000))THEN T.deal_balance ELSE 0 END) z_n_db_sh
+FROM jhdc.histradeinfojour T
+       where 
+           t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+          and t.client_type in('00','01')
+          <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((buy_balance,buy_times,back_times,back_balance
+			) FOR timeStat IN (
+				(n_t_db_sg,n_t_ci_sg, n_t_ci_sh,n_t_db_sh) AS '9点至12点',
+				(t_f_db_sg,t_f_ci_sg,t_f_ci_sh,t_f_db_sh) AS '12点至15点',
+				(f_ty_db_sg,f_ty_ci_sg,f_ty_ci_sh,f_ty_db_sh) AS '15点至20点',
+				(ty_tyf_db_sg,ty_tyf_ci_sg,ty_tyf_ci_sh,ty_tyf_db_sh) AS '20点至24点',
+                (z_n_db_sg,z_n_ci_sg,z_n_ci_sh,z_n_db_sh) AS '0点至9点')))T    
+	</select>
+	
+	
+	<!-- 爽活宝产品各支付类型购买、赎回情况 -->
+	<select id="S_SoPayTypeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+SELECT T.payTypeStat,NVL (T.buy_balance, 0) buy_balance,NVL (T.buy_users, 0) buy_users,NVL (T.back_balance, 0) back_balance,NVL (T.back_users, 0) back_users
+ FROM((
+SELECT
+   SUM (CASE WHEN T.bs_flag = 'B' and  T.pay_type='4' THEN T.deal_balance ELSE 0 END) zero_db_sg, 
+   SUM (CASE WHEN T.bs_flag = 'B' and  T.pay_type='1' THEN T.deal_balance ELSE 0 END) one_db_sg, 
+   SUM (CASE WHEN T.bs_flag = 'B' and  T.pay_type='2' THEN T.deal_balance ELSE 0 END) two_db_sg, 
+  
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.pay_type='4' THEN T.client_id ELSE NULL END)zero_ci_sg, 
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.pay_type='1' THEN T.client_id ELSE NULL END)one_ci_sg, 
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.pay_type='2' THEN T.client_id ELSE NULL END)two_ci_sg, 
+  
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='4'  THEN T.client_id ELSE NULL END)zero_ci_sh,
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='1'  THEN T.client_id ELSE NULL END)one_ci_sh, 
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='2'  THEN T.client_id ELSE NULL END)two_ci_sh, 
+   
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='4' THEN T.deal_balance ELSE 0 END)zero_db_sh,  
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='1' THEN T.deal_balance ELSE 0 END)one_db_sh,
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.pay_type='2' THEN T.deal_balance ELSE 0 END)two_db_sh
+FROM jhdc.histradeinfojour T
+       where 
+           t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+		  and t.client_type in('00','01')
+          <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((buy_balance,buy_users,back_users,back_balance	) FOR payTypeStat IN(
+				(zero_db_sg,zero_ci_sg,zero_ci_sh,zero_db_sh) AS '华创保证金支付',
+				(one_db_sg,one_ci_sg,one_ci_sh,one_db_sh) AS '银行卡支付',
+				(two_db_sg,two_ci_sg,two_ci_sh,two_db_sh) AS '证联余额支付')))T         
+	</select>
+	
+	<!-- 爽活宝产品购买渠道购买、赎回情况 -->
+	<select id="S_SoOpWayStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+SELECT T.opwayStat,NVL (T.buy_balance, 0) buy_balance,NVL (T.buy_users, 0) buy_users,NVL (T.back_balance, 0) back_balance,NVL (T.back_users, 0) back_users
+ FROM(( 
+     SELECT
+      SUM (CASE WHEN T.bs_flag = 'B'  and  T.op_entrust_way=4 THEN T.deal_balance ELSE 0 END) four_db_sg, 
+      SUM (CASE WHEN T.bs_flag = 'B'  and  T.op_entrust_way=0 THEN T.deal_balance ELSE 0 END) zero_db_sg, 
+      SUM (CASE WHEN T.bs_flag = 'B'  and  T.op_entrust_way=1 THEN T.deal_balance ELSE 0 END) one_db_sg, 
+      SUM (CASE WHEN T.bs_flag = 'B'  and  T.op_entrust_way=2 THEN T.deal_balance ELSE 0 END) two_db_sg, 
+      SUM (CASE WHEN T.bs_flag = 'B'  and  T.op_entrust_way=3 THEN T.deal_balance ELSE 0 END) three_db_sg, 
+      
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.op_entrust_way=4 THEN T.client_id ELSE NULL END)four_ci_sg, 
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.op_entrust_way=0 THEN T.client_id ELSE NULL END)zero_ci_sg, 
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.op_entrust_way=1 THEN T.client_id ELSE NULL END)one_ci_sg, 
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.op_entrust_way=2 THEN T.client_id ELSE NULL END)two_ci_sg, 
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.op_entrust_way=3 THEN T.client_id ELSE NULL END)three_ci_sg, 
+      
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=4 THEN T.client_id ELSE NULL END)four_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=0 THEN T.client_id ELSE NULL END)zero_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=1 THEN T.client_id ELSE NULL END)one_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=2 THEN T.client_id ELSE NULL END)two_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=3 THEN T.client_id ELSE NULL END)three_ci_sh, 
+
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=4 THEN T.deal_balance ELSE 0 END)four_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=0 THEN T.deal_balance ELSE 0 END)zero_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=1 THEN T.deal_balance ELSE 0 END)one_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=2 THEN T.deal_balance ELSE 0 END)two_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.op_entrust_way=3 THEN T.deal_balance ELSE 0 END)three_db_sh
+    FROM jhdc.histradeinfojour T
+       where 
+           t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+		   and t.client_type in('00','01')
+          <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT (
+			(buy_balance,buy_users,back_users,back_balance) FOR opwayStat IN(
+				(four_db_sg,four_ci_sg,four_ci_sh,four_db_sh) AS '手机网站',
+				(zero_db_sg,zero_ci_sg,zero_ci_sh,zero_db_sh) AS '网站',
+				(one_db_sg,one_ci_sg,one_ci_sh,one_db_sh) AS 'andriod',
+				(two_db_sg,two_ci_sg,two_ci_sh,two_db_sh) AS 'iphone',
+                (three_db_sg,three_ci_sg,three_ci_sh,three_db_sh) AS '其他')))T            
+	</select>
+	
+	<!-- 爽活宝客户类型购买、赎回情况 -->
+	<select id="S_SoClientTypeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+select a.clientTypeStat,a.buy_balance,a.buy_users,a.back_balance,a.back_users,a.avgbuy,a.avgback,b.first_buy_balance,
+		b.first_buy_users,b.first_back_users,b.first_back_balance 
+from
+(SELECT
+  clientTypeStat,NVL (T.buy_balance, 0) buy_balance,NVL (T.buy_users, 0) buy_users,NVL (T.back_balance, 0) back_balance,NVL (T.back_users, 0) back_users,
+  case when NVL (T.buy_users, 0)=0 then 0 else round(NVL (T.buy_balance, 0)/NVL (T.buy_users, 0),2) end avgbuy,
+  case when NVL (T.back_users, 0)=0 then 0 else round(NVL (T.back_balance, 0)/NVL (T.back_users, 0),2) end avgback
+ FROM((
+     SELECT
+  SUM (CASE WHEN T.bs_flag = 'B' and  T.Client_Type='00' THEN T.deal_balance ELSE 0 END) zz_db_sg,
+  SUM (CASE WHEN T.bs_flag = 'B' and  T.Client_Type='01' THEN T.deal_balance ELSE 0 END) zo_db_sg,
+  SUM (CASE WHEN T.bs_flag = 'B' and  T.Client_Type in ('10','11') THEN T.deal_balance ELSE 0 END) ozo_db_sg,
+  
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.Client_Type='00' THEN T.client_id ELSE NULL END)zz_ci_sg,
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.Client_Type='01' THEN T.client_id ELSE NULL END)zo_ci_sg,
+  COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.Client_Type in ('10','11') THEN T.client_id ELSE NULL END)ozo_ci_sg,
+  
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007) and  T.Client_Type='00' THEN T.client_id ELSE NULL END)zz_ci_sh,
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007) and  T.Client_Type='01' THEN T.client_id ELSE NULL END)zo_ci_sh,
+  COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007) and  T.Client_Type in ('10','11') THEN T.client_id ELSE NULL END)ozo_ci_sh,
+  
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and T.Client_Type='00' THEN T.deal_balance ELSE 0 END)zz_db_sh, 
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and T.Client_Type='01' THEN T.deal_balance ELSE 0 END)zo_db_sh, 
+  SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and T.Client_Type in ('10','11') THEN T.deal_balance ELSE 0 END)ozo_db_sh
+ FROM jhdc.histradeinfojour T  
+       where 
+           t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+          <if test="productType == null">
+          	and t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((buy_balance,buy_users,back_users,back_balance) 
+                FOR clientTypeStat IN(
+				(zz_db_sg,zz_ci_sg,zz_ci_sh,zz_db_sh) AS '经纪人个人',
+				(zo_db_sg,zo_ci_sg,zo_ci_sh,zo_db_sh) AS '互联网个人',
+				(ozo_db_sg,ozo_ci_sg,ozo_ci_sh,ozo_db_sh) AS '机构用户')))T )a, 
+				
+(SELECT
+  khTypeStat,NVL (T.first_buy_balance, 0) first_buy_balance,NVL (T.first_buy_users, 0) first_buy_users,NVL (T.first_back_balance, 0) first_back_balance,NVL (T.first_back_users, 0) first_back_users
+ FROM((
+     SELECT
+  SUM (CASE WHEN  A.Client_Type='00' and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Buy_Amount ELSE 0 END) zz_db_fsg,
+  SUM (CASE WHEN  A.Client_Type='01' and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Buy_Amount ELSE 0 END) zo_db_fsg,
+  SUM (CASE WHEN  A.Client_Type in ('10','11') and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Buy_Amount ELSE 0 END) ozo_db_fsg,
+  
+  COUNT (DISTINCT  CASE WHEN A.Client_Type='00' and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)zz_ci_fsg,
+  COUNT (DISTINCT  CASE WHEN A.Client_Type='01' and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)zo_ci_fsg,
+  COUNT (DISTINCT CASE WHEN A.Client_Type in ('10','11') and t.buy_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)ozo_ci_fsg,
+  
+  COUNT (DISTINCT CASE WHEN A.Client_Type='00' and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)zz_ci_fsh,
+  COUNT (DISTINCT CASE WHEN A.Client_Type='01' and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)zo_ci_fsh,
+  COUNT (DISTINCT CASE WHEN A.Client_Type in ('10','11') and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.client_id ELSE NULL END)ozo_ci_fsh,
+  
+  SUM (CASE WHEN  A.Client_Type='00' and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Redeem_Amount ELSE 0 END)zz_db_fsh,
+  SUM (CASE WHEN  A.Client_Type='01' and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Redeem_Amount ELSE 0 END)zo_db_fsh,
+  SUM (CASE WHEN  A.Client_Type in ('10','11') and t.Redeem_Date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')) THEN T.Redeem_Amount ELSE 0 END)ozo_db_fsh
+ FROM jhdc.client_first_trade T  LEFT JOIN jhdc.clientinfox A ON  T.Client_Id=A.Client_Id
+       where 
+          <if test="productType == null">
+          	 t.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and t.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((first_buy_balance,first_buy_users,first_back_users,first_back_balance) 
+                FOR khTypeStat IN(
+				(zz_db_fsg,zz_ci_fsg,zz_ci_fsh,zz_db_fsh) AS '经纪人个人',
+				(zo_db_fsg,zo_ci_fsg,zo_ci_fsh,zo_db_fsh) AS '互联网个人',
+				(ozo_db_fsg,ozo_ci_fsg,ozo_ci_fsh,ozo_db_fsh) AS '机构用户')))T)b
+ where a.clientTypeStat=b.khTypeStat		          
+	</select>
+	
+<!-- 爽活宝性别购买、赎回情况 -->
+	<select id="S_SoSexStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+select a.sexStat,a.buy_balance,a.buy_users,a.back_users,a.back_balance,b.stock_balance,b.stock_users 
+FROM
+(SELECT T.sexStat,NVL (T.buy_balance, 0) buy_balance,NVL (T.buy_users, 0) buy_users,NVL (T.back_users, 0) back_users,NVL (T.back_balance, 0) back_balance        
+ FROM ((
+SELECT
+      SUM (CASE WHEN T.bs_flag = 'B' and  T.client_sex='0' THEN T.deal_balance ELSE 0 END) zero_db_sg,
+      SUM (CASE WHEN T.bs_flag = 'B' and  T.client_sex='1' THEN T.deal_balance ELSE 0 END) one_db_sg,
+      SUM (CASE WHEN T.bs_flag = 'B' and  T.client_sex not in ('0','1') THEN T.deal_balance ELSE 0 END) null_db_sg,
+      
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.client_sex='0' THEN T.client_id ELSE NULL END)zero_ci_sg,
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.client_sex='1' THEN T.client_id ELSE NULL END)one_ci_sg,
+      COUNT (DISTINCT CASE WHEN T.bs_flag = 'B' and  T.client_sex not in ('0','1') THEN T.client_id ELSE NULL END)null_ci_sg,
+      
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and   T.client_sex='0' THEN T.client_id ELSE NULL END)zero_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and   T.client_sex='1' THEN T.client_id ELSE NULL END)one_ci_sh, 
+      COUNT (DISTINCT CASE WHEN T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and   T.client_sex not in ('0','1') THEN T.client_id ELSE NULL END)null_ci_sh, 
+      
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.client_sex='0' THEN T.deal_balance ELSE 0 END)zero_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.client_sex='1' THEN T.deal_balance ELSE 0 END)one_db_sh,
+      SUM (CASE WHEN  T.opbusiness_flag IN (124,223,224,228,229,8006,8007)and  T.client_sex not in ('0','1') THEN T.deal_balance ELSE 0 END)null_db_sh
+ FROM  jhdc.histradeinfojour T 
+       where 
+           T.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+          <if test="productType == null">
+          	and T.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and T.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and T.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((buy_balance,buy_users,back_users,back_balance) 
+        FOR sexStat IN(
+        (zero_db_sg,zero_ci_sg,zero_ci_sh,zero_db_sh) AS '男',
+        (one_db_sg,one_ci_sg,one_ci_sh,one_db_sh) AS '女',
+        (null_db_sg,null_ci_sg,null_ci_sh,null_db_sh) AS '机构')))T)a,     
+(SELECT T.xbStat,NVL (T.stock_balance, 0) stock_balance,NVL (T.stock_users , 0) stock_users      
+ FROM ((
+SELECT
+      SUM(CASE WHEN T.client_sex='0' THEN A.market_value ELSE 0 END)zero_mv,
+      SUM(CASE WHEN T.client_sex='1' THEN A.market_value ELSE 0 END)one_mv,
+      SUM(CASE WHEN T.client_sex not in ('0','1') THEN A.market_value ELSE 0 END)null_mv,
+      
+      COUNT (DISTINCT CASE WHEN T.client_sex='0' THEN A.client_id ELSE NULL END)zero_cc,
+      COUNT (DISTINCT CASE WHEN T.client_sex='1' THEN A.client_id ELSE NULL END)one_cc,
+      COUNT (DISTINCT CASE WHEN T.client_sex not in ('0','1') THEN A.client_id ELSE NULL END)null_cc
+ FROM  jhdc.hisstockjour A LEFT JOIN jhdc.clientinfox T ON A.CLIENT_ID=T.CLIENT_ID
+	  where  A.Current_Share-A.Back_Share>0 
+	  and   A.Init_Date =to_number(to_char(#{endDate},'yyyyMMdd'))
+          <if test="productType == null">
+          	and A.product_type in (select p.product_type from jhdc.producttypeconfig p where p.up_product_type = 'so')
+          </if>
+          <if test="productType != null">
+          	and A.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+          </if>
+          <if test="branchNo != null">
+          	and A.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>)
+        UNPIVOT ((stock_balance,stock_users) 
+        FOR xbStat IN(
+        (zero_mv,zero_cc) AS '男',
+        (one_mv,one_cc) AS '女',
+        (null_mv,null_cc) AS '机构')))T)b
+where a.sexStat=b.xbStat                          
+</select>
+
+<select id="S_ShBalance" parameterType="map" resultType="map">
+  select '酒交所' sh,nvl(sum (a.occur_balance),0) occurBalance from hs_his.hisoffundtransfer a 
+  where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+and a.treat_status='2' and a.business_flag='174' and a.fund_company='9999' and a.opbusiness_flag not in ('8035','8011')
+union all 
+select '股交所' sh,nvl(sum (a.occur_balance),0) occurBalance from hs_his.hisoffundtransfer a 
+where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+and a.treat_status='2' and a.business_flag='174' and a.fund_company='9998'
+union all 
+select a.manager_name||'(分享计划)', nvl(sum(t.occur_balance), 0) occurBalance
+  from hs_his.hisoffundtransfer t
+  left join jhdc.productproperty a
+    on t.fund_code = a.product_code
+   and a.fund_company = t.fund_company
+ where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+   and t.treat_status = '2'
+   and t.business_flag = '174'
+   and t.fund_company = '9998'
+   and t.stock_type = 'w'
+   and t.fund_code not in ('Y80003','Y80004')
+   and trim(a.manager_name) is not null
+ group by a.manager_name
+union all 
+select '银杏债' sh,nvl(sum (a.occur_balance),0)  occurBalance from hs_his.hisoffundtransfer a 
+where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+and a.treat_status='2' and a.business_flag='174' and a.fund_company='9998' and stock_type='o'
+union all 
+select '美兰资产' sh,nvl(sum (a.occur_balance),0) occurBalance from hs_his.hisoffundtransfer a 
+where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+and a.treat_status='2'  AND (a.fund_code='GY0000' ) and a.opbusiness_flag IN ( '20','22')
+union all 
+select '股交所（爽活宝）' sh,nvl(sum (a.occur_balance),0) occurBalance from hs_his.hisoffundtransfer a 
+where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+and a.treat_status='2' and a.business_flag='174' and a.fund_company='9992' and a.stock_type='y'
+union all
+select '湖南金交所' sh, nvl(sum(a.occur_balance), 0) occurBalance
+  from hs_his.hisoffundtransfer a
+ where curr_date &gt;=#{beginDate}  and curr_date &lt;=#{endDate}
+   and a.treat_status = '2'
+   and a.business_flag = '174'
+   and a.fund_company = '9990'
+                        
+</select>
+
+<!-- 产品分类统计表 -->
+	<select id="S_PtTypeStat" parameterType="com.linkstec.crm.report.dto.ProductReportInDto" resultType="map">
+		select t.*,p.product_type_name,up.product_type_name uptype_name
+		from(
+		select nvl(t.buynum,0) buynum,nvl(t.backnum,0) backnum,nvl(t.buy_amount,0) buy_amount,nvl(t.sell_amount,0) sell_amount,
+    	(case when t.product_type is null then j.product_type else t.product_type end) product_type,j.stocknum,j.mvalue
+		from (
+		select 
+			<![CDATA[count(distinct case when t.buy_amount <>0 then t.client_id else null end) buynum,
+			count(distinct case when t.sell_amount+t.cashed_amount <>0 then t.client_id else null end) backnum,
+			sum(case when t.buy_amount <>0 then t.buy_amount else 0 end) buy_amount,
+			sum(case when t.sell_amount+t.cashed_amount <>0 then t.sell_amount+t.cashed_amount else 0 end) sell_amount,
+			t.product_type ]]>
+			  from jhdc.hisclient_product_trade t
+			 where t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+				<if test="productType != null">
+          			and t.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+		        </if>
+		          <if test="branchNo != null">
+		          	and t.branch_no in
+					<foreach collection="branchNo" open="(" separator="," close=")"
+						item="item">
+						#{item}
+					</foreach> 
+		        </if>
+		        <if test="fundCompany != null">
+		        	and t.fund_company = #{fundCompany}
+		        </if>
+		        <if test="clientType != null">
+			   		and t.client_type = #{clientType}
+			    </if>
+			    <if test="clientSource != null">
+			    	and t.client_source = #{clientSource}
+			    </if>
+			 group by t.product_type )t
+			 full join (select count(distinct j.client_id) stocknum,sum(j.market_value) mvalue
+			 ,j.product_type 
+			 from jhdc.hisstockjour j where j.init_date =
+             (case  when  to_number(to_char(#{endDate},'yyyyMMdd'))>(select to_number(to_char(sysdate-1, 'yyyyMMdd'))  from dual)
+                        then (select to_number(to_char(sysdate-1, 'yyyyMMdd'))  from dual)
+                        else to_number(to_char(#{endDate},'yyyyMMdd')) end)
+<!-- 			  to_number(to_char(#{endDate},'yyyyMMdd')) -->
+			 and j.current_share - j.back_share > 0
+			 <if test="productType != null">
+          			and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+		        </if>
+		          <if test="branchNo != null">
+		          	and j.branch_no in
+					<foreach collection="branchNo" open="(" separator="," close=")"
+						item="item">
+						#{item}
+					</foreach> 
+		        </if>
+		        <if test="fundCompany != null">
+		        	and j.fund_company = #{fundCompany}
+		        </if>
+		        <if test="clientType != null">
+			   		and j.client_type = #{clientType}
+			    </if>
+			    <if test="clientSource != null">
+			    	and j.client_source = #{clientSource}
+			    </if>
+			 group by j.product_type) j
+		on t.product_type = j.product_type 
+		) t
+		left join (select p.product_type,p.up_product_type,p.product_type_name from jhdc.producttypeconfig p
+		where 1=1 
+		<if test="productType != null">
+          		and p.product_type in
+			<foreach collection="productType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+			</foreach>
+		</if>) p
+		on p.product_type = t.product_type
+		left join(select p.product_type_name,p.product_type from jhdc.producttypeconfig p where p.up_product_type = '0') up
+		on p.up_product_type = up.product_type
+		order by up.product_type
+	</select>
+     <select id="S_SoRzfundtotalBank" parameterType="com.linkstec.crm.report.dto.RzfundtotalTotDto" resultType="map">
+     	select case when #{productType}  = '1' then '老爽活宝' else '新爽活宝' end pro_name,
+       init_date,/*交易日*/
+       nvl(sum(fund_buy), 0) fund_buy_sum,/*当日申购金额*/
+       nvl(sum(fund_redeem_kt), 0) fund_redeem_kt_sum,/*当日快提金额*/
+       nvl(sum(fund_redeem), 0) fund_redeem_sum,/*当日普通申请量*/
+       nvl(sum(fund_redeem_succ), 0) fund_redeem_succ_sum,/*当日普提金额（成功）*/
+       nvl(sum(fund_redeem_delay), 0) fund_redeem_delay_sum,/*当日普提金额（未处理）*/
+       nvl(sum(fund_redeem_sh), 0) fund_redeem_sh_sum,/*当日赎回总金额(当日快提金额+当日普提金额（成功）)*/
+       nvl(sum(fund_redeem_jsg), 0) fund_redeem_jsg_sum,/*当日净申购(当日申购金额-(当日快提金额+当日普提金额（成功）))*/
+       nvl(sum(income_balance), 0) income_balance_sum,/*当日结转收益*/
+       nvl(sum(income_tot), 0) income_tot_sum,/*累计结转收益*/
+       nvl(sum(help_income_balance), 0) help_income_balance_sum,/*当日垫资收益*/
+       nvl(sum(stock_tot), 0) stock_tot_sum,/*累计规模（本金加已结转收益）*/
+       nvl(sum(xsb_convert_share), 0) xsb_convert_share_sum,/*新手标转换本金*/
+       nvl(sum(xsb_convert_income), 0) xsb_convert_income_sum,/*新手标转换收益*/
+       nvl(sum(shb_convert_share), 0) shb_convert_share_sum,/*爽活宝转换份额（新手转换）*/
+       nvl(sum(shb_convert_unshare), 0) shb_convert_unshare_sum,/*爽活宝未转换份额（新手转换）*/
+       nvl(sum(shb_back_fund), 0) shb_back_fund_sum,/*倒扣总收益*/
+       nvl(sum(shb_full_back_fund), 0) shb_full_back_fund_sum,/*全额支付倒扣总收益*/
+       nvl(sum(shb_pay_balance), 0) shb_pay_balance_sum,/*爽活宝支付金额*/
+       nvl(sum(wallet_buy_balance), 0) wallet_buy_balance_sum,/*份额钱包充值金额*/
+       nvl(sum(wallet_pay_balance), 0) wallet_pay_balance_sum,/*份额钱包支付金额*/
+       nvl(sum(wallet_redeem_balance), 0) wallet_redeem_balance_sum,/*份额钱包退出金额*/
+       nvl(sum(income_share), 0) income_share_sum,/*当日份额收益*/
+       nvl(sum(shb_drztje), 0) shb_drztje_sum /*当日转投金额*/
+from (select t.init_date,
+       t.fund_code,
+       t.fund_buy,
+       t.fund_redeem_kt,
+       t.fund_redeem,
+       t.fund_redeem_succ,
+       t.fund_redeem_delay,
+       t.fund_redeem_kt+t.fund_redeem_succ fund_redeem_sh ,
+      t.fund_buy-(t.fund_redeem_kt+t.fund_redeem_succ) fund_redeem_jsg,
+       t.income_balance,
+       t.income_tot,
+       t.help_income_balance,
+       t.stock_tot,
+       t.xsb_convert_share,
+       t.xsb_convert_income,
+       t.shb_convert_share,
+       t.shb_convert_unshare,
+       t.shb_back_fund,
+       t.shb_full_back_fund,
+       t.shb_pay_balance,
+       t.wallet_buy_balance,
+       t.wallet_pay_balance,
+       t.wallet_redeem_balance,
+       t.income_share,
+       t.shb_drztje
+ from jhdc.shb_daily_tradejour t
+         where t.fund_code 
+          <if test="productType==null">
+         	not in ('GY0000','YD0002')
+         </if>
+         <if test="productType != null">
+         	in ('GY0000')
+         </if>
+         and t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd'))) 
+ group by init_date
+ order by init_date desc
+
+     </select>
+     
+      <select id="S_SoRzfundtotalYw" parameterType="com.linkstec.crm.report.dto.RzfundtotalTotDto" resultType="map">
+     select (select a.product_name from jhdc.productproperty a where a.product_code = fund_code) PRO_NAME,
+        fund_code,
+       init_date,/*交易日*/
+       nvl(fund_buy, 0) fund_buy_sum,/*当日申购金额*/
+       nvl(fund_redeem_kt, 0) fund_redeem_kt_sum,/*当日快提金额*/
+       nvl(fund_redeem, 0) fund_redeem_sum,/*当日普通申请量*/
+       nvl(fund_redeem_succ, 0) fund_redeem_succ_sum,/*当日普提金额（成功）*/
+       nvl(fund_redeem_delay, 0) fund_redeem_delay_sum,/*当日普提金额（未处理）*/
+       nvl(fund_redeem_sh, 0) fund_redeem_sh_sum,/*当日赎回总金额(当日快提金额+当日普提金额（成功）)*/
+       nvl(fund_redeem_jsg, 0) fund_redeem_jsg_sum,/*当日净申购(当日申购金额-(当日快提金额+当日普提金额（成功）))*/
+       nvl(income_balance, 0) income_balance_sum,/*当日结转收益*/
+       nvl(income_tot, 0) income_tot_sum,/*累计结转收益*/
+       nvl(help_income_balance, 0) help_income_balance_sum,/*当日垫资收益*/
+       nvl(stock_tot, 0) stock_tot_sum,/*累计规模（本金加已结转收益）*/
+       nvl(xsb_convert_share, 0) xsb_convert_share_sum,/*新手标转换本金*/
+       nvl(xsb_convert_income, 0) xsb_convert_income_sum,/*新手标转换收益*/
+       nvl(shb_convert_share, 0) shb_convert_share_sum,/*爽活宝转换份额（新手转换）*/
+       nvl(shb_convert_unshare, 0) shb_convert_unshare_sum,/*爽活宝未转换份额（新手转换）*/
+       nvl(shb_back_fund, 0) shb_back_fund_sum,/*倒扣总收益*/
+       nvl(shb_full_back_fund, 0) shb_full_back_fund_sum,/*全额支付倒扣总收益*/
+       nvl(shb_pay_balance, 0) shb_pay_balance_sum,/*爽活宝支付金额*/
+       nvl(wallet_buy_balance, 0) wallet_buy_balance_sum,/*份额钱包充值金额*/
+       nvl(wallet_pay_balance, 0) wallet_pay_balance_sum,/*份额钱包支付金额*/
+       nvl(wallet_redeem_balance, 0) wallet_redeem_balance_sum,/*份额钱包退出金额*/
+       nvl(income_share, 0) income_share_sum, /*当日份额收益*/
+       nvl(shb_drztje, 0) shb_drztje_sum /*当日转投金额*/
+from (select t.init_date,
+       t.fund_code,
+       t.fund_buy,
+       t.fund_redeem_kt,
+       t.fund_redeem,
+       t.fund_redeem_succ,
+       t.fund_redeem_delay,
+       t.fund_redeem_kt+t.fund_redeem_succ fund_redeem_sh ,
+      t.fund_buy-(t.fund_redeem_kt+t.fund_redeem_succ) fund_redeem_jsg,
+       t.income_balance,
+       t.income_tot,
+       t.help_income_balance,
+       t.stock_tot,
+       t.xsb_convert_share,
+       t.xsb_convert_income,
+       t.shb_convert_share,
+       t.shb_convert_unshare,
+       t.shb_back_fund,
+       t.shb_full_back_fund,
+       t.shb_pay_balance,
+       t.wallet_buy_balance,
+       t.wallet_pay_balance,
+       t.wallet_redeem_balance,
+       t.income_share,
+       t.shb_drztje
+ from jhdc.shb_daily_tradejour t
+ where (t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and to_number(to_char(#{endDate},'yyyyMMdd')))
+   and t.fund_code 
+    <if test="code == null">
+   not in ('GY0000')
+   </if>
+ 	<if test="code != null">
+ 		in (#{code})
+ 	</if> )
+ order by init_date desc, fund_code desc
+     </select>
+     
+     <!-- 产品存量统计表按日汇总 -->
+	<select id="productStockDate" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+select decode(j.init_date, null, t.init_date,j.init_date) init_date,
+       NVL(j.marketValue, 0) marketValue,
+       NVL(j.marketValue_w, 0) marketValue_w,
+       NVL(j.marketValue_zz, 0) marketValue_zz,
+       NVL(j.marketValue_jh, 0) marketValue_jh,
+       NVL(j.marketValue_so, 0) marketValue_so,
+       
+       NVL(j.marketValue_hb, 0) marketValue_hb,
+       NVL(j.marketValue_qt, 0) marketValue_qt,
+       nvl(t.balance, 0) balance
+from (select 
+  j.init_date，
+  sum(j.market_value)  marketValue,
+  sum(case when p.up_product_type='w' then j.market_value else 0 end ) marketValue_w,
+  sum(case when p.up_product_type= 'zz'  then j.market_value else 0 end ) marketValue_zz,
+  sum(case when p.product_type in ('y','h','j','m') then j.market_value else 0 end ) marketValue_jh,
+  sum(case when p.up_product_type='so' then j.market_value else 0 end ) marketValue_so,
+  sum(case when p.product_type in ('2') then j.market_value else 0 end ) marketValue_hb,
+  sum(case when p.up_product_type not in ('jh','so','w','zz') then j.market_value else 0 end ) marketValue_qt
+from jhdc.hisstockjour j
+left join jhdc.productproperty p on j.product_code=p.product_code
+       where 
+           j.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+           and j.current_share - j.back_share > 0
+        <if test="branchNo != null">
+          	and j.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+     group by j.init_date
+  order by j.init_date)j
+  full join
+  (select t.init_date, sum(t.current_balance) balance
+    from jhdc.hispayfund t
+    where t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+   group by t.init_date
+   order by t.init_date)t
+   on j.init_date=t.init_date
+	</select>
+
+
+<!-- 产品存量统计表按周汇总 -->
+	<select id="productStockWeek" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+select decode(j.init_date, null, t.init_date,j.init_date) init_date,
+       NVL(j.marketValue, 0) marketValue,
+       NVL(j.marketValue_w, 0) marketValue_w,
+       NVL(j.marketValue_zz, 0) marketValue_zz,
+       NVL(j.marketValue_jh, 0) marketValue_jh,
+       NVL(j.marketValue_so, 0) marketValue_so,
+       
+       NVL(j.marketValue_hb, 0) marketValue_hb,
+       NVL(j.marketValue_qt, 0) marketValue_qt,
+       nvl(t.balance, 0)balance 
+from 
+(select 
+  j.init_date，
+  sum(j.market_value)  marketValue,
+  sum(case when p.up_product_type='w' then j.market_value else 0 end ) marketValue_w,
+  sum(case when p.up_product_type= 'zz'  then j.market_value else 0 end ) marketValue_zz,
+  sum(case when p.product_type in ('y','h','j','m') then j.market_value else 0 end ) marketValue_jh,
+  sum(case when p.up_product_type='so' then j.market_value else 0 end ) marketValue_so,
+  sum(case when p.product_type in ('2') then j.market_value else 0 end ) marketValue_hb,
+  sum(case when p.up_product_type not in ('jh','so','w','zz') then j.market_value else 0 end ) marketValue_qt
+from jhdc.hisstockjour j
+left join jhdc.productproperty p on j.product_code=p.product_code
+       <where>  
+        <if test="branchNo != null">
+          	and j.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+          <if test="listFriday != null">
+          	and j.init_date in
+			<foreach collection="listFriday" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+          and j.current_share - j.back_share > 0
+         </where>
+     group by j.init_date
+  order by j.init_date)j
+  full join
+  (select t.init_date, sum(t.current_balance) balance
+    from jhdc.hispayfund t
+    <where>   
+    <if test="listFriday != null">
+         and t.init_date in
+	    <foreach collection="listFriday" open="(" separator="," close=")"
+		item="item">
+		#{item}
+	   </foreach> 
+     </if>
+     </where> 
+   group by t.init_date
+   order by t.init_date)t
+   on j.init_date=t.init_date
+	</select>
+	
+	<!-- 产品存量统计表按月末汇总 -->
+	<select id="productStockMonth" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+select decode(j.init_date, null, t.init_date,j.init_date) init_date,
+       NVL(j.marketValue, 0) marketValue,
+       NVL(j.marketValue_w, 0) marketValue_w,
+       NVL(j.marketValue_zz, 0) marketValue_zz,
+       NVL(j.marketValue_jh, 0) marketValue_jh,
+       NVL(j.marketValue_so, 0) marketValue_so,
+       
+       NVL(j.marketValue_hb, 0) marketValue_hb,
+       NVL(j.marketValue_qt, 0) marketValue_qt,
+       nvl(t.balance, 0)balance
+from 
+(select 
+  j.init_date，
+  sum(j.market_value)  marketValue,
+  sum(case when p.up_product_type='w' then j.market_value else 0 end ) marketValue_w,
+  sum(case when p.up_product_type= 'zz'  then j.market_value else 0 end ) marketValue_zz,
+  sum(case when p.product_type in ('y','h','j','m') then j.market_value else 0 end ) marketValue_jh,
+  sum(case when p.up_product_type='so' then j.market_value else 0 end ) marketValue_so,
+  sum(case when p.product_type in ('2') then j.market_value else 0 end ) marketValue_hb,
+  sum(case when p.up_product_type not in ('jh','so','w','zz') then j.market_value else 0 end ) marketValue_qt
+from jhdc.hisstockjour j
+left join jhdc.productproperty p on j.product_code=p.product_code
+       <where>  
+        <if test="branchNo != null">
+          	and j.branch_no in
+			<foreach collection="branchNo" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+          <if test="listMonth != null">
+          	and j.init_date in
+			<foreach collection="listMonth" open="(" separator="," close=")"
+				item="item">
+				#{item}
+			</foreach> 
+          </if>
+          and j.current_share - j.back_share > 0
+         </where>
+     group by j.init_date
+  order by j.init_date)j
+  full join
+  (select t.init_date, nvl(sum(t.current_balance), 0) balance
+    from jhdc.hispayfund t
+    <where>   
+    <if test="listMonth != null">
+         and t.init_date in
+	    <foreach collection="listMonth" open="(" separator="," close=")"
+		item="item">
+		#{item}
+	   </foreach> 
+     </if>
+     </where> 
+   group by t.init_date
+   order by t.init_date)t
+   on j.init_date=t.init_date
+	</select>
+	
+	<!-- 分享计划产品开放时间存量统计表按每日汇总 -->
+	<select id="FxjhopProductStockDate" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+     select t.init_date,
+       sum(case
+             when t.product_type = 'xs' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_Y,
+       sum(case
+             when t.product_type = 'xv' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_J,
+       sum(case
+             when t.product_type not in ('xs','xv') then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_M,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T1' then
+              t.market_value
+             else
+              0
+           end) T1_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T2' then
+              t.market_value
+             else
+              0
+           end) T2_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T3' then
+              t.market_value
+             else
+              0
+           end) T3_VALUE
+  from
+     (
+     select t.init_date, t.product_code, t.client_id, t.market_value,
+            pp.product_type, f.term_no,
+            decode(mod(nvl(f.term_no, 1), 3), 1, 'T1', 2, 'T2', 'T3') term_no_f,
+           f.product_code relate_code
+     from jhdc.hisstockjour t left join productproperty pp on t.fund_company = pp.fund_company
+            and t.product_code = pp.product_code
+           left join jhdc.v_fxjh_info f on pp.relate_code = f.product_code
+           and t.init_date between f.term_begin_date and f.term_end_date
+      <where>   
+     
+        t.current_share - t.back_share > 0
+      and  pp.up_product_type = 'w'
+      and  t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+	 <if test="productType != null">
+	   and pp.product_type = #{productType}
+	</if>	
+	 </where> 		
+	)t
+ group by t.init_date order by t.init_date
+
+	</select>
+	<!-- 分享计划产品开放时间存量统计表按每周汇总 -->
+	<select id="FxjhopProductStockWeek" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+    select t.init_date,
+       sum(case
+             when t.product_type = 'xs' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_Y,
+       sum(case
+             when t.product_type = 'xv' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_J,
+       sum(case
+             when t.product_type not in ('xs','xv') then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_M,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T1' then
+              t.market_value
+             else
+              0
+           end) T1_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T2' then
+              t.market_value
+             else
+              0
+           end) T2_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T3' then
+              t.market_value
+             else
+              0
+           end) T3_VALUE
+  from
+     (
+     select t.init_date, t.product_code, t.client_id, t.market_value,
+            pp.product_type, f.term_no,
+            decode(mod(nvl(f.term_no, 1), 3), 1, 'T1', 2, 'T2', 'T3') term_no_f,
+           f.product_code relate_code
+     from jhdc.hisstockjour t left join productproperty pp on t.fund_company = pp.fund_company
+            and t.product_code = pp.product_code
+           left join jhdc.v_fxjh_info f on pp.relate_code = f.product_code
+           and  t.init_date between f.term_begin_date and f.term_end_date
+      <where>   
+        t.current_share - t.back_share > 0
+      and  pp.up_product_type = 'w'
+      <if test="listFriday != null">
+         and t.init_date in
+	    <foreach collection="listFriday" open="(" separator="," close=")"
+		item="item">
+		#{item}
+	   </foreach> 
+     </if>
+	 <if test="productType != null">
+	   and pp.product_type = #{productType}
+	 </if>	
+	 </where> 		
+	)t
+ group by t.init_date order by t.init_date
+	</select>
+	<!-- 分享计划产品开放时间存量统计表按每月汇总 -->
+	<select id="FxjhopProductStockMonth" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+    select t.init_date,
+       sum(case
+             when t.product_type = 'xs' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_Y,
+       sum(case
+             when t.product_type = 'xv' then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_J,
+       sum(case
+             when t.product_type not in ('xs','xv') then
+              t.market_value
+             else
+              0
+           end) MARKETVALUE_M,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T1' then
+              t.market_value
+             else
+              0
+           end) T1_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T2' then
+              t.market_value
+             else
+              0
+           end) T2_VALUE,
+       sum(case
+             when t.product_type not in ('xv', 'xs') and t.term_no_f = 'T3' then
+              t.market_value
+             else
+              0
+           end) T3_VALUE
+  from
+     (
+     select t.init_date, t.product_code, t.client_id, t.market_value,
+            pp.product_type, f.term_no,
+            decode(mod(nvl(f.term_no, 1), 3), 1, 'T1', 2, 'T2', 'T3') term_no_f,
+           f.product_code relate_code
+     from jhdc.hisstockjour t left join productproperty pp on t.fund_company = pp.fund_company
+            and t.product_code = pp.product_code
+           left join jhdc.v_fxjh_info f on pp.relate_code = f.product_code
+           and  t.init_date between f.term_begin_date and f.term_end_date
+      <where>   
+    
+     t.current_share - t.back_share > 0
+      and  pp.up_product_type = 'w'
+      <if test="listMonth != null">
+         and t.init_date in
+	    <foreach collection="listMonth" open="(" separator="," close=")"
+		item="item">
+		#{item}
+	   </foreach> 
+     </if>
+	 <if test="productType != null">
+	   and pp.product_type = #{productType}
+	 </if>	
+	 </where> 		
+	)t
+ group by t.init_date order by t.init_date
+	</select>
+	
+	<!-- 分享计划产品投资起点值存量统计表按 -->
+	<select id="FxjhShareProductStock" parameterType="com.linkstec.crm.report.dto.JinhuiProductSaleStatInDto" resultType="map">
+    select t.init_date,
+       sum(case when  p.min_share='50000' then t.market_value else 0 end ) marketValue_five,
+       sum(case when  p.min_share='100000' then t.market_value else 0 end ) marketValue_ten,
+       sum(case when  p.min_share='200000' then t.market_value else 0 end ) marketValue_tenty,
+       sum(case when  p.min_share='300000' then t.market_value else 0 end ) marketValue_thirty,
+       sum(case when  p.min_share='500000' then t.market_value else 0 end ) marketValue_fifty,
+       sum(case when  p.min_share='1000000' then t.market_value else 0 end ) marketValue_hundred,
+       sum(case when  p.min_share not in ('50000','100000','200000','300000','500000','1000000') then t.market_value else 0 end ) marketValue_qt
+ from  jhdc.hisstockjour t left join jhdc.productproperty p on t.product_code=p.product_code
+  <where> 
+   <if test="beginDate!=null and endDate!=null">
+	and t.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+		to_number(to_char(#{endDate},'yyyyMMdd'))
+   </if>
+   <if test="productType != null">
+	   and p.product_type = #{productType}
+   </if>
+   and p.up_product_type='w'
+   and t.current_share-t.back_share>0
+  </where>  
+    group by t.init_date 
+   order by  t.init_date 
+	</select>
+</mapper>

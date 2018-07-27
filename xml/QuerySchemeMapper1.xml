@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.ib.mobile.mapper.QuerySchemeMapper1">
+
+<!-- 新员工预约审核-->
+<select id="selectKHYY" resultType="com.linkstec.ib.mobile.dto.M002Dto" parameterType="map">
+SELECT
+  A.*,
+  B.ORG_NAME "orgname",
+  C.DD_VALUE "ygztid" ,
+  D.DD_VALUE "orderStatus",
+  E.DD_VALUE "flowStatus",
+ rel.member_name "memberName"
+FROM
+	t_ehr_jjr_jbxx_yy A
+LEFT JOIN L_MEMBER rel ON REL.MEMBER_ID = A .ORDER_USER
+LEFT JOIN L_ORGANIZATION B ON B.ORG_ID = A.JGID 
+LEFT JOIN LMSP_DATADICT C ON (C.DD_KEY = A.YGZTID AND C.DD_TYPE = 'employee_Zgzt')
+LEFT JOIN LMSP_DATADICT D ON (D.DD_KEY = A.ORDER_STATUS AND D.DD_TYPE = 'employee_Yyzt')
+LEFT JOIN LMSP_DATADICT E ON (E.DD_KEY = A.FLOW_STATUS AND E.DD_TYPE = 'INS_STATUS')
+WHERE 1=1
+<if test="id!=null">
+ and A.id = #{id}
+</if> 
+</select>
+<!-- 渠道调整审核流程/调整/续约-->
+<select id="selectQDTZ" resultType="map" parameterType="map">
+SELECT 
+a.JGID,
+a.JG_NAME "jg_name",
+a.JG_CODE "jg_code",
+B.DD_VALUE "jg_type",
+a.DEVP_NAME "devp_name",
+a.JSZQ "jszq",
+a.FILE_NUM "file_num",
+a.CONTRACT_NUM "contract_num",
+TO_CHAR((a.JG_ONLINE),'yyyy/MM/dd') "jg_online",
+TO_CHAR((a.JG_OFFLINE),'yyyy/MM/dd') "jg_offline",
+a.JG_STATUS,
+a.JBR_NAME "jbr_name",
+a.JBR_TEL "jbr_tel",
+C.DD_VALUE "jbrzj_type",
+a.JBRZJ_NUM "jbrzj_num",
+a.FZR "fzr",
+a.FZR_TEL "fzr_tel",
+D.DD_VALUE "fzrzj_type",
+a.FZRZJ_NUM "fzrzj_num",
+a.SUPER_NAME "super_name",
+CRM.FN_GET_DICTVALUE('JG_TYPE_SUB', a.JG_TYPE_SUB) "jg_type_sub",
+a.FRDB_NAME "farenName",
+TO_CHAR((a.FRZJ_BEGIN),'yyyy/MM/dd') "cardStartDate",
+TO_CHAR((a.FRZJ_END),'yyyy/MM/dd') "cardEndDate",
+E.DD_VALUE "orgFarenType",
+F.DD_VALUE "qiyeType", 
+TO_CHAR((a.YYZZ_BEGIN),'yyyy/MM/dd') "yyeStartDate",
+TO_CHAR((a.YYZZ_END),'yyyy/MM/dd') "yyeEndDate",
+a.OPEN_BANK "bankName",
+a.OPEN_NAME "openName",
+a.OPEN_ACCOUNT "bankNum",
+a.XY_DOC "xy_doc",
+a.JBR_COPY "jbr_copy",
+a.FRDBWTS "frdbwts",
+a.YYZZ_COPY "yyzz_copy"
+FROM 
+L_ORGANIZATION_EXPAND a
+LEFT JOIN LMSP_DATADICT B on (B.DD_KEY = a.JG_TYPE AND B.DD_TYPE='JG_TYPE')
+LEFT JOIN LMSP_DATADICT C on (C.DD_KEY = a.JBRZJ_TYPE AND C.DD_TYPE='zjlx')
+LEFT JOIN LMSP_DATADICT D on (D.DD_KEY = a.FZRZJ_TYPE AND D.DD_TYPE='zjlx')
+LEFT JOIN LMSP_DATADICT E on (E.DD_KEY = a.JG_TYPE AND E.DD_TYPE='JG_FRXZ')
+LEFT JOIN LMSP_DATADICT F on (F.DD_KEY = a.QYXZ AND F.DD_TYPE='QYXZ')
+WHERE 1=1
+<if test="jgid!=null">
+ and a.JGID = #{jgid}
+</if> 
+</select>
+<!-- 渠道调整协议文档复件 -->
+<select id="selectQDTZDoc" resultType="com.linkstec.ib.mobile.dto.M001Dto" parameterType="map">
+SELECT
+A.XY_DOC "xy_doc",
+A.JBR_COPY "jbr_copy",
+A.FRDBWTS "frdbwts",
+A.YYZZ_COPY "yyzz_copy"
+FROM L_ORGANIZATION_EXPAND A
+WHERE 1=1
+<if test="jgid!=null">
+ and A.JGID = #{jgid}
+</if> 
+</select>
+<!--渠道注销审核流程-->
+<select id="selectJGlogout" resultType="com.linkstec.ib.mobile.dto.M007Dto" parameterType="map">
+SELECT 
+A.JGID "jgId",
+A.JG_CODE "jgCode",
+A.JG_NAME "jgName",
+A.FZR "fzr",
+A.DEVP_NAME "devpName",
+A.JG_ONLINE "jgOnline",
+A.INS_FINISH_TIME "insFinishTime",
+A.BZ "beizhu"
+FROM L_ORGANIZATION_EXPAND A
+WHERE 1=1
+<if test="id!=null">
+ and A.JGID = #{id}
+</if> 
+</select>
+<!-- 经纪人注销审核流程 -->
+<select id="selectJjrZhuXiao" resultType="com.linkstec.ib.mobile.dto.M003Dto" parameterType="map">
+SELECT RYID "ryid",
+XM "xm",
+to_char(TO_DATE(to_char(LZRQ),'yyyyMMdd'),'yyyy-MM-dd') "lzrq",
+BZ "bz" 
+FROM T_EHR_JJR_JBXX_LS A 
+WHERE 1=1 
+<if test="ryid!=null">
+ and A.ID = #{ryid}
+</if> 
+</select>
+
+<!-- 经纪人渠道调整审核流程 -->
+<select id="selectJjrOrgChange" resultType="com.linkstec.ib.mobile.dto.M004Dto" parameterType="map">
+SELECT
+A.RYID "ryid",
+B.XM "xm",
+CRM.FN_GET_DICTVALUE('employeeDj',B.CURRENT_PLEVEL) "currentPlevel",
+C.JG_NAME "jgid",
+D.JG_NAME "yjgid",
+A.BZ "bz"
+FROM T_MEMBER_ORG_REL_EXTEND A
+LEFT JOIN T_EHR_JJR_JBXX B ON B.RYID = A.RYID
+LEFT JOIN L_ORGANIZATION_EXPAND C ON A.JGID = C.JG_CODE
+LEFT JOIN L_ORGANIZATION_EXPAND D ON A.YJGID = D.JG_CODE
+WHERE 1=1 
+<if test="id!=null">
+ and A.RYID = #{id}
+</if> 
+</select>
+
+<!-- 经纪人等级调整审核流程 -->
+<select id="selectJjrGradeChange" resultType="com.linkstec.ib.mobile.dto.M005Dto" parameterType="map">
+SELECT
+A.ID,
+A.RYID "ryid",
+A.XM "xm",
+B.DD_VALUE "lsgw",
+C.DD_VALUE "currentPlevel",
+A.FJS "fjs",
+A.BZ "BZ"
+FROM T_EHR_JJR_JBXX_LS A
+LEFT JOIN LMSP_DATADICT B ON(A.LSGW = B.DD_KEY AND B.DD_TYPE='employeeDj')
+LEFT JOIN LMSP_DATADICT C ON(A.CURRENT_PLEVEL = C.DD_KEY AND C.DD_TYPE='employeeDj')
+WHERE 1=1
+<if test="id!=null">
+ and A.ID = #{id}
+</if> 
+</select>
+
+<!-- 经纪人等级调整审核流程 附件-->
+<select id="selectJjrGradeChangeDoc" resultType="com.linkstec.ib.mobile.po.DocInfo" parameterType="map">
+SELECT A.* FROM DOC_INFO A LEFT JOIN T_EHR_JJR_JBXX_LS B ON B.FJS  = (A.DOC_NUM ||',,,'||A.DOC_NAME)
+WHERE 1=1
+<if test="id!=null">
+ and B.INS_ID = #{insId}
+</if> 
+</select>
+
+<!-- 团队新增审核流程 -->
+<select id="selectTeamAdd" resultType="com.linkstec.ib.mobile.dto.M006Dto" parameterType="map">
+SELECT
+A.JYDY_ID "jydy_id",
+A.JYDY_NAME "jydy_name",
+A.JG_NAME "jg_name",
+A.JYDY_CLSJ "jydy_clsj",
+A.FZR_NAME "fzr_name"
+FROM
+T_JYDY_XX A
+WHERE 1=1
+<if test="id!=null">
+ and A.JYDY_ID = #{id}
+</if> 
+</select>
+<!--经纪人开户审核流程 -->
+<select id="selectJjrOpenAccount" resultType="com.linkstec.ib.mobile.dto.M008Dto" parameterType="map">
+SELECT
+A.RYID "ryid",
+A.XM "xm",
+B.DD_VALUE "xb",
+A.BGDH "bgdh",
+C.DD_VALUE "zjlb",
+A.SFZH "sfzh",
+D.ORG_NAME "jgid",
+E.DD_VALUE "currentType",
+F.DD_VALUE "currentPlevel",
+G.DD_VALUE "zbxz",
+H.DD_VALUE "qyht",
+I.DD_VALUE "dlzt",
+J.DD_VALUE "ygztid",
+K.DD_VALUE "hgbz",
+L.DD_VALUE "flowStatus",
+to_char(TO_DATE(A.RZRQ,'yyyyMMdd'),'yyyy-MM-dd') "rzrq",
+to_char(A.HTQDR ,'yyyy-MM-dd') "htqdr",
+to_char(A.HTDQR ,'yyyy-MM-dd') "htdqr",
+A.FJS "fjs"
+FROM T_EHR_JJR_JBXX A
+LEFT JOIN LMSP_DATADICT B ON (B.DD_KEY = A.XB AND B.DD_TYPE='SEX')
+LEFT JOIN LMSP_DATADICT C ON (C.DD_KEY = A.ZJLB AND C.DD_TYPE='zjlx')
+LEFT JOIN LMSP_DATADICT E ON (E.DD_KEY = A.CURRENT_TYPE AND E.DD_TYPE='employeeType')
+LEFT JOIN LMSP_DATADICT F ON (F.DD_KEY = A.CURRENT_PLEVEL AND F.DD_TYPE='employeeDj')
+LEFT JOIN LMSP_DATADICT G ON (G.DD_KEY = A.ZBXZ AND G.DD_TYPE='employeeZbxz')
+LEFT JOIN LMSP_DATADICT H ON (H.DD_KEY = A.QYHT AND H.DD_TYPE='employeeQyht')
+LEFT JOIN LMSP_DATADICT I ON (I.DD_KEY = A.DLZT AND I.DD_TYPE='user_status')
+LEFT JOIN LMSP_DATADICT J ON (J.DD_KEY = A.YGZTID AND J.DD_TYPE='employee_Zgzt')
+LEFT JOIN LMSP_DATADICT K ON (K.DD_KEY = A.HGBZ AND K.DD_TYPE='employeeHgbz')
+LEFT JOIN LMSP_DATADICT L ON (L.DD_KEY = A.FLOW_STATUS AND L.DD_TYPE='INS_STATUS')
+LEFT JOIN L_ORGANIZATION D ON A.JGID =D.ORG_ID
+WHERE 1=1
+<if test="id!=null">
+ and A.RYID = #{id}
+</if>
+</select>
+
+<!--经纪人开户审核流程 不通过时流程信息要在流水中查找 -->
+<select id="selectJjrOpenAccountSearchInLS" resultType="com.linkstec.ib.mobile.dto.M008Dto" parameterType="map">
+	select
+	a.rynum ryid,
+	a.xm xm,
+	crm.fn_get_dictvalue('SEX',a.xb) xb,
+	a.bgdh bgdh,
+	crm.fn_get_dictvalue('zjlx',a.zjlb) zjlb,
+	a.sfzh sfzh,
+	a.jgid jgid,
+	crm.fn_get_dictvalue('employeeType',a.current_type) currentType,
+	crm.fn_get_dictvalue('employeeDj',a.current_plevel) currentPlevel,
+	crm.fn_get_dictvalue('employeeZbxz',a.zbxz) zbxz,
+	crm.fn_get_dictvalue('employeeQyht',a.qyht) qyht,
+	crm.fn_get_dictvalue('user_status',a.dlzt) dlzt,
+	crm.fn_get_dictvalue('employee_Zgzt',a.ygztid) ygztid,
+	crm.fn_get_dictvalue('employeeHgbz',a.hgbz) hgbz,
+	crm.fn_get_dictvalue('INS_STATUS',a.flow_status) flowStatus,
+	to_char( to_date( a.rzrq, 'yyyyMMdd' ), 'yyyy-MM-dd' ) rzrq,
+	to_char( a.htqdr, 'yyyy-MM-dd' ) htqdr,
+	to_char( a.htdqr, 'yyyy-MM-dd' ) htdqr,
+	a.fjs fjs
+	from crm.t_ehr_jjr_jbxx_ls a
+	where 1 = 1
+	<if test=" id != null ">
+		and a.ryid = #{id}
+	</if>
+	<if test=" insId != null ">
+		and a.ins_id = #{insId}
+	</if>
+</select>
+
+<!-- 经纪人开户审核流程附件 -->
+<select id="selectJjrOpenAccountDoc" resultType="com.linkstec.ib.mobile.po.DocInfo" parameterType="map">
+SELECT DOC_ID,DOC_NAME,DOC_NUM FROM DOC_INFO
+WHERE 1=1
+<if test="xy!=null">
+and DOC_ID IN (${xy})
+</if>
+</select>
+<!-- 经纪关系新增审核流程 -->
+
+<select id="findKh" parameterType="map" resultType="map">
+		select a.KHID "KHID",a.KHXM "KHXM"
+		from T_KH_XX a
+		where 1=1
+		<if test="khid!=null">
+			and KHID = #{khid}
+		</if>
+	</select>
+	
+
+<select id="findOrg" parameterType="map" resultType="map">
+		select org_id "orgid",
+		org_name   "orgName"
+		from L_ORGANIZATION
+		where 1=1
+		<if test="orgId!=null">
+		    and org_id = #{orgId}
+		</if>
+	</select>
+	
+
+	<select id="findRY" parameterType="map"
+		resultType="map">
+		SELECT
+		"TO_CHAR"("ryid") "ryid",
+		"membername",
+		"jgid",
+		"orgname"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		ygztid,
+		XM ||
+		'(' || ryid || ')' "membername",
+		JGID
+		"jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		)
+		"orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		/*LT*/
+		A
+		) A
+		WHERE
+		1 = 1 and ygztid in
+		('1','4')
+		<if test="ryid!=null">
+			and "ryid" = #{ryid}
+		</if>
+		
+	</select>
+	
+	<select id="findkhfldm" parameterType="map" resultType="map">
+		select KHFLDM,KHFLMC,SFQY
+		from T_CUST_TYPE
+		where SFQY = '1'
+		<if test="khfldm!=null">
+			and KHFLDM = #{khfldm}
+		</if>
+	</select>
+
+<select id="selectJjGxAdd" resultType="com.linkstec.ib.mobile.dto.M009Dto" parameterType="map">
+SELECT
+B.KHXM "khid",
+C.XM "ryid",
+D.ORG_NAME "orgname",
+E.KHFLMC "khfldm",
+to_char(TO_DATE(A.FPRQ,'yyyyMMdd'),'yyyy-MM-dd') "Fprq",
+A.FJ "fj",
+A.BZ "bz" 
+FROM T_GXGL_GXMX A
+LEFT JOIN T_KH_XX B ON B.KHID = A.KHID
+LEFT JOIN T_EHR_JJR_JBXX C ON C.RYID = A.RYID
+LEFT JOIN L_ORGANIZATION D ON D.ORG_ID = A.ORGID
+LEFT JOIN T_CUST_TYPE E ON E.KHFLDM = A.KHFLDM
+WHERE 1=1
+<if test="id!=null">
+and a.khid=#{id}
+</if>
+</select>
+<!-- 经纪关系新增审核流程附件 -->
+<select id="selectJjGxAddDoc" resultType="com.linkstec.ib.mobile.po.DocInfo" parameterType="map">
+SELECT DOC_ID,DOC_NAME,DOC_NUM FROM DOC_INFO
+WHERE 1=1
+<if test="xy!=null">
+and DOC_ID IN (${xy})
+</if>
+</select>
+
+<!-- 经纪关系转移审核流程 -->
+
+<select id="selecJjgxMove" resultType="map" parameterType="map">
+    select khid,khxm
+    from T_KH_XX
+    where 1=1
+    <if test="khids!=null">
+			AND KHID IN 
+		<foreach collection="khids" open="(" separator="," close=")"
+				item="item">
+				#{item}
+		</foreach>
+		</if>
+</select>
+
+<select id = "selectJJR" resultType="map" parameterType="map">
+    select ryid,xm from T_EHR_JJR_JBXX
+    where 1=1
+    <if test="ryid!=null">
+       and ryid = #{ryid}
+    </if>
+</select>
+
+<!-- 	经济关系取消 -->
+	<select id="selectGxmxByRyidForGxqx" parameterType="map" resultType="map">
+	SELECT
+		 a.KHID "KHID",
+		 a.KHXM "KHXM"
+	FROM T_KH_XX a
+		where 1=1
+		<if test="khids!=null">
+			AND KHID IN 
+		<foreach collection="khids" open="(" separator="," close=")"
+				item="item">
+				#{item}
+		</foreach>
+		</if>
+	</select>
+	
+<!-- 更新客户提成审批流程 -->
+<select id="selectUpdKhTc" resultType="com.linkstec.ib.mobile.dto.M010Dto" parameterType="map">
+SELECT 
+A.CUST_ID,
+B.KHXM "custName",
+C.DD_VALUE "custRel",
+D.XM "jjrName",
+E.MODEL_NAME "modelId"
+FROM T_XCMODEL_USROBJ A
+LEFT JOIN T_KH_XX B ON B.KHID = A.CUST_ID 
+LEFT JOIN LMSP_DATADICT C ON (C.DD_KEY = A.CUST_REL AND C.DD_TYPE='khgx')
+LEFT JOIN T_EHR_JJR_JBXX D ON D.RYID = A.USER_ID
+LEFT JOIN T_XCTCMODEL E ON E.MODEL_ID = A.MODEL_ID
+WHERE 1=1
+<if test="id!=null">
+and A.CUST_ID=#{id} 
+</if>
+</select>
+
+<!-- 经济关系变更审核流程 -->
+<select id="selecJjgxChange" resultType="com.linkstec.ib.mobile.dto.M011Dto" parameterType="map">
+SELECT
+A.KHID,
+A.KHXM "khxm",
+B.ORG_NAME "orgname",
+A.RYXM ||'('||RYID ||')' "ryxm",
+A.BGRYXM ||'('||BGRYID ||')' "bgryxm",
+to_char(TO_DATE(A.FPRQ,'yyyyMMdd'),'yyyy-MM-dd') "jlrq",
+A.BZ "bz",
+A.FJ "fj"
+FROM T_GXGL_GXMX A
+LEFT JOIN L_ORGANIZATION B ON B.ORG_ID = A.ORGID
+WHERE 1=1
+<if test="id!=null">
+and A.KHID =#{id} 
+</if>
+</select>
+<!-- 经济关系变更审核流程附件 -->
+<select id="selecJjgxChangeDoc" resultType="com.linkstec.ib.mobile.po.DocInfo" parameterType="map">
+SELECT DOC_ID,DOC_NAME,DOC_NUM FROM DOC_INFO
+WHERE 1=1
+<if test="xy!=null">
+and DOC_ID IN (${xy})
+</if>
+</select>
+
+<!-- 短信模板建立审核流程 -->
+<select id="selecttmpltInfo" resultType="com.linkstec.ib.mobile.dto.M012Dto" parameterType="map">
+SELECT 
+A.INFO_TMPLT_NAME "InfoTmpltName",
+A.INFO_CONTENTS "infoContents",
+B.DD_VALUE "businessNo",
+C.DD_VALUE "tmpltType"
+FROM
+T_INFO_MSG_TMPLT A
+LEFT JOIN LMSP_DATADICT B ON (B.DD_KEY = A.BUSINESS_NO AND B.DD_TYPE = 'tmplt_bussinessNo')
+LEFT JOIN LMSP_DATADICT C ON (C.DD_KEY = A.TMPLT_TYPE AND C.DD_TYPE = 'tmplt_Type')
+where 1=1
+<if test="id!=null">
+and A.INFO_TMPLT_NAME =#{id} 
+</if>
+</select>
+<!--分成关系审核流程 -->
+<select id="selectDivide" resultType="map" parameterType="map">
+SELECT
+A.KHID "khId",
+A.KHXM "khxm",
+A.FCRYXM ||'('||FCRYID ||')'"fcryxm",
+A.FCBL "fcbl",
+to_char(TO_DATE(A.SXRQ,'yyyyMMdd'),'yyyy-MM-dd')"sxrq",
+B.DD_VALUE "zgxbz",
+A.BZ "bz"
+FROM T_GXGL_FCGX A
+LEFT JOIN LMSP_DATADICT B ON (B.DD_KEY = A.ZGXBZ  AND B.DD_TYPE = 'YESNOT')
+WHERE 1=1
+<if test="id!=null">
+and A.KHID =#{id} 
+</if>
+</select>
+
+
+<select id="selectDocByIds" resultType="com.linkstec.lmspcom.mobile.dto.FileDto" parameterType="map">
+SELECT
+			T_DOC.DOC_NUM fileId,
+			T_DOC.DOC_NAME fileName,
+			to_char(T_DOC.REC_GEN_TIME,'yyyy-MM-dd') createDate,
+			L_MEMBER.MEMBER_NAME creator
+		FROM
+			DOC_INFO  T_DOC
+		LEFT JOIN 
+			L_MEMBER 
+		ON 
+			T_DOC.DOC_OWNER_ID = L_MEMBER.MEMBER_ID
+			WHERE 1=1
+			<if test="xy!=null">
+			    and DOC_ID IN (${xy})
+			</if>
+</select>
+
+<!-- 司务流程 -->
+<select id="selectMassInfo" resultType="com.linkstec.ib.mobile.dto.M016Dto" parameterType="map">
+SELECT
+	a.mass_title "messTitle",
+	a.doc_ids "fj",
+	to_char(a.apply_date,'yyyy-MM-dd hh:mm:ss') "applicationTime",
+	a.ryxm "rafterName",
+	a.mass_bz "contents",
+	a.mass_contents "messContent",
+	CRM.FN_GET_DICTVALUE('MASS_TYPE',a.mass_type) "messType",
+	b.JG_NAME "channel"
+FROM
+	t_mass_manage a left join L_ORGANIZATION_EXPAND b on a.jgid = b.JGID
+WHERE
+	1=1
+	<if test="massId!=null">
+	    and mass_id = #{massId}
+	</if>
+</select>
+</mapper>

@@ -1,0 +1,2146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.linkstec.lmspcom.salary.mapper.SalaryReportMapper">
+
+	<!-- 客户日度交易查询 -->
+	<select id="query_client_dm_jy" parameterType="map" resultType="map">
+		SELECT
+		A .*,A.FARE_COMM_NET*GET_TBJJ() JYJ, b.khxm,c.ywlx_name,d.xm ryxm,d.ryid,d.jydy_name
+		FROM
+		(
+			SELECT * FROM CFS_CLIENT_DM WHERE 1=1
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="jyStartTime!=null">
+				and OC_DATE &gt;= #{jyStartTime} 
+			</if>
+			<if test="jyEndTime!=null">
+				and OC_DATE&lt;=#{jyEndTime} 
+			</if>
+			<if test="khxm!=null">
+				and CLIENT_ID = #{khxm}
+			</if>
+			<if test="isHistory==1">
+				UNION ALL
+				SELECT * FROM CFS_CLIENT_DM_HIS WHERE 1=1
+				<if test="ywlx!=null">
+					and BUSINESS_FLAG IN
+					<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="jyStartTime!=null">
+					and OC_DATE &gt;= #{jyStartTime} 
+				</if>
+				<if test="jyEndTime!=null">
+					and OC_DATE&lt;=#{jyEndTime} 
+				</if>
+				<if test="khxm!=null">
+					and CLIENT_ID = #{khxm}
+				</if>
+			</if>
+		)A 
+		INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX /*LT*/ khxx
+			WHERE 1=1
+			<if test="khxm!=null">
+				and KHID = #{khxm}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			
+			<!-- 如果选择经营单元，则要包含公共客户 -->
+			<if test="jydy!=null">
+				and EXISTS 
+				(
+					select 1 from 
+					(
+						select * from T_GXGL_GXMX A WHERE a.GXLXBH = 1 and EXISTS
+						(
+							SELECT 1 FROM L_MEMBER_JYDY_REL r where r.jydy_id in
+							<foreach collection="jydy" open="(" separator="," close=")" item="item">
+								#{item}
+							</foreach>
+							and a.ryid = r.member_id
+						 )
+						<if test="khfl!=null">
+							and KHFLDM = #{khfl}
+						</if>
+					) b where b.KHID = khxx.KHID 
+				)
+				union
+				select KHID,KHXM from t_kh_xx /*LT*/ khxx where ORGID in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				and not EXISTS
+				(select 1 from T_GXGL_GXMX t where KHXX.KHID = t.KHID and t.gxlxbh=1)
+				<if test="khxm!=null">
+					and KHID = #{khxm}
+				</if>
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			</if>
+		)B ON A.CLIENT_ID = B.KHID INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID LEFT JOIN
+    	(
+    		select t1.ryid,t1.KHID,t1.GXLXBH,t1.KHFLDM,t2.xm,t2.jydy_id,t2.jydy_name from 
+    		(
+				select * from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				<if test="khxm!=null">
+					and KHID = #{khxm}
+				</if>
+			)t1,
+    		(
+    			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX e,
+	    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+	    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+	    		<if test="ryxm!=null">
+					and (e.ryid like '%'|| #{ryxm} ||'%' or e.xm like '%'|| #{ryxm} ||'%')
+				</if>
+				<if test="jydy!=null">
+					and g.jydy_id in
+					<foreach collection="jydy" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+    		)t2 WHERE t1.ryid = t2.ryid
+    		
+    	) d ON A.CLIENT_ID = d.khid
+		where 1=1
+		<if test="ryxm!=null">
+			and (d.ryid like '%'|| #{ryxm} ||'%' or d.xm like '%'|| #{ryxm} ||'%')
+		</if>
+		<if test="gxlxbh!=null">
+			and d.GXLXBH = #{gxlxbh}
+		</if>
+		<if test="khfl!=null">
+			and d.KHFLDM = #{khfl}
+		</if>
+	</select>
+	
+	<!-- 客户日度交易查询汇总 -->
+	<!-- 客户日度交易查询 -->
+	<select id="query_client_dm_jy_hz" parameterType="map" resultType="map">
+		SELECT
+		A .CLIENT_ID,b.khxm,d.xm ryxm,d.ryid,d.jydy_name,
+		SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2,
+		SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE_COMM_NET*GET_TBJJ())JYJ,SUM(FARE_COMM)FARE_COMM
+		FROM
+		(
+			SELECT * FROM CFS_CLIENT_DM WHERE 1=1
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="jyStartTime!=null">
+				and OC_DATE &gt;= #{jyStartTime} 
+			</if>
+			<if test="jyEndTime!=null">
+				and OC_DATE&lt;=#{jyEndTime} 
+			</if>
+			<if test="khxm!=null">
+				and CLIENT_ID = #{khxm}
+			</if>
+			<if test="isHistory==1">
+				UNION
+				SELECT * FROM CFS_CLIENT_DM_HIS WHERE 1=1
+				<if test="ywlx!=null">
+					and BUSINESS_FLAG IN
+					<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="jyStartTime!=null">
+					and OC_DATE &gt;= #{jyStartTime} 
+				</if>
+				<if test="jyEndTime!=null">
+					and OC_DATE&lt;=#{jyEndTime} 
+				</if>
+				<if test="khxm!=null">
+					and CLIENT_ID = #{khxm}
+			</if>
+			</if>
+			
+		)A 
+		INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX /*LT*/ khxx
+			WHERE 1=1
+			<if test="khxm!=null">
+				and KHID = #{khxm}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<!-- 如果选择经营单元，则要包含公共客户 -->
+			<if test="jydy!=null">
+				and EXISTS 
+				(
+					select 1 from 
+					(
+						select * from T_GXGL_GXMX A WHERE a.GXLXBH = 1 and EXISTS
+						(
+							SELECT 1 FROM L_MEMBER_JYDY_REL r where r.jydy_id in
+							<foreach collection="jydy" open="(" separator="," close=")" item="item">
+								#{item}
+							</foreach>
+							and a.ryid = r.member_id
+						 )
+						<if test="khfl!=null">
+							and KHFLDM = #{khfl}
+						</if>
+					) b where b.KHID = khxx.KHID 
+				)
+				union
+				select KHID,KHXM from t_kh_xx khxx /*LT*/ where ORGID in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				and not EXISTS
+				(select 1 from T_GXGL_GXMX t where KHXX.KHID = t.KHID and t.gxlxbh=1)
+				<if test="khxm!=null">
+					and KHID = #{khxm}
+				</if>
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			</if>
+		)B ON A.CLIENT_ID = B.KHID INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID LEFT JOIN
+    	(
+    		select t1.ryid,t1.KHID,t1.GXLXBH,t1.KHFLDM,t2.xm,t2.jydy_id,t2.jydy_name from 
+    		(
+				select * from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				<if test="khxm!=null">
+					and KHID = #{khxm}
+				</if>
+			)t1,
+    		(
+    			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX e,
+	    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+	    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+	    		<if test="ryxm!=null">
+					and (e.ryid like '%'|| #{ryxm} ||'%' or e.xm like '%'|| #{ryxm} ||'%')
+				</if>
+				<if test="jydy!=null">
+					and g.jydy_id in
+					<foreach collection="jydy" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+    		)t2 WHERE t1.ryid = t2.ryid
+    		
+    	) d ON A.CLIENT_ID = d.khid
+		where 1=1
+		<if test="ryxm!=null">
+			and (d.ryid like '%'|| #{ryxm} ||'%' or d.xm like '%'|| #{ryxm} ||'%')
+		</if>
+		<if test="gxlxbh!=null">
+			and d.GXLXBH = #{gxlxbh}
+		</if>
+		<if test="khfl!=null">
+			and d.KHFLDM = #{khfl}
+		</if>
+		GROUP BY A .CLIENT_ID,b.khxm,d.xm,d.ryid,d.jydy_name
+	</select>
+	
+	<!-- 客户日度资产查询 -->
+	<select id="query_client_dm_zc" parameterType="map" resultType="map">
+		SELECT
+		A .*, b.khxm,d.xm ryxm,d.ryid,d.jydy_name
+		FROM
+		(
+			<if test="isHistory==0">
+				SELECT * FROM CFS_CLIENT_ASSET_DM WHERE 1=1
+				<if test="khid!=null">
+					and CLIENT_ID = #{khid}
+				</if>
+				<if test="rq!=null">
+					and OC_DATE = #{rq} 
+				</if>
+			</if>
+			<if test="isHistory==1">
+				SELECT * FROM CFS_CLIENT_ASSET_DM_HIS WHERE 1=1
+				<if test="khid!=null">
+					and CLIENT_ID = #{khid}
+				</if>
+				<if test="rq!=null">
+					and OC_DATE = #{rq} 
+				</if>
+			</if>
+		)A INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX /*LT*/ khxx
+			WHERE 1=1
+			<if test="khid!=null">
+				and KHID = #{khid}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<!-- 如果选择经营单元，则要包含公共客户 -->
+			<if test="jydy!=null">
+				and EXISTS 
+				(
+					select 1 from 
+					(
+						select * from T_GXGL_GXMX A WHERE a.GXLXBH = 1 and EXISTS
+						(
+							SELECT 1 FROM L_MEMBER_JYDY_REL r where r.jydy_id in
+							<foreach collection="jydy" open="(" separator="," close=")" item="item">
+								#{item}
+							</foreach>
+							and a.ryid = r.member_id
+						 )
+						<if test="khfl!=null">
+							and KHFLDM = #{khfl}
+						</if>
+					) b where b.KHID = khxx.KHID 
+				)
+				union
+				select KHID,KHXM from t_kh_xx khxx /*LT*/ where ORGID in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				and not EXISTS
+				(select 1 from T_GXGL_GXMX t where KHXX.KHID = t.KHID and t.gxlxbh=1)
+				<if test="khid!=null">
+					and KHID = #{khid}
+				</if>
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			</if>
+			
+		)B ON A .CLIENT_ID = B.KHID 
+		LEFT JOIN
+    	(
+    		select t1.ryid,t1.KHID,t1.GXLXBH,t1.KHFLDM,t2.xm,t2.jydy_id,t2.jydy_name from 
+    		(
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+				<if test="gxlx!=null">
+					and GXLXBH = #{gxlx}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				union all
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+				<if test="gxlx!=null">
+					and GXLXBH = #{gxlx}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t1,
+    		(
+    			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX e,
+	    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+	    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+	    		<if test="ryid!=null">
+					and (e.ryid like '%'||#{ryid}||'%' or e.xm like '%'||#{ryid}||'%')
+				</if>
+				<if test="jydy!=null">
+					and g.jydy_id in
+					<foreach collection="jydy" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+    		)t2 WHERE t1.ryid = t2.ryid
+    	) d ON A.CLIENT_ID = d.khid 
+		where 1=1
+		<if test="ryid!=null">
+			and (d.ryid like '%'|| #{ryid} ||'%' or d.xm like '%'|| #{ryid} ||'%')
+		</if>
+		<if test="gxlxbh!=null">
+			and d.GXLXBH = #{gxlxbh}
+		</if>
+		<if test="khfl!=null">
+			and d.KHFLDM = #{khfl}
+		</if>
+		
+	</select>
+	
+	
+	<!-- 客户月度交易查询 -->
+	<select id="query_client_mmjy" parameterType="map" resultType="map">
+		SELECT
+		A .*, b.khxm,c.ywlx_name,d.xm ryxm,d.ryid,d.jydy_name
+		FROM
+		(
+			SELECT * FROM CFS_CLIENT_MM WHERE 1=1
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG in
+				<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			<if test="khid!=null">
+				and CLIENT_ID =#{khid}
+			</if>
+			<if test="isHistory==1">
+				UNION
+				SELECT * FROM CFS_CLIENT_MM_HIS WHERE 1=1
+				<if test="ywlx!=null">
+					and BUSINESS_FLAG in
+					<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ksyf!=null">
+					and OC_MONTH &gt;= #{ksyf} 
+				</if>
+				<if test="jsyf!=null">
+					and OC_MONTH&lt;=#{jsyf} 
+				</if>
+				<if test="khid!=null">
+					and CLIENT_ID =#{khid}
+				</if>
+			</if>
+
+		)A INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX /*LT*/ khxx
+			WHERE 1=1
+			<if test="khid!=null">
+				and KHID =#{khid}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<!-- 如果选择经营单元，则要包含公共客户 -->
+			<if test="jydy!=null">
+				and EXISTS 
+				(
+					select 1 from 
+					(
+						select * from T_GXGL_GXMX A WHERE a.GXLXBH = 1 and EXISTS
+						(
+							SELECT 1 FROM L_MEMBER_JYDY_REL r where r.jydy_id in
+							<foreach collection="jydy" open="(" separator="," close=")" item="item">
+								#{item}
+							</foreach>
+							and a.ryid = r.member_id
+						 )
+						<if test="khfl!=null">
+							and KHFLDM = #{khfl}
+						</if>
+					) b where b.KHID = khxx.KHID 
+				)
+				union
+				select KHID,KHXM from t_kh_xx /*LT*/ khxx where ORGID in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				and not EXISTS
+				(select 1 from T_GXGL_GXMX t where KHXX.KHID = t.KHID and t.gxlxbh=1)
+				<if test="khid!=null">
+					and KHID = #{khid}
+				</if>
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			</if>
+			
+		)B ON A.CLIENT_ID = B.KHID INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		LEFT JOIN
+    	(
+    		 select t1.ryid,t1.KHID,t1.KHFLDM,t1.GXLXBH,t2.xm,t2.jydy_id,t2.jydy_name from 
+    		(
+				select * from T_GXGL_GXMX where  shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khid!=null">
+					and KHID =#{khid}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t1,
+    		(
+    			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX e,
+	    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+	    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+	    		<if test="ryid!=null">
+					and (e.ryid like '%'||#{ryid}||'%' or e.xm like '%'||#{ryid}||'%')
+				</if>
+				<if test="jydy!=null">
+					and g.jydy_id in
+					<foreach collection="jydy" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+    		)t2 WHERE t1.ryid = t2.ryid
+    	) d ON A.CLIENT_ID = d.khid
+		where 1=1
+		<if test="ryid!=null">
+			and (d.ryid like '%'||#{ryid}||'%' or d.xm like '%'||#{ryid}||'%')
+		</if>
+		<if test="khfl!=null">
+			and d.KHFLDM = #{khfl}
+		</if>
+		<if test="gxlxbh!=null">
+    		and d.GXLXBH= #{gxlxbh}
+    	</if>
+	</select>
+	
+	<!-- 客户月度交易汇总查询 -->
+	<!-- 客户月度交易查询 -->
+	<select id="query_client_mmjy_hz" parameterType="map" resultType="map">
+		SELECT
+		A .CLIENT_ID,b.khxm,d.xm ryxm,d.ryid,d.jydy_name,
+		SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2,
+		SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE_COMM)FARE_COMM
+		FROM
+		(
+			SELECT * FROM CFS_CLIENT_MM WHERE 1=1
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG in
+				<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			<if test="khid!=null">
+				and CLIENT_ID =#{khid}
+			</if>
+			<if test="isHistory==1">
+				UNION
+				SELECT * FROM CFS_CLIENT_MM_HIS WHERE 1=1
+				<if test="ywlx!=null">
+					and BUSINESS_FLAG in
+					<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ksyf!=null">
+					and OC_MONTH &gt;= #{ksyf} 
+				</if>
+				<if test="jsyf!=null">
+					and OC_MONTH&lt;=#{jsyf} 
+				</if>
+				<if test="khid!=null">
+					and CLIENT_ID =#{khid}
+				</if>
+			</if>
+		)A INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX /*LT*/ khxx
+			WHERE 1=1
+			<if test="khid!=null">
+				and KHID =#{khid}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<!-- 如果选择经营单元，则要包含公共客户 -->
+			<if test="jydy!=null">
+				and EXISTS 
+				(
+					select 1 from 
+					(
+						select * from T_GXGL_GXMX A WHERE a.GXLXBH = 1 and EXISTS
+						(
+							SELECT 1 FROM L_MEMBER_JYDY_REL r where r.jydy_id in
+							<foreach collection="jydy" open="(" separator="," close=")" item="item">
+								#{item}
+							</foreach>
+							and a.ryid = r.member_id
+						 )
+						<if test="khfl!=null">
+							and KHFLDM = #{khfl}
+						</if>
+					) b where b.KHID = khxx.KHID 
+				)
+				union
+				select KHID,KHXM from t_kh_xx /*LT*/ khxx where ORGID in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				and not EXISTS
+				(select 1 from T_GXGL_GXMX t where KHXX.KHID = t.KHID and t.gxlxbh=1)
+				<if test="khid!=null">
+					and KHID = #{khid}
+				</if>
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			</if>
+		)B ON A.CLIENT_ID = B.KHID INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		LEFT JOIN
+    	(
+    		 select t1.ryid,t1.KHID,t2.xm,t1.KHFLDM,t1.GXLXBH,t2.jydy_id,t2.jydy_name from 
+    		(
+				select * from T_GXGL_GXMX where  shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khid!=null">
+					and KHID =#{khid}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t1,
+    		(
+    			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX e,
+	    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+	    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+	    		<if test="ryid!=null">
+					and (e.ryid like '%'||#{ryid}||'%' or e.xm like '%'||#{ryid}||'%')
+				</if>
+				<if test="jydy!=null">
+					and g.jydy_id in
+					<foreach collection="jydy" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+    		)t2 WHERE t1.ryid = t2.ryid
+    	) d ON A.CLIENT_ID = d.khid
+		where 1=1
+		<if test="ryid!=null">
+			and (d.ryid like '%'||#{ryid}||'%' or d.xm like '%'||#{ryid}||'%')
+		</if>
+		<if test="khfl!=null">
+			and d.KHFLDM = #{khfl}
+		</if>
+		<if test="gxlxbh!=null">
+    		and d.GXLXBH= #{gxlxbh}
+    	</if>
+		GROUP BY A.CLIENT_ID,B.KHXM,d.xm,d.ryid,d.jydy_name
+	</select>
+	
+	
+	<!-- 客户人员月度明细资产查询 -->
+	<select id="query_member_mmzc" parameterType="map" resultType="map">
+		SELECT
+		SUM(ZZC_PT)ZZC_PT,SUM(SZ_PTZQ)SZ_PTZQ,SUM(SZ_KJ)SZ_KJ,SUM(ZZC_XJ)ZZC_XJ,SUM(ZZC_LR)ZZC_LR,SUM(LRFZ)LRFZ,
+		SUM(LR_JZC)LR_JZC,SUM(ZZC_GGQQ)ZZC_GGQQ,SUM(ZZC_ALL)ZZC_ALL,SUM(ZZC_ALL_J)ZZC_ALL_J,SUM(ZZC_ALL2)ZZC_ALL2,
+		SUM(ZZC_ALL_J2)ZZC_ALL_J2,SUM(ZZC_ALL_LJ)ZZC_ALL_LJ,SUM(ZZC_ALL_J_LJ)ZZC_ALL_J_LJ,SUM(FUND_IN)FUND_IN,SUM(FUND_OUT)FUND_OUT,
+		SUM(STOCK_IN)STOCK_IN,SUM(STOCK_OUT)STOCK_OUT,A.RYID,A.GXLXBH,A.OC_MONTH,E.XM RYXM,A.JYDY_ID,D.JYDY_NAME
+		FROM
+		(
+			SELECT T1.* FROM RES_SALARY_GXMX_ZC T1
+			INNER JOIN 
+			(
+				SELECT KHID,KHXM FROM T_KH_XX WHERE 1=1
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			)T2 ON T1.KHID = T2.KHID 
+			INNER JOIN 
+			(
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				union all
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t5 on T1.KHID = T5.KHID and t1.ryid = t5.ryid
+			
+			WHERE 1=1
+			<if test="gxlxbh!=null">
+				and T1.GXLXBH= #{gxlxbh}
+			</if>
+			<if test="ksyf!=null">
+				and T1.OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and T1.OC_MONTH&lt;=#{jsyf} 
+			</if>
+			
+			UNION
+			SELECT T3.* FROM RES_SALARY_GXMX_ZC_HIS T3
+			INNER JOIN 
+			(
+				SELECT KHID,KHXM FROM T_KH_XX
+				WHERE 1=1
+				<if test="khrqStartTIme!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+				</if>
+				<if test="khrqEndTime!=null">
+					and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+				</if>
+			)T4 ON T3.KHID = T4.KHID 
+			INNER JOIN 
+			(
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				union all
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t6 on T3.KHID = T6.KHID and t3.ryid = t6.ryid
+			WHERE 1=1
+			<if test="gxlxbh!=null">
+				and T3.GXLXBH= #{gxlxbh}
+			</if>
+			<if test="ksyf!=null">
+				and T3.OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and T3.OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		INNER JOIN
+		(
+			SELECT RYID,XM FROM T_EHR_JJR_JBXX /*LT*/ WHERE 1=1
+			<if test="ryid!=null">
+				and ryid = #{ryid}
+			</if>
+		)E ON A.RYID = E.RYID
+		where 1=1
+		GROUP BY A.RYID,A.GXLXBH,A.OC_MONTH,E.XM,A.JYDY_ID,D.JYDY_NAME
+	</select>
+	
+	
+	<!-- 客户人员月度明细交易查询 -->
+	<select id="query_member_mmjy" parameterType="map" resultType="map">
+		SELECT
+		A .*, C.YWLX_NAME,E.XM RYXM,D.JYDY_NAME
+		FROM
+		(
+			SELECT RYID,JYDY_ID,OC_MONTH,GXLXBH,BUSINESS_FLAG,SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(FARE_COMM_NET)FARE_COMM_NET,
+			SUM(JYJ)JYJ,SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM2)FARE_COMM2,SUM(FARE)FARE FROM (
+				SELECT T1.* FROM RES_SALARY_GXMX_M T1
+				INNER JOIN 
+				(
+					SELECT KHID,KHXM FROM T_KH_XX WHERE 1=1
+					<if test="khrqStartTIme!=null">
+						and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+					</if>
+					<if test="khrqEndTime!=null">
+						and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+					</if>
+				)T2 ON T1.KHID = T2.KHID 
+				INNER JOIN 
+				(
+					select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+					<if test="gxlxbh!=null">
+						and GXLXBH = #{gxlxbh}
+					</if>
+					<if test="khfl!=null">
+						and KHFLDM = #{khfl}
+					</if>
+					union all
+					select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+					<if test="gxlxbh!=null">
+						and GXLXBH = #{gxlxbh}
+					</if>
+					<if test="khfl!=null">
+						and KHFLDM = #{khfl}
+					</if>
+				)t5 on T1.KHID = T5.KHID and t1.ryid = t5.ryid
+				WHERE 1=1
+				<if test="gxlxbh!=null">
+					and T1.GXLXBH= #{gxlxbh}
+				</if>
+				<if test="ywlx!=null">
+					and T1.BUSINESS_FLAG in
+					<foreach collection="ywlx" open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ksyf!=null">
+					and T1.OC_MONTH &gt;= #{ksyf} 
+				</if>
+				<if test="jsyf!=null">
+					and T1.OC_MONTH&lt;=#{jsyf} 
+				</if>
+				
+				UNION
+				SELECT T3.* FROM RES_SALARY_GXMX_M_HIS T3
+				INNER JOIN 
+				(
+					SELECT KHID,KHXM FROM T_KH_XX WHERE 1=1
+					<if test="khrqStartTIme!=null">
+						and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+					</if>
+					<if test="khrqEndTime!=null">
+						and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+					</if>
+				)T4 ON T3.KHID = T4.KHID 
+				INNER JOIN 
+				(
+					select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+					<if test="gxlxbh!=null">
+						and GXLXBH = #{gxlxbh}
+					</if>
+					<if test="khfl!=null">
+						and KHFLDM = #{khfl}
+					</if>
+					union all
+					select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+					<if test="gxlxbh!=null">
+						and GXLXBH = #{gxlxbh}
+					</if>
+					<if test="khfl!=null">
+						and KHFLDM = #{khfl}
+					</if>
+				)t6 on T3.KHID = T6.KHID and t3.ryid = t6.ryid
+				WHERE 1=1
+				<if test="gxlxbh!=null">
+					and T3.GXLXBH= #{gxlxbh}
+				</if>
+				<if test="ywlx!=null">
+					and T3.BUSINESS_FLAG in
+					<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ksyf!=null">
+					and T3.OC_MONTH &gt;= #{ksyf} 
+				</if>
+				<if test="jsyf!=null">
+					and T3.OC_MONTH&lt;=#{jsyf} 
+				</if>
+			) GROUP BY RYID,OC_MONTH,GXLXBH,BUSINESS_FLAG,JYDY_ID
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		INNER JOIN
+		(
+			SELECT RYID,XM FROM T_EHR_JJR_JBXX /*LT*/ WHERE 1=1
+			<if test="ryid!=null">
+				and (ryid like '%'||#{ryid}||'%' or xm like '%'||#{ryid}||'%')
+			</if>
+		)E ON A.RYID = E.RYID
+		
+		where 1=1
+		
+	</select>
+	
+	<!-- 汇总数据 -->
+	<!-- 客户人员月度明细交易查询 -->
+	<select id="query_member_mmjy_hz" parameterType="map" resultType="map">
+	SELECT RYID,RYXM,JYDY_NAME,SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(FARE_COMM_NET)FARE_COMM_NET,
+	SUM(JYJ)JYJ,SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM2)FARE_COMM2,SUM(FARE)FARE FROM (
+		SELECT
+		A .*, b.KHXM KHXM1,C.YWLX_NAME,E.XM RYXM,D.JYDY_NAME
+		FROM
+		(
+			SELECT t1.* FROM RES_SALARY_GXMX_M t1
+			INNER JOIN 
+			(
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				union all
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t2 on T1.KHID = T2.KHID and t1.ryid = t2.ryid
+			WHERE 1=1
+			<if test="gxlxbh!=null">
+				and t1.GXLXBH= #{gxlxbh}
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			
+			UNION
+			SELECT t3.* FROM RES_SALARY_GXMX_M_HIS t3
+			INNER JOIN 
+			(
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+				union all
+				select KHID,RYID,GXLXBH,KHFLDM from T_GXGL_GXMX_HIS where shzt=2
+				<if test="gxlxbh!=null">
+					and GXLXBH = #{gxlxbh}
+				</if>
+				<if test="khfl!=null">
+					and KHFLDM = #{khfl}
+				</if>
+			)t4 on T3.KHID = T4.KHID and t3.ryid = t4.ryid
+			WHERE 1=1
+			<if test="gxlxbh!=null">
+				and t3.GXLXBH= #{gxlxbh}
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A INNER JOIN 
+		(
+			SELECT KHID,KHXM FROM T_KH_XX
+			WHERE 1=1
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+		)B ON A.KHID = B.KHID 
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		INNER JOIN
+		(
+			SELECT RYID,XM FROM T_EHR_JJR_JBXX /*LT*/ WHERE 1=1
+			<if test="ryid!=null">
+				and (ryid like '%'||#{ryid}||'%' or xm like '%'||#{ryid}||'%')
+			</if>
+		)E ON A.RYID = E.RYID
+		
+		where 1=1
+	) GROUP BY RYID,RYXM,JYDY_NAME
+	</select>
+	
+	
+	<!-- 营业部月度数据查询 -->
+	<select id="query_org_ydjy" parameterType="map" resultType="map">
+		SELECT
+		A .*,nvl(A.fare_comm_net,0)*get_tbjj() as JYJ ,C.YWLX_NAME,D.ORG_NAME
+		FROM
+		(
+			SELECT * FROM CFS_ORG_MM WHERE 1=1
+			<if test="branchNo!=null">
+				and BRANCH_NO in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			
+			UNION
+			SELECT * FROM CFS_ORG_MM_HIS WHERE 1=1
+			<if test="branchNo!=null">
+				and BRANCH_NO in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT ORG_ID,ORG_NAME FROM L_ORGANIZATION /*LT*/ WHERE 1=1
+			<if test="branchNo!=null">
+				AND ORG_ID in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.BRANCH_NO = D.ORG_ID
+		
+		where 1=1
+		
+	</select>
+	
+	<!-- 营业部月度汇总数据查询 -->
+	<!-- 营业部月度数据查询 -->
+	<select id="query_org_ydjy_hz" parameterType="map" resultType="map">
+		SELECT
+		A.BRANCH_NO,D.ORG_NAME,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(DEAL_BALANCE)DEAL_BALANCE,
+		SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2,
+		SUM(nvl(A.fare_comm_net,0)*get_tbjj())JYJ
+		FROM
+		(
+			SELECT * FROM CFS_ORG_MM WHERE 1=1
+			<if test="branchNo!=null">
+				and BRANCH_NO in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			
+			UNION
+			SELECT * FROM CFS_ORG_MM_HIS WHERE 1=1
+			<if test="branchNo!=null">
+				and BRANCH_NO in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT ORG_ID,ORG_NAME FROM L_ORGANIZATION /*LT*/ WHERE 1=1
+			<if test="branchNo!=null">
+				AND ORG_ID in
+				<foreach collection="branchNo"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.BRANCH_NO = D.ORG_ID
+		where 1=1
+		GROUP BY A.BRANCH_NO,D.ORG_NAME
+	</select>
+	
+	
+	<!-- 营业部年度数据查询 -->
+	<select id="query_org_ndjy" parameterType="map" resultType="map">
+		SELECT
+		A .*,A.FARE_COMM_NET*GET_TBJJ() JYJ,C.YWLX_NAME,D.ORG_NAME
+		FROM
+		(
+			SELECT * FROM CFS_ORG_Y WHERE 1=1
+			<if test="orgs!=null">
+				and BRANCH_NO in
+				<foreach collection="orgs"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT ORG_ID,ORG_NAME FROM L_ORGANIZATION /*LT*/ WHERE 1=1
+			<if test="orgs!=null">
+				AND ORG_ID in
+				<foreach collection="orgs"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.BRANCH_NO = D.ORG_ID
+		
+		where 1=1 order by A.BRANCH_NO asc,A.BUSINESS_FLAG asc
+		
+	</select>
+	
+	<!-- 营业部年度汇总数据查询 -->
+	<!-- 营业部年度数据查询 -->
+	<select id="query_org_ndjy_hz" parameterType="map" resultType="map">
+		SELECT
+		A.BRANCH_NO,D.ORG_NAME,SUM(DEAL_AMOUNT)DEAL_AMOUNT,SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(FARE_COMM_NET*GET_TBJJ())JYJ,
+		SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2
+		FROM
+		(
+			SELECT * FROM CFS_ORG_Y WHERE 1=1
+			<if test="orgs!=null">
+				AND BRANCH_NO in
+				<foreach collection="orgs"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id in
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT ORG_ID,ORG_NAME FROM L_ORGANIZATION /*LT*/ WHERE 1=1
+			<if test="orgs!=null">
+				AND ORG_ID in
+				<foreach collection="orgs"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.BRANCH_NO = D.ORG_ID
+		where 1=1
+		GROUP BY A.BRANCH_NO,D.ORG_NAME
+		order by A.BRANCH_NO asc
+	</select>
+	
+	<!-- 经营单元月度数据查询 -->
+	<select id="query_jydy_ydjy" parameterType="map" resultType="map">
+		SELECT
+		A .*,C.YWLX_NAME,D.JYDY_NAME
+		FROM
+		(
+			SELECT * FROM CFS_JYDY_MM WHERE 1=1
+			<if test="jydy!=null">
+				and JYDY_ID in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX /*LT*/ WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		where 1=1 order by A.JYDY_ID asc,A.BUSINESS_FLAG asc
+		
+	</select>
+	
+	<!-- 经营单元月度汇总数据 -->
+	<!-- 经营单元月度数据查询 -->
+	<select id="query_jydy_ydjy_hz" parameterType="map" resultType="map">
+		SELECT
+		A.JYDY_ID,D.JYDY_NAME,SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,
+		SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2,
+		SUM(JYJ)JYJ
+		FROM
+		(
+			SELECT * FROM CFS_JYDY_MM WHERE 1=1
+			<if test="jydy!=null">
+				and JYDY_ID in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX /*LT*/ WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		where 1=1
+		GROUP BY A.JYDY_ID,D.JYDY_NAME
+		order by A.JYDY_ID asc
+	</select>
+	
+	<!-- 经营单元年度数据查询 -->
+	<select id="query_jydy_ndjy" parameterType="map" resultType="map">
+		SELECT
+		A .*,C.YWLX_NAME,D.JYDY_NAME
+		FROM
+		(
+			SELECT * FROM CFS_JYDY_Y WHERE 1=1
+			<if test="jydy!=null">
+				and JYDY_ID in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksnd!=null">
+				and OC_YEAR &gt;= #{ksnd} 
+			</if>
+			<if test="jsnd!=null">
+				and OC_YEAR&lt;=#{jsnd} 
+			</if>
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX /*LT*/ WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		
+		where 1=1
+		order by A.JYDY_ID asc,A.BUSINESS_FLAG asc
+		
+	</select>
+	
+	<!-- 经营单元汇总数据 -->
+	<!-- 经营单元年度数据查询 -->
+	<select id="query_jydy_ndjy_hz" parameterType="map" resultType="map">
+		SELECT
+		A.JYDY_ID,D.JYDY_NAME,SUM(DEAL_BALANCE)DEAL_BALANCE,SUM(DEAL_AMOUNT)DEAL_AMOUNT,
+		SUM(FARE_COMM)FARE_COMM,SUM(FARE_COMM_NET)FARE_COMM_NET,SUM(FARE)FARE,SUM(FARE_COMM2)FARE_COMM2,
+		SUM(JYJ)JYJ
+		FROM
+		(
+			SELECT * FROM CFS_JYDY_Y WHERE 1=1
+			<if test="jydy!=null">
+				and JYDY_ID in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ywlx!=null">
+				and BUSINESS_FLAG IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="ksnd!=null">
+				and OC_YEAR &gt;= #{ksnd} 
+			</if>
+			<if test="jsnd!=null">
+				and OC_YEAR&lt;=#{jsnd} 
+			</if>
+			
+		)A
+		INNER JOIN
+		(
+			SELECT ywlx_id,ywlx_name FROM PAR_SET_YWLX_DEF
+			WHERE 1=1
+			<if test="ywlx!=null">
+				and ywlx_id IN
+				<foreach collection="ywlx"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		) C ON A.BUSINESS_FLAG = C.YWLX_ID 
+		INNER JOIN
+		(
+			SELECT JYDY_ID,JYDY_NAME FROM T_JYDY_XX /*LT*/ WHERE 1=1
+			<if test="jydy!=null">
+				AND jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		)D ON A.JYDY_ID = D.JYDY_ID
+		where 1=1
+		GROUP BY A.JYDY_ID,D.JYDY_NAME
+		order by A.JYDY_ID asc
+	</select>
+	
+	<!-- 投顾签约查询 -->
+	<select id="query_tgqy" parameterType="map" resultType="map">
+		SELECT
+		A .*,c.qyryid,c.qyryxm,c.jsryid,c.jsryxm,c.qyrq,B.JYDY_NAME,B.XM RYXM,C.KHXM KHXM1
+		FROM
+		(
+			SELECT * FROM RES_SALARY_TGQY WHERE GXLXBH= 4
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			UNION
+			SELECT * FROM RES_SALARY_TGQY_HIS WHERE GXLXBH= 4
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A INNER JOIN
+		(
+   			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX /*LT*/ e,
+    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+    		<if test="qyr!=null">
+				and (e.ryid like '%'|| #{qyr} ||'%' or e.xm like '%'|| #{qyr} ||'%')
+			</if>
+			<if test="jydy!=null">
+				and g.jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+    	)B ON A.RYID = B.RYID
+		INNER JOIN 
+		(
+			select khid,khxm,qyryid,qyryxm,jsryid,jsryxm,qyrq FROM T_GXGL_TGQY where shzt = 2
+			<if test="qyr!=null">
+				and (qyryid like '%'||#{qyr}||'%' or qyryxm like '%'||#{qyr}||'%')
+			</if>
+			UNION
+			select khid,khxm,qyryid,qyryxm,jsryid,jsryxm,qyrq from T_GXGL_TGQY_HIS where shzt = 2
+			<if test="qyr!=null">
+				and (qyryid like '%'||#{qyr}||'%' or qyryxm like '%'||#{qyr}||'%')
+			</if>
+		)C ON A.KHID = C.KHID and a.ryid = c.qyryid
+		where 1=1
+		order by c.qyryid asc
+		
+	</select>
+	
+	<!-- 投顾签约汇总查询 -->
+	<select id="query_tgqy_hz" parameterType="map" resultType="map">
+		SELECT
+		SUM(ZZYJ_PT) ZZYJ_PT,
+		SUM(ZZYJ_LR) ZZYJ_LR,
+		SUM(ZZYJ) ZZYJ,
+		SUM(YJ_PT) YJ_PT,
+		SUM(YJ_LR) YJ_LR,
+		SUM(ZZYJ_YCX) ZZYJ_YCX,
+		c.qyryid,c.qyryxm
+		FROM
+		(
+			SELECT * FROM RES_SALARY_TGQY WHERE GXLXBH= 4
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+			UNION
+			SELECT * FROM RES_SALARY_TGQY_HIS WHERE GXLXBH= 4
+			<if test="ksyf!=null">
+				and OC_MONTH &gt;= #{ksyf} 
+			</if>
+			<if test="jsyf!=null">
+				and OC_MONTH&lt;=#{jsyf} 
+			</if>
+		)A INNER JOIN
+		(
+   			SELECT e.RYID,e.XM,g.jydy_id,g.JYDY_NAME FROM T_EHR_JJR_JBXX /*LT*/ e,
+    		L_MEMBER_JYDY_REL f,T_JYDY_XX g 
+    		where f.member_id = e.ryid and f.jydy_id = g.jydy_id
+    		<if test="qyr!=null">
+				and (e.ryid like '%'|| #{qyr} ||'%' or e.xm like '%'|| #{qyr} ||'%')
+			</if>
+			<if test="jydy!=null">
+				and g.jydy_id in
+				<foreach collection="jydy"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+    	)B ON A.RYID = B.RYID
+		INNER JOIN 
+		(
+			select khid,khxm,qyryid,qyryxm,jsryid,jsryxm,qyrq FROM T_GXGL_TGQY where shzt = 2
+			<if test="qyr!=null">
+				and (qyryid like '%'||#{qyr}||'%' or qyryxm like '%'||#{qyr}||'%')
+			</if>
+			UNION
+			select khid,khxm,qyryid,qyryxm,jsryid,jsryxm,qyrq from T_GXGL_TGQY_HIS where shzt = 2
+			<if test="qyr!=null">
+				and (qyryid like '%'||#{qyr}||'%' or qyryxm like '%'||#{qyr}||'%')
+			</if>
+		)C ON A.KHID = C.KHID and a.ryid = c.qyryid
+		where 1=1
+		group by c.qyryid,c.qyryxm
+		order by c.qyryid asc
+	</select>
+	
+	<!-- 提成明细报表 -->
+	<select id="getFxbb" parameterType="map" resultType="map">
+		SELECT a.*,b.xm,b.current_type,b.current_plevel FROM
+		(
+			SELECT * FROM L_SALARY_RESULT_${yf} WHERE super_id IN(
+				SELECT id FROM L_SALARY_RESULT_${yf} WHERE ITEM_TYPE = 2 and ITEM_STEP =1 and SUPER_ID is null
+			) AND item_type=6 AND item_step=3
+		)a 
+		LEFT JOIN T_EHR_JJR_JBXX b ON target_id = ryid
+		LEFT JOIN L_MEMBER_JYDY_REL C ON a.target_id = c.member_id and c.delete_flag = 1 and ins_status = 2
+		WHERE 1=1
+		<if test="ryid!=null">
+			and (b.ryid like '%'||#{ryid}||'%' or b.xm like '%'||#{ryid}||'%') 
+		</if>
+		<if test="gw!=null">
+			and b.current_type in
+			<foreach collection="gw" open="(" separator="," close=")" item="item">
+				#{item}
+			</foreach>
+		</if>
+		<if test="jydy!=null">
+			and c.jydy in
+			<foreach collection="jydy" open="(" separator="," close=")" item="item">
+				#{item}
+			</foreach>
+		</if>
+		order by target_id asc,item_name asc
+	</select>
+	
+	
+	<select id="getHdsjbb" parameterType="map" resultType="map">
+		select t.*,a.dd_value gw,b.dd_value zj,t1.gwgz,t2.bzzjgz,t3.score,t4.zjgz,t5.pm,t6.ydjx,t7.jtjt,t8.wcjt,t9.gwjt
+		,t10.clptcjje,t11.clptyj,t12.clptjyj,t13.clxyptcjje,t14.clxypyj,t15.clxyptjyj,t16.jycb,t17.clkhtc,t18.dhtc 
+		from(
+		select a.member_id ryid,c.xm,b.JYDY_NAME,c.rygj,c.ryzj,CURRENT_TYPE,CURRENT_PLEVEL from L_MEMBER_JYDY_REL a,T_JYDY_XX b,t_ehr_jjr_jbxx c 
+		where a.jydy_id=b.jydy_id and a.member_id= c.ryid
+		<if test="jydy!=null">
+			and a.jydy_id = #{jydy}
+		</if>
+		<if test="ryid!=null">
+			and a.member_id = #{ryid}
+		</if>
+		<if test="gw!=null">
+			and current_type = #{gw}
+		</if>
+		)t
+		LEFT JOIN LMSP_DATADICT a on DD_TYPE = 'employeeType' and a.dd_key=current_type
+		LEFT JOIN LMSP_DATADICT b on b.dd_type = current_type and b.dd_key=current_plevel
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE gwgz from L_SALARY_RESULT_${yf} where item_id= '10002'
+		)t1 on t.ryid=t1.target_id
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE bzzjgz from L_SALARY_RESULT_${yf} where item_id= '10003'
+		)t2 on t.ryid=t2.target_id
+		LEFT JOIN(
+		select DISTINCT target_id,score from T_XC_ASSESS_RESULT where yf = ${yf} and ind_key='ykhdf'
+		)t3 on t.ryid=t3.target_id
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE zjgz from L_SALARY_RESULT_${yf} where item_id= '10030'
+		)t4 on t.ryid=t4.target_id
+		LEFT JOIN
+		(
+		select DISTINCT TARGET_ID,item_value pm from L_SALARY_RESULT_${yf} where item_name like '考核得分排名'
+		) t5 on t1.target_id=t5.TARGET_ID
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE ydjx from L_SALARY_RESULT_${yf} where item_id= '10037'
+		)t6 on t.ryid=t6.target_id
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE jtjt from L_SALARY_RESULT_${yf} where item_id= '10040'
+		)t7 on t.ryid=t7.target_id
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE wcjt from L_SALARY_RESULT_${yf} where item_id= '10041'
+		)t8 on t.ryid=t8.target_id
+		LEFT JOIN(
+		select DISTINCT TARGET_ID,ITEM_VALUE gwjt from L_SALARY_RESULT_${yf} where item_id= '10039'
+		)t9 on t.ryid=t9.target_id
+		LEFT JOIN
+		(
+		select ryid,sum(DEAL_BALANCE) clptcjje from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1501 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t10 on t.ryid=t10.ryid
+		LEFT JOIN
+		(
+		select ryid,sum(FARE_COMM) clptyj from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1501 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t11 on t.ryid=t11.ryid
+		LEFT JOIN
+		(
+		select ryid,sum(jyj) clptjyj from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1501 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t12 on t.ryid=t12.ryid
+		LEFT JOIN
+		(
+		select ryid,sum(DEAL_BALANCE) clxyptcjje from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1505 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t13 on t.ryid=t13.ryid
+		LEFT JOIN
+		(
+		select ryid,sum(FARE_COMM) clxypyj from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1505 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t14 on t.ryid=t14.ryid
+		LEFT JOIN
+		(
+		select ryid,sum(jyj) clxyptjyj from RES_SALARY_GXMX_M b where gxlxbh=1 and b.oc_month=#{yf} and business_flag = 1501 and
+		EXISTS(select 1 from T_GXGL_GXMX a where khfldm in(54,97) and a.khid=b.khid) GROUP BY ryid
+		) t15 on t.ryid=t15.ryid
+		LEFT JOIN
+		(
+		select target_id,sum(item_value)jycb from L_SALARY_RESULT_${yf} where SUPER_ID in(
+		select id from L_SALARY_RESULT_${yf} where ITEM_STEP=3 and ITEM_MODIFY_DESC like '%"custType":"54"%')
+		and ITEM_ID = 'cost' GROUP BY TARGET_ID
+		) t16 on t.ryid=t16.target_id
+		LEFT JOIN
+		(
+		select TARGET_ID,sum(ITEM_VALUE)clkhtc from L_SALARY_RESULT_${yf} where ITEM_STEP=3 and ITEM_MODIFY_DESC like '%"custType":"54"%' and target_id=2000001
+		GROUP BY TARGET_ID
+		)t17 on t.ryid=t17.target_id
+		LEFT JOIN
+		(
+		select b.target_id,sum(a.item_value)dhtc from L_SALARY_RESULT_#{yf} a,(
+		select ID,target_id from L_SALARY_RESULT_${yf} where ITEM_ID=10004 and ITEM_TYPE=2 and ITEM_STEP=1)b
+		where a.SUPER_ID = b.id GROUP BY b.target_id
+		)t18 on t.ryid=t18.target_id
+	
+	</select>
+	
+	<!-- 工资报表 -->
+	<select id="selectItemResult" resultType="com.linkstec.lmspcom.newsalary.dto.SalaryResultDto"
+		parameterType="map">
+		SELECT DISTINCT
+		A.ID id,
+		A.TARGET_ID targetId,
+		A.ITEM_VALUE itemValue,
+		A.ITEM_ID itemId,
+		NVL(T.SALARY_NAME,A.ITEM_ID) itemName,
+		T.SALARY_TYPE itemType,
+		A.TARGET_NAME memberName,
+		A.TARGET_BUSIDEPNAME orgName,
+		A.TARGET_BUSIDEPID orgId,
+		A.TARGET_TYPE ptype,
+		A.TARGET_LEVEL plevel,
+		T.ITEM_LEVEL itemLevel,
+		J.RYGJ rygj,
+		(J.RYGJ||'-'||J.RYZJ) ryzj,
+		Y.JYDY_NAME tdmc,
+		B.CARD_NO cardNo,
+		B.DD_VALUE cardName
+		FROM
+		${tableName} A
+		INNER JOIN T_XCITEM T on A.ITEM_ID = T.SALARY_CODE
+		INNER JOIN T_EHR_JJR_JBXX J /*LT*/ ON TARGET_ID = J.RYID
+		LEFT JOIN L_MEMBER_TD_REL R ON TARGET_ID = R.MEMBER_ID
+		LEFT JOIN T_JYDY_XX Y ON R.JYDY_ID = Y.JYDY_ID
+		LEFT JOIN 
+		(SELECT ryid,dd_value,card_no FROM T_XC_BANKCARD,LMSP_DATADICT where dd_type = 'banks' and bank_name = dd_key) B ON J.RYID = B.RYID
+		<where>
+			A.ITEM_STEP = 1
+			<if test="batchId!=null">
+				and A.BATCH_ID = #{batchId}
+			</if>
+			<if test="orgId!=null">
+				and A.TARGET_BUSIDEPID = #{orgId}
+			</if>
+			<if test="memKey!=null">
+				and (A.TARGET_NAME like #{memKey} or A.TARGET_ID like
+				#{memKey})
+			</if>
+			<if test="filterZero!=null">
+				and A.ITEM_VALUE &lt;&gt; 0
+				and A.ITEM_VALUE IS NOT NULL
+			</if>
+			<if test="memType!=null">
+				and A.TARGET_TYPE = #{memType}
+			</if>
+			<if test="gws!=null">
+				and J.CURRENT_TYPE IN
+				<foreach collection="gws"  open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+		ORDER BY A.TARGET_BUSIDEPID,A.TARGET_ID,T.ITEM_LEVEL,A.ID
+	</select>
+	
+	<!-- 动态打印工资报表数据 -->
+	<select id="selectPrintItemResult" resultType="map" parameterType="map">
+		SELECT 
+			TARGETID,MEMBERNAME,ORGNAME,ORGID,PTYPE,PLEVEL,RYGJ,RYZJ,TDMC,CARDNO,CARDNAME,
+			SUM(DECODE(ITEMID,'10002',ITEMVALUE,0)) AS GWGZ,
+			SUM(DECODE(ITEMID,'10030',ITEMVALUE,0)) AS ZJGZ,
+			SUM(DECODE(ITEMID,'10037',ITEMVALUE,0)) AS YDJX,
+			SUM(DECODE(ITEMID,'10004',ITEMVALUE,0)) AS JJKHTC,
+			SUM(DECODE(ITEMID,'10017',ITEMVALUE,0)) AS XYJYTC,
+			SUM(DECODE(ITEMID,'10015',ITEMVALUE,0)) AS TGQYTC,
+			SUM(DECODE(ITEMID,'10035',ITEMVALUE,0)) AS KJTC,
+			SUM(DECODE(ITEMID,'10023',ITEMVALUE,0)) AS TGJSTC,
+			SUM(DECODE(ITEMID,'10036',ITEMVALUE,0)) AS HGTTC,
+			SUM(DECODE(ITEMID,'10020',ITEMVALUE,0)) AS XSBTC,
+			SUM(DECODE(ITEMID,'10012',ITEMVALUE,0)) AS QQTC,
+			SUM(DECODE(ITEMID,'10019',ITEMVALUE,0)) AS CPXSTC,
+			SUM(DECODE(ITEMID,'41',ITEMVALUE,0)) AS JT,
+			SUM(DECODE(ITEMID,'10014',ITEMVALUE,0)) AS TDZJT,
+			SUM(DECODE(ITEMID,'10011',ITEMVALUE,0)) AS JJRTJJ,
+			SUM(DECODE(ITEMID,'10024',ITEMVALUE,0)) AS JYJZLJ,
+			SUM(DECODE(ITEMID,'10041',ITEMVALUE,0)) AS WCJT,
+			SUM(DECODE(ITEMID,'10040',ITEMVALUE,0)) AS JTJT,
+			SUM(DECODE(ITEMID,'10043',ITEMVALUE,0)) AS ZFJT,
+			SUM(DECODE(ITEMID,'10039',ITEMVALUE,0)) AS GWJT,
+			SUM(DECODE(ITEMID,'10031',ITEMVALUE,0)) AS YKCB,
+			SUM(DECODE(ITEMID,'10026',ITEMVALUE,0)) AS QTYFSQ,
+			SUM(DECODE(ITEMID,'10013',ITEMVALUE,0)) AS NFGZ,
+			SUM(DECODE(ITEMID,'10018',ITEMVALUE,0)) AS SXYJ,
+			SUM(DECODE(ITEMID,'10016',ITEMVALUE,0)) AS SQGZ,
+			SUM(DECODE(ITEMID,'10032',ITEMVALUE,0)) AS YYS,
+			SUM(DECODE(ITEMID,'10001',ITEMVALUE,0)) AS GRSDS,
+			SUM(DECODE(ITEMID,'10022',ITEMVALUE,0)) AS LWSDS,
+			SUM(DECODE(ITEMID,'10025',ITEMVALUE,0)) AS SHGZ,
+			SUM(DECODE(ITEMID,'10027',ITEMVALUE,0)) AS QTYFSH,
+			SUM(DECODE(ITEMID,'10028',ITEMVALUE,0)) AS GHHF,
+			SUM(DECODE(ITEMID,'10027',ITEMVALUE,0)) AS QTYFSH,
+			SUM(DECODE(ITEMID,'10034',ITEMVALUE,0)) AS YFGZ,
+			SUM(DECODE(ITEMID,'10021',ITEMVALUE,0)) AS FXJ,
+			SUM(DECODE(ITEMID,'10033',ITEMVALUE,0)) AS SFGZ
+		FROM 
+		(
+		SELECT DISTINCT
+				A.ID id,
+				A.TARGET_ID targetId,
+				A.ITEM_VALUE itemValue,
+				A.ITEM_ID itemId,
+				NVL(T.SALARY_NAME,A.ITEM_ID) itemName,
+				T.SALARY_TYPE itemType,
+				A.TARGET_NAME memberName,
+				A.TARGET_BUSIDEPNAME orgName,
+				A.TARGET_BUSIDEPID orgId,
+				A.TARGET_TYPE ptype,
+				A.TARGET_LEVEL plevel,
+				T.ITEM_LEVEL itemLevel,
+				J.RYGJ rygj,
+				(J.RYGJ||'-'||J.RYZJ) ryzj,
+				Y.JYDY_NAME tdmc,
+				B.CARD_NO cardNo,
+				B.DD_VALUE cardName
+				FROM
+				L_SALARY_RESULT_201507 A
+				INNER JOIN T_XCITEM T on A.ITEM_ID = T.SALARY_CODE
+				INNER JOIN T_EHR_JJR_JBXX J /*LT*/ ON TARGET_ID = J.RYID
+				LEFT JOIN L_MEMBER_TD_REL R ON TARGET_ID = R.MEMBER_ID
+				LEFT JOIN T_JYDY_XX Y ON R.JYDY_ID = Y.JYDY_ID
+				LEFT JOIN 
+				(SELECT ryid,dd_value,card_no FROM T_XC_BANKCARD,LMSP_DATADICT where dd_type = 'banks' and bank_name = dd_key) B ON J.RYID = B.RYID
+				<where>
+					A.ITEM_STEP = 1
+					<if test="batchId!=null">
+						and A.BATCH_ID = #{batchId}
+					</if>
+					<if test="orgId!=null">
+						and A.TARGET_BUSIDEPID in
+						<foreach collection="orgId"  open="(" separator="," close=")" item="item">
+							#{item}
+						</foreach>
+					</if>
+					<if test="memKey!=null">
+						and (A.TARGET_NAME like #{memKey} or A.TARGET_ID like
+						#{memKey})
+					</if>
+					<if test="filterZero!=null">
+						and A.ITEM_VALUE &lt;&gt; 0
+						and A.ITEM_VALUE IS NOT NULL
+					</if>
+					<if test="memType!=null">
+						and A.TARGET_TYPE = #{memType}
+					</if>
+					<if test="gws!=null">
+						and J.CURRENT_TYPE IN
+						<foreach collection="gws"  open="(" separator="," close=")" item="item">
+							#{item}
+						</foreach>
+					</if>
+				</where>
+			
+				ORDER BY A.TARGET_BUSIDEPID,A.TARGET_ID,T.ITEM_LEVEL,A.ID
+		) GROUP BY TARGETID,MEMBERNAME,ORGNAME,ORGID,PTYPE,PLEVEL,RYGJ,RYZJ,TDMC,CARDNO,CARDNAME
+	</select>
+	
+	<!-- 客户日度融资融券资产表 -->
+	<select id="selectClientRzrq" parameterType="map" resultType="map">
+		SELECT t1.*,t2.khxm,t3.ryid,t4.xm FROM 
+		(
+			SELECT * FROM DC_CRDT_CLIENT_ASSET WHERE 1=1
+			<if test="jyStartTime!=null">
+				and init_date &gt;=#{jyStartTime}
+			</if>
+			<if test="jyEndTime!=null">
+				and init_date &lt;=#{jyEndTime}
+			</if>
+			<if test="khid!=null">
+				and CLIENT_ID = #{khid}
+			</if>
+			<if test="branchNo!=null">
+				and BRANCHNO = #{branchNo}
+			</if>
+		)t1 inner join 
+		(
+			select * from T_KH_XX /*LT*/ where 1=1
+			<if test="khid!=null">
+				and KHID = #{khid}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<if test="branchNo!=null">
+				and ORGID = #{branchNo}
+			</if>
+			
+		)t2 on t1.client_id = t2.khid
+		inner join
+		(
+			select * from t_gxgl_gxmx where gxlxbh = 2
+			<if test="khid!=null">
+				and KHID = #{khid}
+			</if>
+		)t3 on t1.client_id = t3.khid
+		inner join
+		(
+			select * from t_ehr_jjr_jbxx where 1=1
+			<if test="ryxm!=null">
+				and (ryid like '%'||#{ryxm}||'%' or xm like '%'||#{ryxm}||'%')
+			</if>
+		)t4 on t3.ryid = t4.ryid
+		where 1=1 
+		
+	</select>
+	
+	<!-- 客户约购回购余额报表 -->
+	<select id="selectClientYghg" parameterType="map" resultType="map">
+		SELECT t1.khid as CLIENT_ID,t1.khxm,t2.init_date,t2.FUND_ACCOUNT,t2.BALANCE
+<!-- 		,t3.BALANCE as BALANCE2  -->
+		FROM 
+		(
+			select * from T_KH_XX /*LT*/ where 1=1
+			<if test="khid!=null">
+				and KHID = #{khid}
+			</if>
+			<if test="khrqStartTIme!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &gt;=#{khrqStartTIme}
+			</if>
+			<if test="khrqEndTime!=null">
+				and to_number(to_char(khsj,'yyyymmdd')) &lt;=#{khrqEndTime}
+			</if>
+			<if test="branchNo!=null">
+				and ORGID = #{branchNo}
+			</if>
+			
+		)t1
+		left join
+		(
+			SELECT * FROM DC_ARP_CLIENT_TOTAL WHERE 1=1
+			<if test="jyStartTime!=null">
+				and init_date &gt;=#{jyStartTime}
+			</if>
+			<if test="jyEndTime!=null">
+				and init_date &lt;=#{jyEndTime}
+			</if>
+			<if test="khid!=null">
+				and CLIENT_ID = #{khid}
+			</if>
+			
+		)t2 on t1.khid = t2.client_id
+<!-- 		left join  -->
+<!-- 		( -->
+<!-- 			SELECT * FROM DC_SRP_CLIENT_TOTAL WHERE 1=1 -->
+<!-- 			<if test="jyStartTime!=null"> -->
+<!-- 				and init_date &gt;=#{jyStartTime} -->
+<!-- 			</if> -->
+<!-- 			<if test="jyEndTime!=null"> -->
+<!-- 				and init_date &lt;=#{jyEndTime} -->
+<!-- 			</if> -->
+<!-- 			<if test="khid!=null"> -->
+<!-- 				and CLIENT_ID = #{khid} -->
+<!-- 			</if> -->
+<!-- 		)t3 -->
+<!-- 		on t1.khid = t3.client_id -->
+		where 1=1 
+		and (t2.BALANCE is not null )
+<!-- 		and t2.init_date = t3.init_date -->
+		
+	</select>
+	
+	<!-- 理财顾问考核 -->
+	<select id="getLcgw" parameterType="map" resultType="map">
+		select DISTINCT t2.*,T1.fwxgdf as fwxgdf,t3.fwldf as fwldf,t4.fjdf as fjdf,t5.khdf as khdf,
+		(nvl(T1.fwxgdf,0)+nvl(t3.fwldf,0)+nvl(t4.fjdf,0))rankScore,t6.rank from 
+		(
+			select TARGET_ID,round(IND_VALUE/factor*weight,6) as fwxgdf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_客户服务效果得分'
+		) t1
+		LEFT JOIN 
+		(
+			select a.RYID,a.XM,c.jydy_id,c.JYDY_NAME,a.CURRENT_TYPE,a.CURRENT_PLEVEL from T_EHR_JJR_JBXX a, L_MEMBER_JYDY_REL b ,T_JYDY_XX c 
+			where a.current_type=13 AND a.ryid = b.MEMBER_ID and b.jydy_id = c.jydy_id 
+		)t2 on T1.TARGET_ID=T2.RYID
+		LEFT JOIN
+		(
+			select TARGET_ID,round(IND_VALUE/factor*weight,6) as fwldf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_客户服务量得分'
+		) t3 on t1.target_id=t3.TARGET_ID
+		LEFT JOIN
+		(
+			select TARGET_ID,round(IND_VALUE/factor*weight,6) as fjdf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_月度附加考核得分'
+		) t4 on t1.target_id=t4.TARGET_ID
+		LEFT JOIN
+		(
+			select target_id,SCORE as khdf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='ykhdf'
+		) t5 on t1.target_id=t5.target_id
+		LEFT JOIN
+		(
+			select TARGET_ID,item_value as rank from L_SALARY_RESULT_${yf} where item_name like '考核得分排名'
+		) t6 on t1.target_id=t6.TARGET_ID
+		
+		where t2.current_type=13 
+		<if test="ryxm!=null">
+			and (t2.ryid like '%'||#{ryxm}||'%' or t2.xm like '%'||#{ryxm}||'%')
+		</if>
+		<if test="jydy!=null">
+			and t2.jydy_id = #{jydy}
+		</if>
+		ORDER BY t6.rank asc
+		
+		
+	</select>
+	
+	<!-- 客户经理考核 -->
+	<select id="getKhjl" parameterType="map" resultType="map">
+		select t2.*,T1.rjzc,T1.rjzcdf,T1.WEIGHT,T1.FACTOR,T3.WEIGHT AS WEIGHT2,T3.FACTOR AS FACTOR2,
+		t3.xkkhs,t3.xkkhsdf,t4.fjdf,t5.khdf,
+		(nvl(T1.SCORE1,0)+nvl(t3.score2,0)+nvl(t4.fjdf,0))as rankScore,t6.rank from
+		(select TARGET_ID,IND_VALUE as rjzc,SCORE as rjzcdf,round(IND_VALUE/FACTOR*WEIGHT,6)score1,WEIGHT,FACTOR
+		from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_新开户当月日均资产') t1
+		LEFT JOIN 
+		(
+			select a.ryid,a.xm,c.jydy_id,c.jydy_name,a.current_type,a.current_plevel from T_EHR_JJR_JBXX a, L_MEMBER_JYDY_REL b ,T_JYDY_XX c 
+			where a.current_type = 11 and a.ryid = b.MEMBER_ID and b.jydy_id = c.jydy_id 
+		)t2
+		on T1.TARGET_ID=T2.RYID
+		LEFT JOIN
+		(
+			select TARGET_ID,IND_VALUE as xkkhs,SCORE as xkkhsdf,round(IND_VALUE/FACTOR*WEIGHT,6) score2,WEIGHT,FACTOR
+			from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_本月新开客户数'
+		) t3 on t1.target_id=t3.TARGET_ID
+		LEFT JOIN
+		(
+			select TARGET_ID,nvl(round(IND_VALUE/FACTOR*WEIGHT,6),0) as fjdf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='人员_月度附加考核得分'
+		) t4 on t1.target_id=t4.TARGET_ID
+		LEFT JOIN
+		(
+			select target_id,SCORE as khdf from T_XC_ASSESS_RESULT where yf=#{yf} and IND_KEY='ykhdf'
+		) t5 on t1.target_id=t5.target_id
+		LEFT JOIN
+		(
+			select TARGET_ID,item_value as rank from L_SALARY_RESULT_${yf} where item_name like '考核得分排名'
+		) t6 on t1.target_id=t6.TARGET_ID
+		where t2.current_type=11 
+		<if test="ryxm!=null">
+			and (t2.ryid like '%'||#{ryxm}||'%' or t2.xm like '%'||#{ryxm}||'%')
+		</if>
+		<if test="jydy!=null">
+			and t2.jydy_id = #{jydy}
+		</if>
+		ORDER BY t6.rank asc
+	</select>
+</mapper>

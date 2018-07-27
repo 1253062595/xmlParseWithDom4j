@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.cfs.salary.base.mapper.B100102Mapper">
+	<resultMap id="BaseResultMap" type="com.linkstec.cfs.salary.base.po.TCostJbxx">
+		<id column="cost_id" jdbcType="BIGINT" property="costId" />
+		<result column="cost_type" jdbcType="VARCHAR" property="costType" />
+		<result column="bz" jdbcType="VARCHAR" property="bz" />
+		<result column="rec_gen_time" jdbcType="TIMESTAMP" property="recGenTime" />
+		<result column="rec_gen_user" jdbcType="BIGINT" property="recGenUser" />
+		<result column="delete_flag" jdbcType="VARCHAR" property="deleteFlag" />
+		<result column="rec_upd_time" jdbcType="TIMESTAMP" property="recUpdTime" />
+		<result column="cost_name" jdbcType="VARCHAR" property="costName" />
+		<result column="cost_dm" jdbcType="VARCHAR" property="costDm" />
+	</resultMap>
+	<sql id="Base_Column_List">cost_type,bz,rec_gen_time,rec_gen_user,delete_flag,rec_upd_time,cost_name,cost_dm,cost_id
+	</sql>
+
+	<select id="selectAll" resultMap="BaseResultMap"
+		parameterType="com.linkstec.cfs.salary.base.po.TCostJbxx">
+		select
+		<include refid="Base_Column_List" />
+		from t_cost_jbxx
+		<where>
+			<if test="costType!= null">and cost_type=#{costType,jdbcType=VARCHAR}</if>
+			<if test="bz!= null">and bz=#{bz,jdbcType=VARCHAR}</if>
+			<if test="recGenTime!= null">and rec_gen_time=#{recGenTime,jdbcType=TIMESTAMP}</if>
+			<if test="recGenUser!= null">and rec_gen_user=#{recGenUser,jdbcType=BIGINT}</if>
+			<if test="deleteFlag!= null">and delete_flag=#{deleteFlag,jdbcType=VARCHAR}</if>
+			<if test="recUpdTime!= null">and rec_upd_time=#{recUpdTime,jdbcType=TIMESTAMP}</if>
+			<if test="costName!= null">and cost_name=#{costName,jdbcType=VARCHAR}</if>
+			<if test="costDm!= null">and cost_dm=#{costDm,jdbcType=VARCHAR}</if>
+			<if test="costId!= null">and cost_id=#{costId,jdbcType=BIGINT}</if>
+		</where>
+	</select>
+
+	<!-- todo yes -->
+	<select id="selectCostSetInfo" parameterType="map"
+		resultType="com.linkstec.cfs.salary.base.dto.B100203Dto">
+		SELECT
+		c.*, x.JG_NAME "jydyName",
+		x.JGID "jydyId",
+		ry.xm "memberName",
+		ry.ryid "memberId",
+		Kh.khxm "custName",
+		kh.khid "custId",
+		mem.member_name "creatorName",
+		ct.khflmc "khflmc",
+		jb.cost_name "costName",
+		jb.cost_type "costType"
+		FROM
+		T_COST_SET /*LT*/ c
+		LEFT JOIN L_ORGANIZATION_EXPAND x ON c.jydy_id = x.JGID
+		LEFT JOIN T_EHR_JJR_JBXX ry ON c.member_id = ry.ryid
+		LEFT JOIN T_KH_XX Kh ON Kh.khid = c.cust_id
+		LEFT JOIN L_MEMBER mem ON mem.member_id = c.REC_GEN_USER
+		LEFT JOIN T_CUST_TYPE ct ON ct. ID = c.cust_set_id
+		LEFT JOIN T_COST_JBXX jb ON jb.cost_id = c.cost_id
+		where
+		1=1
+		<if test="costName!=null">
+			and jb.cost_name like '%'||#{costName}||'%'
+		</if>
+		<if test="costSx!=null">
+			AND c.COST_SX =#{costSx}
+		</if>
+		<if test="costType!=null">
+			AND jb.cost_type = #{costType}</if>
+		<if test="objType!=null">
+			AND c.OBJ_TYPE = #{objType}
+			<if test="objType==1 and jydyName!=null">
+				AND x.jydy_name  like   '%'||#{jydyName}||'%'
+			</if>
+			<if test="objType==2 and tdName!=null">
+				AND y.jydy_name  like   '%'||#{tdName}||'%'
+			</if>
+			<if test="objType==3 and memberName!=null">
+				AND ry.xm like  '%'||#{memberName}||'%'
+			</if>
+			<if test="objType==4 and custId!=null">
+				AND c.CUST_ID = #{custId}
+			</if>		
+		</if>
+		<if test="costBeginTime!=null">
+			AND	#{costBeginTime}  >=TO_NUMBER(c.COST_BEGIN_TIME) 
+			and #{costBeginTime} &lt;=TO_NUMBER(c.COST_END_TIME) 
+		</if>
+		order by c.rec_gen_time,c.id asc
+	</select>
+	<select id="selectCostSetNumByCostId" parameterType="java.lang.Long"
+		resultType="java.lang.Long">
+		select count(*) from T_COST_JBXX j inner JOIN T_COST_SET s
+		on j.COST_ID =
+		s.COST_ID
+		WHERE s.COST_ID = #{costId}
+	</select>
+
+	<select id="selectCostTotalRY" parameterType="com.linkstec.cfs.salary.base.dto.B100205InDto"
+		resultType="com.linkstec.cfs.salary.base.dto.B100205Dto">
+		SELECT
+		CT.member_id,
+		ct.COST_SX,
+		ct.TOTAL_TIME_START,CT.TOTAL_TIME_END,
+		ct.TOTAL_VALUE,
+		ct.GX_TYPE,
+		M .MEMBER_NAME,
+		ctype.khflmc,ct.COSTED,ct.COSTING,CT.FSSJ,CT.BZ
+		FROM
+		T_COST_TOTAL /*LT*/ ct
+		INNER JOIN 
+		L_MEMBER M ON ct.MEMBER_ID = M .MEMBER_ID
+		LEFT JOIN T_CUST_TYPE ctype
+		ON ct.cust_set_id = ctype.KHFLDM
+		WHERE
+		ct.obj_type = 3
+		<if test="memberName!=null"> AND M .MEMBER_NAME LIKE '%'||#{memberName}||'%'</if>
+		<if test="totalTimeStart!=null"> AND ct.TOTAL_TIME_START like to_number(to_char(#{totalTimeStart},'yyyyMMdd'))</if>
+		<if test="totalTimeEnd!=null"> AND ct.TOTAL_TIME_End LIKE to_number(to_char(#{totalTimeEnd},'yyyyMMdd'))</if>
+		<if test="costSx!=null"> AND CT.COST_SX LIKE #{costSx}</if>
+	</select>
+
+	<select id="selectCostTotalKH" parameterType="com.linkstec.cfs.salary.base.dto.B100205InDto"
+		resultType="com.linkstec.cfs.salary.base.dto.B100205Dto">
+		SELECT
+		CT.member_id,
+		ct.COST_SX,
+		ct.TOTAL_MONTH,
+		ct.TOTAL_VALUE,
+		ct.GX_TYPE,
+		CT.cust_id,
+		M .KHXM,
+		ctype.khflmc,ct.COSTED,ct.COSTING,CT.FSSJ,CT.BZ
+		FROM
+		T_COST_TOTAL /*LT*/ ct
+		INNER
+		JOIN
+		T_KH_XX M ON CT.CUST_ID = M .KHID
+		LEFT JOIN T_CUST_TYPE ctype ON
+		ct.cust_set_id = ctype.KHFLDM
+		WHERE
+		ct.obj_type = 4
+		<if test="khxm!=null"> AND M .KHXM LIKE '%'||#{khxm}||'%'</if>
+		<if test="khId!=null"> AND ct.cust_id LIKE '%'||#{khId}||'%'</if>
+		<if test="totalMonth!=null"> AND ct.TOTAL_MONTH LIKE #{totalMonth}</if>
+		<if test="costSx!=null"> AND CT.COST_SX LIKE #{costSx}</if>
+	</select>
+	<select id="selectCostSetLs" parameterType="map"
+		resultType="com.linkstec.cfs.salary.base.dto.B100207Dto">
+	SELECT
+		c.*, x.JG_NAME "jydyName",
+	
+		ry.xm
+		"memberName",
+		Kh.khxm "custName",
+		mem.member_name "creatorName",
+		ct.khflmc "khflmc",
+		jb.cost_name "costName",
+		jb.cost_type "costType"
+		FROM
+		T_COST_SET_LS /*LT*/ c
+		LEFT JOIN L_ORGANIZATION_EXPAND x on x.JGID = c.JYDY_ID
+		LEFT JOIN T_EHR_JJR_JBXX ry ON c.member_id = ry.ryid
+		LEFT JOIN
+		T_KH_XX Kh ON Kh.khid = c.cust_id
+		LEFT JOIN L_MEMBER mem ON
+		mem.member_id = c.REC_GEN_USER
+		LEFT JOIN T_CUST_TYPE ct ON ct. ID =
+		c.cust_set_id
+		LEFT JOIN T_COST_JBXX jb ON jb.cost_id = c.cost_id
+		where
+		1=1
+		<if test="costName!=null">
+			and jb.cost_name like '%'||#{costName}||'%'
+		</if>
+		<if test="costSx!=null">
+			AND c.COST_SX =#{costSx}
+		</if>
+		<if test="costType!=null">AND jb.cost_type = #{costType}</if>
+		<if test="costBeginTimeU!=null">
+			AND c.REC_GEN_TIME >=#{costBeginTimeU}
+		</if>
+		<if test="costEndTimeU!=null">
+			AND c.REC_GEN_TIME &lt;=#{costEndTimeU}
+		</if>
+		<if test="czType!=null">
+			AND c.CZ_TYPE =#{czType}
+		</if>
+		order by c.rec_gen_time asc
+	</select>
+	<select id="selectCostTotalRYRes" parameterType="com.linkstec.cfs.salary.base.dto.B100205InDto"
+		resultType="com.linkstec.cfs.salary.base.dto.B100205Dto">
+	select 
+		CT.member_id,
+		ct.COST_SX,	ct.TOTAL_TIME_START,
+		ct.TOTAL_TIME_END,
+		ct.GX_TYPE,
+		M .MEMBER_NAME,
+		ctype.khflmc,
+		ct.COSTED,
+		jydy.jg_name jydy_name from 
+		(
+			select distinct max(TOTAL_TIME_START)TOTAL_TIME_START,max(TOTAL_TIME_END) TOTAL_TIME_END,MEMBER_ID,gx_type,obj_type,cost_sx,cust_set_id,
+			sum(costed)COSTED from T_COST_TOTAL /*LT*/ where OBJ_TYPE = 3 group by MEMBER_ID,gx_type,obj_type,cost_sx,cust_set_id
+		)ct
+		INNER JOIN L_MEMBER M ON ct.MEMBER_ID = M .MEMBER_ID
+		LEFT JOIN T_CUST_TYPE ctype ON ct.cust_set_id = ctype.KHFLDM
+		left join (SELECT j.jg_name,
+		j.jgid,
+		r.ryid
+		FROM
+		L_ORGANIZATION_EXPAND j,
+		T_EHR_JJR_JBXX r
+		WHERE
+		j.jgid = r.jgid) jydy on jydy.ryid = m.member_id
+		WHERE
+		1=1
+		<if test="memberName!=null"> AND M .MEMBER_NAME LIKE '%'||#{memberName}||'%'</if>
+		<if test="totalTimeStart!=null"> AND ct.TOTAL_TIME_START LIKE #{totalTimeStart}</if>
+		<if test="totalTimeEnd!=null"> AND ct.TOTAL_TIME_END LIKE #{totalTimeEnd}</if>
+		<if test="costSx!=null"> AND CT.COST_SX LIKE #{costSx}</if>
+		<if test="jydyId!=null"> AND jydy.jgid= #{jydyId}</if>
+	</select>
+	<select id="selectCostTotalKHRes" parameterType="com.linkstec.cfs.salary.base.dto.B100205InDto"
+		resultType="com.linkstec.cfs.salary.base.dto.B100205Dto">
+		SELECT
+		ct.COST_SX,
+		ct.TOTAL_MONTH,
+		ct.GX_TYPE,
+		CT.cust_id,
+		M .KHXM,
+		ct.COSTED
+		FROM
+		(
+			select distinct cust_id,max(TOTAL_MONTH)TOTAL_MONTH,sum(costed)COSTED,gx_type,obj_type,cost_sx from T_COST_TOTAL/*LT*/ 
+			where OBJ_TYPE = 4 group by cust_id,gx_type,obj_type,cost_sx
+		) ct
+		INNER JOIN T_KH_XX M ON CT.CUST_ID = M .KHID
+		where 1=1
+		<if test="khxm!=null"> AND M.KHXM LIKE '%'||#{khxm}||'%' </if>
+		<if test="khId!=null"> AND ct.cust_id LIKE '%'||#{khId}||'%'</if>
+		<if test="totalMonth!=null"> AND ct.TOTAL_MONTH LIKE #{totalMonth}</if>
+		<if test="costSx!=null"> AND CT.COST_SX LIKE #{costSx}</if>
+	</select>
+</mapper>

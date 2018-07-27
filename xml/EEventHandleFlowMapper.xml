@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.mot.top.po.EEventHandleFlowMapper">
+  <resultMap id="BaseResultMap" type="com.linkstec.mot.top.po.EEventHandleFlow">
+    <id column="event_flow_id" jdbcType="BIGINT" property="eventFlowId"/>
+    <result column="event_desc" jdbcType="VARCHAR" property="eventDesc"/>
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName"/>
+    <result column="staff_id" jdbcType="BIGINT" property="staffId"/>
+    <result column="event_trg_time" jdbcType="TIMESTAMP" property="eventTrgTime"/>
+    <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
+    <result column="department_name" jdbcType="VARCHAR" property="departmentName"/>
+    <result column="rec_upd_time" jdbcType="TIMESTAMP" property="recUpdTime"/>
+    <result column="handle_status" jdbcType="VARCHAR" property="handleStatus"/>
+    <result column="dead_line" jdbcType="TIMESTAMP" property="deadline"/>
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId"/>
+    <result column="event_id" jdbcType="BIGINT" property="eventId"/>
+    <result column="branch_id " jdbcType="VARCHAR" property="branchId"/>
+    <result column="staff_name" jdbcType="VARCHAR" property="staffName"/>
+    <result column="event_require" jdbcType="VARCHAR" property="eventRequire"/>
+    <result column="rec_gen_time" jdbcType="TIMESTAMP" property="recGenTime"/>
+    <result column="event_name" jdbcType="VARCHAR" property="eventName"/>
+    <result column="department_id" jdbcType="VARCHAR" property="departmentId"/>
+    <result column="biz_date" jdbcType="BIGINT" property="bizDate"/>
+    <result column="event_level_type" jdbcType="VARCHAR" property="eventLevelType"/>
+    <result column="append_information" jdbcType="VARCHAR" property="appendInformation"/>
+  </resultMap>
+  <resultMap id="MotResultMap" type="com.linkstec.mot.top.dto.MotEventHandleFlowDto">
+    <result column="event_type" jdbcType="VARCHAR" property="eventType"/>
+    <result column="event_id" jdbcType="BIGINT" property="eventId"/>
+    <result column="branch_id " jdbcType="VARCHAR" property="branchId"/>
+    <result column="event_require" jdbcType="VARCHAR" property="eventRequire"/>
+    <result column="total_num" jdbcType="BIGINT" property="totalNum"/>
+    <result column="do_num" jdbcType="BIGINT" property="doNum"/>
+  </resultMap>
+  <resultMap id="MotCustResultMap" type="com.linkstec.mot.top.dto.MotCustListDto">
+   <id column="event_flow_id" jdbcType="BIGINT" property="eventFlowId"/>
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId"/>
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName"/>
+    <result column="today_ttl_asset " jdbcType="DECIMAL" property="todayTtlAsset"/>
+    <result column="handle_status" jdbcType="VARCHAR" property="handleStatus"/>
+    <result column="singleflag" jdbcType="VARCHAR" property="singleFlag"/>
+    <result column="FLFJ_NAME" jdbcType="VARCHAR" property="flfjName"/>
+  </resultMap>
+  <resultMap id="CustResultMap" type="com.linkstec.mot.top.dto.CustEventHandleFlowDto">
+    <result column="customer_id" jdbcType="VARCHAR" property="customerId"/>
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName"/>
+    <result column="today_ttl_asset " jdbcType="DECIMAL" property="todayTtlAsset"/>
+    <result column="total_num" jdbcType="BIGINT" property="totalNum"/>
+    <result column="do_num" jdbcType="BIGINT" property="doNum"/>
+    <result column="singleflag" jdbcType="VARCHAR" property="singleFlag"/>
+  </resultMap>
+  <resultMap id="CustMotResultMap" type="com.linkstec.mot.top.dto.CustMotListDto">
+  <id column="event_flow_id" jdbcType="BIGINT" property="eventFlowId"/>
+    <result column="event_id" jdbcType="BIGINT" property="eventId"/>
+    <result column="event_name" jdbcType="VARCHAR" property="eventName"/>
+    <result column="event_require " jdbcType="VARCHAR" property="eventRequire"/>
+    <result column="event_level_type" jdbcType="VARCHAR" property="eventLevelType"/>
+    <result column="handle_status" jdbcType="VARCHAR" property="handleStatus"/>
+    <result column="event_desc" jdbcType="VARCHAR" property="eventDesc"/>
+    
+  </resultMap>
+  
+  
+  <sql id="Base_Column_List">event_desc,
+	 customer_name,staff_id,
+	 event_trg_time,event_type,
+	 department_name,rec_upd_time,
+	 handle_status,deadline,customer_id,
+	 event_id,branch_id ,staff_name,event_require,
+	 rec_gen_time,event_name,department_id,
+	 biz_date,event_flow_id,
+	 event_level_type,
+	 append_information
+  </sql>
+ 
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long">
+    select
+    <include refid="Base_Column_List"/>
+    from e_event_handle_flow where  event_flow_id = #{eventFlowId,jdbcType=BIGINT}
+  </select>
+  
+  
+  <select id="selectMotEventFlow" resultMap="MotResultMap" parameterType="map">
+    select t.event_id,
+         t.event_name,
+         t.event_type,
+         t.event_require,
+         t.event_desc,
+         count(t.event_flow_id) total_num,
+         sum(decode(t.handle_status, '91', 1, '93', 1, 0)) do_num
+          from E_EVENT_HANDLE_FLOW t
+        where 1=1
+        <if test="eventType!=null">
+           AND t.event_type = #{eventType}
+        </if>
+       <if test="staffId!=null">
+        AND T.STAFF_ID = #{staffId}
+       </if>
+       and t.event_id not in (select event_id from t_info_tmplt where business_no = 2)
+       and to_char(t.DEAD_LINE, 'YYYYMMDD') >= to_char(SYSDATE, 'YYYYMMDD')
+         group by t.event_id, t.event_name, t.event_type, t.event_require,t.event_desc
+  </select>
+  
+  <select id="selectMotCustList" resultMap="MotCustResultMap" parameterType="map">
+		select t.customer_id,
+		 kh.XM customerName, 
+		 NVL(zc.zzc,0.00) today_ttl_asset
+		 ,t.event_flow_id
+		 ,t.handle_status
+		 ,kh.singleflag
+		  from e_event_handle_flow t
+		    left join t_kh_xx kh on kh.khid = t.customer_id
+		   left join T_KH_ZCXX zc ON kh.KHID = zc.KHID
+	       where t.handle_status IN ('01','02') 
+	       <if test="eventId!=null">
+	          AND t.event_id = #{eventId}
+	       </if>
+	      <if test="staffId!=null">
+	       AND T.STAFF_ID = #{staffId}
+	      </if>
+	      and to_char(t.DEAD_LINE, 'YYYYMMDD') >= to_char(SYSDATE, 'YYYYMMDD')
+  </select>
+  <select id="selectCustEventFlow" resultMap="CustResultMap" parameterType="map">
+	select t.customer_id,
+		       T1.XM CUSTOMER_NAME,
+		       nvl(zcxx.zzc, 0) today_ttl_asset,
+		       count(t.event_flow_id) total_num,
+		       t1.singleflag,
+               tab.FLFJ_NAME,
+		      sum(decode(t.handle_status, '91', 1, '93', 1, 0)) do_num
+		  FROM (select * from E_EVENT_HANDLE_FLOW where event_id not in (select event_id from t_info_tmplt where business_no = 2)) t left join T_KH_XX t1 on  T.CUSTOMER_ID = T1.KHID
+			LEFT JOIN T_KH_ZCXX zcxx ON T.CUSTOMER_ID  = zcxx.khid
+          LEFT JOIN T_FLFJ_FJ_CUST ct ON t1.khid =CT.cust_id
+          LEFT JOIN T_FLFJ_TAB tab ON ct.fj_id = tab.flfj_id
+		    where 1=1
+	      <if test="staffId!=null">
+	       AND T.STAFF_ID = #{staffId}
+	      </if>
+	         and to_char(t.DEAD_LINE, 'YYYYMMDD') >= to_char(SYSDATE, 'YYYYMMDD')
+	    group by t.customer_id, T1.XM, zcxx.zzc,t1.singleflag,tab.FLFJ_NAME
+  </select>
+  <select id="selectCustMotList" resultMap="CustMotResultMap" parameterType="map">
+		select t.event_id,
+		       t.event_name,
+		       t.event_require,
+		       t.event_level_type,
+		       t.handle_status,
+		       t.event_flow_id
+		  from E_Event_Handle_Flow t
+		  where t.handle_status IN ('01','02')
+	      <if test="staffId!=null">
+	       AND T.STAFF_ID = #{staffId}
+	      </if>
+	      <if test="customerId!=null">
+	       AND T.customer_id = #{customerId}
+	      </if>
+	      and to_char(t.DEAD_LINE, 'YYYYMMDD') >= to_char(SYSDATE, 'YYYYMMDD')
+  </select>
+  <select id="selectEventInfoByEventIds" resultMap="CustMotResultMap" parameterType="map">
+		select t.event_id,
+		       t.event_name,
+		       t.event_require,
+		       t.event_desc,
+		       t.handle_status,
+		       t.event_flow_id
+		  from E_Event_Handle_Flow t
+		  where 1=1
+	     and t.event_flow_id in 
+	     <foreach collection="eventFlowIds" item="item" separator="," open="(" close=")">
+	     ${item}
+	     </foreach>
+  </select>
+<select id="choseCst" parameterType="java.lang.Long" resultType="map">
+SELECT  NVL(tf.phone_no, tf.agent_mobile) as mobile FROM MOT_CST_INF tf WHERE CUST_NO = #{custId}
+</select>
+
+<update id="reDistribution" parameterType="map">
+UPDATE E_EVENT_HANDLE_FLOW SET STAFF_ID = #{staffId} ,STAFF_NAME = #{staffName} ,DEPARTMENT_ID = #{orgId}
+,DEPARTMENT_NAME = #{orgName} WHERE EVENT_FLOW_ID IN
+<if test="eventFlowIds!=null">
+<foreach collection="eventFlowIds" item="item" separator="," open="(" close=")">
+${item}
+</foreach>
+</if>
+</update>
+<!-- mot服务历史 -->
+<select id="motServiceHis" parameterType="map" resultType="map">
+select * from(
+SELECT
+	REC.EVENT_ID "eventId",
+	REC.MAIL_THEME "mailTheme",
+	REC.DEAL_TYPE "dealType",
+	REC.DEAL_CONTENT "dealContent",
+	REC.WORKLIST_CONTENT "worklistContent",
+	REC.STAFF_ID "staffId",
+	REC.DEAL_TIME "dealTime",
+	REC.TASK_TYPE "taskType",
+	REC.CUSTOMER_ID "customerId",
+	REC.event_flow_id "eventFlowId",
+	XX.khxm "xm",
+	event.RULE_NAME "ruleName",
+event.exe_type "exeType",
+eFlow.event_trg_time "trgTime",
+eFlow.dead_line "deadLine",
+xx.singleflag "singleFlag",
+event.
+	strgy.STRATEGY_NAME "strategyName",
+	flow.TG_DEAL_STATUS "tgDealStatus",
+	mem.member_name "memberName",
+	eFlow.branch_id "orgId"
+FROM
+	T_PL_DEALRECORD /*LT*/ REC
+LEFT JOIN T_KH_XX xx ON XX.khid = REC.CUSTOMER_ID
+LEFT JOIN rrl_rule event ON event.RULE_ID = REC.EVENT_ID
+LEFT JOIN E_STRATEGY strgy ON REC.STRATEGY_ID = strgy.STRATEGY_ID
+LEFT JOIN E_EVENT_FLOW eFlow ON REC.event_flow_id = eFlow.event_flow_id
+inner JOIN 
+(SELECT  TG_EVENT_FLOW_ID,TG_DEAL_STATUS FROM TG_EVENT_FLOW
+UNION 
+SELECT  TG_EVENT_FLOW_ID,TG_DEAL_STATUS FROM TG_HIS_EVENT_FLOW) flow ON flow.tg_event_flow_id = REC.event_flow_id
+LEFT JOIN L_MEMBER mem ON mem.member_id = rec.STAFF_ID
+)info 
+WHERE
+	1 = 1
+	<if test="customerId!=null">
+	and "customerId" like '%'||#{customerId}||'%'
+	</if>
+	<if test="xm!=null">
+	and "xm" like '%'||#{xm}||'%'
+	</if>
+	<if test="exeType!=null">
+	and "exeType" = #{exeType}
+	</if>
+	<if test="ruleName!=null">
+	and "ruleName" like '%'||#{ruleName}||'%'
+	</if>
+	<if test="trgTimeBeg!=null">
+	and "trgTime" >=#{trgTimeBeg}
+	</if>
+	<if test="trgTimeBeg!=null">
+	and "trgTime" &lt;=#{trgTimeEnd}
+	</if>
+	<if test="orgId!=null">
+	and "orgId" = #{orgId}
+	</if>
+	<if test="staffId!=null">
+	and "staffId" = #{staffId}
+	</if>
+	ORDER BY "dealTime" DESC
+</select>
+</mapper>

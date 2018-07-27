@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.msp.toppage.mapper.BulletinMapper">
+
+	<sql id="Base_Column_List">GGID,GGBT,FBSJ,SXSJ,GGLX,GGNR,FBZID,FJID,GGFL,ZDTS,SFSX,GGNM</sql>
+	
+
+	
+	<!-- 根据用户id找到团队id -->
+	<select id="queryOrgIdList" parameterType="map" resultType="com.linkstec.crm.system.dto.AnnouncementDto">
+		select
+			org_id
+		from
+			L_MEMBER_ORGANIZATION_REL
+		where
+			member_id = #{curUserId}
+	</select>
+	
+	<!-- 查找公告 -->
+	<select id="queryAnnounce" parameterType="map" resultType="com.linkstec.crm.system.dto.AnnouncementDto">
+        select * from (select A.* ,(case when to_date(to_char(A.fbsj,'yyyyMMdd'),'yyyyMMdd')-1+ zdts &gt;= to_date(to_char(sysdate,'yyyyMMdd'),'yyyyMMdd') then 1  else  0 end) flag,(case when A.zdts!=null then 1 else 0 end) flag1,b.ckzt from
+		(select 
+			<include refid="Base_Column_List" />
+		from 
+			T_SYS_GGGL /*LT*/
+		where  1=1 
+			<include refid="conditions1" />
+			) A left join crm.t_Sys_Gg_Ckzt b on a.ggid=b.ggid and b.member_id=#{memberId}
+		order by sfsx,flag1 desc,flag desc,FBSJ desc,ckzt) where ROWNUM &lt; 100
+	</select>
+	
+	<sql id="conditions1">
+		<if test="fbsjStart != null">
+	    <![CDATA[
+	        and FBSJ >= #{fbsjStart,jdbcType=DATE}
+	        ]]>
+		</if>
+		<if test="fbsjEnd != null">
+	    <![CDATA[
+	        and FBSJ < #{fbsjEnd,jdbcType=DATE} + 1
+	        ]]>
+		</if>
+		<if test="sxsjStart != null">
+	    <![CDATA[
+	        and SXSJ >= #{sxsjStart,jdbcType=DATE}
+	        ]]>
+		</if>
+		<if test="sxsjEnd != null">
+		 <![CDATA[
+	        and SXSJ < #{sxsjEnd,jdbcType=DATE} + 1
+	        ]]>
+		</if>
+		<if test="title != null">
+			and GGBT Like #{title}||'%'
+		</if>
+		<if test="fbzid != null">
+			and FBZID = #{fbzid,jdbcType=NUMERIC}
+		</if>
+		<if test="fbzid == null">
+		<![CDATA[
+	      and FBSJ  <trunc(SYSDATE+1)
+	        ]]>
+<!-- 			AND SXSJ >= trunc(SYSDATE) -->
+		</if>
+<!-- 		and SFSX is NULL -->
+	</sql>
+	
+	<sql id="conditions2">
+		<if test="fbsjStart != null">
+    	<![CDATA[
+	        and FBSJ >= #{fbsjStart,jdbcType=DATE}
+	        ]]>
+		</if>
+		<if test="fbsjEnd != null">
+	    <![CDATA[
+	        and FBSJ < #{fbsjEnd,jdbcType=DATE} + 1
+	        ]]>
+		</if>
+		<if test="sxsjStart != null">
+	    <![CDATA[
+	        and SXSJ >= #{sxsjStart,jdbcType=DATE}
+	        ]]>
+		</if>
+		<if test="sxsjEnd != null">
+	 	<![CDATA[
+	        and SXSJ < #{sxsjEnd,jdbcType=DATE} + 1
+	        ]]>
+		</if>
+		<if test="title != null">
+			and GGBT Like #{title}||'%'
+		</if>
+		<if test="fbzid != null">
+			and FBZID = #{fbzid,jdbcType=NUMERIC}
+		</if>
+		<if test="bmid != null">
+			and BMID Like #{bmid}||'%'
+		</if>
+		<if test="orgIdList != null and fbzid == null">
+			and
+			( TDID is NULL OR TDID = '' OR
+			<foreach item="item" index="index" collection="orgIdList" open="(" separator="or" close=")">
+				( TDID Like #{item}||'%' )
+			</foreach>
+			)
+		</if>
+		<if test="fbzid == null">
+		<![CDATA[
+	      and FBSJ  <= SYSDATE
+	        ]]>
+			AND SXSJ >= SYSDATE
+		</if>
+		and SFSX is NULL
+	</sql>
+
+
+</mapper>

@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.linkstec.lmspcom.newsalary.mapper.SalarySchemeMapper2">
+
+	<!-- 查询薪酬项目名称 -->
+	<select id="selectItemSetValueByRy"
+		resultType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueDto"
+		parameterType="map">
+		SELECT
+		fix.END_TIME "endTime",
+		FIX.START_TIME,
+		fix.ITEM_CODE,
+		FIX.USER_ID "memberId",
+		INFO.JYDY_NAME "jydyName",
+		INFO.JYDY_ID "jydyId",
+		info.CURRENT_TYPE "currentType",Info.xm "memberName",
+		ITEM.SALARY_NAME|| '(' || ITEM.SALARY_CODE || ')' "itemName",
+		fix.FIX_VALUE,FIX.ITEM_DESC "bz",FIX."ID",
+		fix.REC_GEN_TIME "recGenTime",
+		fix.REC_UPD_TIME "recUpdTime",
+		fix.REC_GEN_USER "recGenUser",
+		fix.REC_UPD_USER "recUpdUser"
+		FROM
+		T_XCITEM_FIXVALUE fix
+		LEFT JOIN (
+		SELECT
+		JBXX.RYID,
+		org.JG_NAME jydy_name,
+		jbxx.JGID JYDY_ID,
+		JBXX.CURRENT_TYPE,
+		JBXX.XM
+		FROM
+		T_EHR_JJR_JBXX jbxx
+		LEFT JOIN L_ORGANIZATION_EXPAND org on ORG.JGID = JBXX.JGID
+		) info ON
+		FIX.USER_ID =
+		info.RYID
+		LEFT JOIN T_XCITEM item
+		ON fix.item_code = item.salary_code
+		WHERE
+		fix.USER_ID is not NULL
+		<if test="jydyId!=null">
+			AND INFO.JYDY_ID = #{jydyId}
+		</if>
+		<if test="currentType!=null">
+			AND INFO.CURRENT_TYPE = #{currentType}
+		</if>
+		<if test="memberId!=null">
+			AND FIX.USER_ID = #{memberId}
+		</if>
+		<if test="itemCode!=null">
+			AND fix.ITEM_CODE =#{itemCode}
+		</if>
+		<if test="startTime!=null">
+			AND fix.START_TIME >=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			AND FIX.ENT_TIME &lt;=#{endTime}
+		</if>
+	</select>
+	<!-- 根据模板id查询公式类型 -->
+	<select id="selectGsTypeByModelId" parameterType="java.lang.Long"
+		resultType="com.linkstec.lmspcom.newsalary.dto.AddCommisssionModelCheckInDto">
+		SELECT b.COMMISSION_TYPE,b.COMMISSION_EXP_TYPE,a.MODEL_FORMUAL_ID from
+		T_XCTCMODEL A ,T_XCTCGSDY b WHERE
+		a.MODEL_FORMUAL_ID = b."ID" AND	a.MODEL_ID = #{modelId}
+	</select>
+	<!-- 按照科目级别查询所有科目 -->
+	<select id="selectItemInfo" resultType="com.linkstec.lmspcom.newsalary.po.TXcitem">
+		SELECT * from
+		T_XCITEM ORDER BY ITEM_LEVEL
+	</select>
+	<!-- 	查询经纪人岗位工资信息 -->
+	<select id="selectBasePayInfo" parameterType="map" resultType="map">
+		SELECT
+		"mt". ID "mt_80180",
+		"mt".MEM_ID "mt_80181",
+		"mt".PAY_VALUE
+		"mt_80182",
+		"mt".RECODE_TIME "mt_80183",
+		"mt".CREATER "mt_80184",
+		"80027".XM "80027_10462",
+		"80027".JGID "80027_12630",
+		"80027".CURRENT_TYPE "80027_81217",
+		org.JG_NAME "jydyName",
+		"80027".JGID "jydyId"
+		FROM
+		T_XC_BASEPAY /*LT*/ "mt"
+		LEFT JOIN T_EHR_JJR_JBXX "80027" ON "80027".RYID = "mt".MEM_ID
+		LEFT JOIN L_ORGANIZATION_EXPAND org on ORG.JGID = "80027".JGID
+		WHERE
+		"mt".MEM_ID IS NOT NULL
+		<if test="currentType!=null">
+			AND "80027".CURRENT_TYPE = #{currentType}
+		</if>
+		<if test="memberName!=null">
+			AND (
+			"80027".XM LIKE '%'||#{memberName}||'%'
+			OR "mt".MEM_ID LIKE #{memberName}
+			)
+		</if>
+		<if test="jydyId!=null">
+			AND "80027".JGID =#{jydyId}
+		</if>
+		ORDER BY "mt_80183" DESC
+	</select>
+	<!-- 查询客户提成方式设置 -->
+	<select id="selectModelUseObjKh" parameterType="map" resultType="map">
+		SELECT
+		"mt".USER_ID "mt_80142",
+		"mt".CUST_ID "mt_80143",
+		"mt".AUDIT_STATE "mt_80144",
+		"mt".REC_GEN_TIME "mt_80169",
+		"mt".REC_UPD_TIME "mt_80170",
+		"mt". ID "mt_80171",
+		"mt".USROBJ_TYPE "mt_80172",
+		"mt".MODEL_ID "mt_80176",
+		"mt".CUST_REL "mt_80359",
+		"mt".CREATOR "mt_80889",
+		"80006r".MODEL_NAME "80006r_80164",
+		"80006rT80005r".COMMISSION_NAME "80006rT80005r_80153",
+		"80006rT80005r". ID "80006rT80005r_80152",
+		"xx".khxm "custName",
+		"jbxx".JGID "jydyId",
+		"org".JG_NAME "jydyName",
+		"jbxx".xm "jjrName"
+		FROM
+		T_XCMODEL_USROBJ /*LT*/	"mt"
+		LEFT JOIN T_XCTCMODEL "80006r" ON "80006r".MODEL_ID = "mt".MODEL_ID
+		LEFT JOIN T_XCTCGSDY "80006rT80005r" ON "80006rT80005r". ID =	"80006r".MODEL_FORMUAL_ID
+		LEFT JOIN t_kh_xx "xx" ON "xx".KHID ="mt".CUST_ID
+		LEFT JOIN T_EHR_JJR_JBXX "jbxx" ON "jbxx".ryid ="mt".USER_ID
+		LEFT JOIN L_ORGANIZATION_EXPAND "org" ON "org".JGID = "jbxx".JGID
+		WHERE "mt".USROBJ_TYPE = 2
+		<if test="custId!=null">
+			and "mt".CUST_ID = #{custId}
+		</if>
+		<if test="modelName!=null">
+			AND "80006r".MODEL_NAME LIKE '%'||#{modelName}||'%'
+		</if>
+		<if test="khgx!=null">
+			AND "mt".CUST_REL =#{khgx}
+		</if>
+		<if test="memberId!=null">
+			AND "mt".USER_ID = #{memberId}
+		</if>
+		<if test="jydyId!=null">
+			AND "jbxx".JGID = #{jydyId}
+		</if>
+		ORDER BY
+		"mt_80169" DESC,
+		"mt_80170" DESC,
+		"mt_80171" DESC
+	</select>
+	
+<!-- 	查询渠道下所有的清算时间段 -->
+	<select id="selectorgQsTime" parameterType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueInDto" resultType="map">
+SELECT
+	CAL_TIME_START || '-' || CAL_TIME_END TIME,
+	CAL_TIME_START "START",
+	CAL_TIME_START ||CAL_TIME_END DATESTRING
+FROM
+	"CRM"."T_XC_INLIQUIDATION_FLOW"
+WHERE
+	ORG_ID = TO_CHAR (#{ jydyId })
+	</select>
+	
+	<!-- 	查询渠道下一条的清算但是未结算的结果 -->
+	<select id="selectQsButWjs" parameterType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueInDto" resultType="map">
+select * from (SELECT
+	A .BATCH_ID,
+	to_date(A.CAL_TIME_START,'yyyyMMdd') CAL_TIME_START,
+	to_date(A.CAL_TIME_END,'yyyyMMdd') CAL_TIME_END,
+	b.BATCH_ID BATCH_ID_B
+FROM
+	"CRM"."T_XC_INLIQUIDATION_FLOW" A
+LEFT JOIN (SELECT * FROM T_XC_JS WHERE fhzt = '1') b ON A .BATCH_ID = b.BATCH_ID
+WHERE a.ORG_ID = #{ jydyId }  order by a.rec_gen_time desc ) where ROWNUM &lt;=1
+	</select>
+	
+	
+	<!-- 	查询渠道下所有的清算时间段 -->
+	<select id="selectSalayList" parameterType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueInDto" resultType="map">
+SELECT
+	"mt".REC_GEN_TIME "mt_80967",
+	"mt". ID "mt_80969",
+	 substr("mt".YF_START,1,6) "calTime",
+	"mt".YF_START "mt_80970",
+	"mt".JYDY "mt_80971",
+	"mt".BZ "mt_80972",
+	"mt".JSR "mt_80973",
+	"mt".BATCH_ID "mt_80974",
+	"mt".FHZT "mt_80975",
+	"mt".FH_TIME "mt_80848",
+	"mt".FH_INFO "mt_80849",
+	"mt".YF_END "mt_81535",
+	"mt".DATESTRING ,
+	"80029".JG_NAME "80029_81030"
+FROM
+	(SELECT A.*,(A.YF_START||'-'||A.YF_END) DATESTRING FROM T_XC_JS A) "mt"
+LEFT JOIN L_ORGANIZATION_EXPAND /*LT*/
+"80029" ON "80029".JGID = "mt".JYDY
+WHERE 1 = 1
+<if test="calType!=null">
+and "mt".CAL_TYPE = #{calType}
+</if>
+<if test="jydyId!=null">
+			AND "mt".JYDY = #{jydyId}
+</if>
+<if test="fhzt!=null">
+			AND "mt".FHZT = #{fhzt}
+</if>
+<if test=" dateString!=null">
+		AND "mt".DATESTRING = #{dateString}
+</if>
+
+ORDER BY
+	"mt_80967" DESC
+	</select>
+	
+	
+	<!-- 	查询渠道下所有结算的时间段 -->
+	<select id="selectorgJsTime" parameterType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueInDto" resultType="map">
+SELECT
+	YF_START || '-' || YF_END TIME,
+	YF_START "START"
+FROM
+	"CRM"."T_XC_JS"
+WHERE
+	JYDY = TO_CHAR (#{ jydyId })
+	</select>
+	
+		<!-- 	查询外部渠道下所有清算还没结算的时间段 -->
+	<select id="QueryWbQdQsTimeBo" parameterType="com.linkstec.lmspcom.newsalary.dto.QueryItemSetValueInDto" resultType="map">
+SELECT * FROM 
+(
+SELECT
+	A.CAL_TIME_START,
+	A.CAL_TIME_END,
+	(A.CAL_TIME_START||'-'||A.CAL_TIME_END) TIME,
+	A.BATCH_ID,
+	A.ORG_ID,
+	B.BATCH_ID BATCH_ID_B
+FROM
+	"CRM"."T_XC_INLIQUIDATION_FLOW" A
+LEFT JOIN (
+	SELECT
+		*
+	FROM
+		"CRM"."T_XC_JS"
+	WHERE
+		FHZT = '2'
+) B ON A.BATCH_ID = B.BATCH_ID
+WHERE
+	INLIQUIDATION_STATE = '2'
+) WHERE BATCH_ID_B IS NULL AND ORG_ID = #{jydyId}
+	</select>
+	<select id="selectCommissionSet" resultType="com.linkstec.lmspcom.newsalary.dto.CommissionSaveTableDto">
+	select
+      t.model_weight,t1.user_type,t1.user_deptype,t.model_param ,t.model_id ,t1.user_level,t1.org_id user_dep
+      from  T_XCTCMODEL  t ,T_XCMODEL_USROBJ  t1 where t1.model_id = t.model_id 
+<!--       and t1.user_type = 16	 -->
+	</select>
+	<delete id="deleteCommissionSet">
+	delete from T_XCTCMODEL_DETAIL 
+	</delete>
+</mapper>

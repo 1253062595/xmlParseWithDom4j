@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.customer.mapper.C100102Mapper">
+<select id="selectProductSellDay" parameterType="map" resultType="map">
+
+SELECT tf.ryid,
+       tf.ryxm,
+       tf.jgid,
+       crm.fn_get_branchname(tf.jgid) jjrJgName,
+       
+       te.client_id,
+       tf.khxm,
+       th.orgid,
+       crm.fn_get_branchname(th.orgid) khJgName,
+       
+       te.product_code,
+       te.product_name,
+       tresult.term_no,
+       te.market_value,
+       
+       tresult.sell_start_date,
+       tresult.sell_end_date
+
+  FROM (SELECT sj.client_id,
+               pp.relate_code product_code,
+               sum(nvl(sj.market_value, 0)) market_value,
+               pp.product_name
+          FROM jhdc.stockjour sj
+          LEFT JOIN jhdc.productproperty pp
+            ON sj.product_code = pp.product_code
+         WHERE 1=1 
+         <if test="cpdm!=null">
+			and (pp.relate_code like trim(' ' FROM #{cpdm})||'%' or pp.product_name like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+          and sj.current_share - sj.back_share > 0
+           and pp.sub_type IN ('F1', 'F2', 'F3')
+         GROUP BY sj.client_id, pp.relate_code, pp.product_name) te
+ inner JOIN (
+             select a.product_code,
+                     a.sell_start_date,
+                     a.sell_end_date,
+                     a.term_no
+               from (SELECT ta.product_code,
+                             ta.sell_start_date,
+                             ta.sell_end_date,
+                             ta.term_no,
+                             row_number() OVER(PARTITION BY ta.product_code ORDER BY ta.term_no) row_no
+                        FROM jhdc.v_fxjh_info ta
+                        LEFT JOIN jhdc.productproperty tb
+                          ON ta.product_code = tb.product_code
+                       WHERE tb.sub_type IN ('F1', 'F2', 'F3')
+                         and ta.sell_end_date &gt;= to_char(sysdate, 'yyyymmdd')) a
+              where a.row_no = 1
+             
+             UNION ALL
+             
+             SELECT tc.relate_code     product_code,
+                     tc.sell_start_date,
+                     tc.sell_end_date,
+                     1  term_no
+               FROM hs_opfund.productarg tc
+               LEFT JOIN jhdc.productproperty td
+                 ON tc.fund_code = td.product_code
+              WHERE td.sub_type IN ('F1', 'F2', 'F3')
+                and tc.sell_end_date &gt;= to_char(sysdate, 'yyyymmdd')
+                AND NOT EXISTS
+              (SELECT 1
+                       FROM jhdc.v_fxjh_info te
+                      WHERE te.relate_code = tc.fund_code)
+             
+             ) tresult
+    ON te.product_code = tresult.product_code
+
+ inner JOIN (select g.ryid, g.ryxm, to_char(g.khid) khid, g.khxm, a.jgid
+               from crm.t_gxgl_gxmx g
+              inner join crm.t_ehr_jjr_jbxx a
+                 on a.ryid = g.ryid
+              where 1 = 1
+               <if test="ryid!= null">
+			   and   g.ryid in
+			   <foreach collection="ryid" open="(" separator="," close=")" item="item">
+			   #{item}
+			   </foreach>
+		       </if> 
+		        <if test="jgid!= null">
+			   and  a.jgid in
+			   <foreach collection="jgid" open="(" separator="," close=")" item="item">
+			   #{item}
+			   </foreach>
+		       </if> 
+) tf
+    ON te.client_id = tf.khid
+  LEFT JOIN crm.t_kh_xx th
+    ON th.khid = te.client_id
+ WHERE 1=1 and th.khlx = 00
+ <if test="startTime!=null and endTime!=null">
+	and (
+	(tresult.sell_start_date &lt;=#{startTime} 
+	and tresult.sell_end_date&gt;=#{startTime}) 
+	or
+	(tresult.sell_start_date &gt;=#{startTime}
+	and  tresult.sell_start_date &lt;=#{endTime})
+	)
+ </if>
+ order by tf.ryid,te.client_id,te.product_code
+</select>
+
+<select id="selectProductSellDayHz" parameterType="map" resultType="Double">
+select sum(nvl(market_value, 0)) from (
+SELECT tf.ryid,
+       tf.ryxm,
+       tf.jgid,
+       crm.fn_get_branchname(tf.jgid) jjrJgName,
+       
+       te.client_id,
+       tf.khxm,
+       th.orgid,
+       crm.fn_get_branchname(th.orgid) khJgName,
+       
+       te.product_code,
+       te.product_name,
+       tresult.term_no,
+       te.market_value,
+       
+       tresult.sell_start_date,
+       tresult.sell_end_date
+
+  FROM (SELECT sj.client_id,
+               pp.relate_code product_code,
+               sum(nvl(sj.market_value, 0)) market_value,
+               pp.product_name
+          FROM jhdc.stockjour sj
+          LEFT JOIN jhdc.productproperty pp
+            ON sj.product_code = pp.product_code
+         WHERE 1=1 
+         <if test="cpdm!=null">
+			and (pp.relate_code like trim(' ' FROM #{cpdm})||'%' or pp.product_name like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+          and sj.current_share - sj.back_share > 0
+           and pp.sub_type IN ('F1', 'F2', 'F3')
+         GROUP BY sj.client_id, pp.relate_code, pp.product_name) te
+ inner JOIN (
+             select a.product_code,
+                     a.sell_start_date,
+                     a.sell_end_date,
+                     a.term_no
+               from (SELECT ta.product_code,
+                             ta.sell_start_date,
+                             ta.sell_end_date,
+                             ta.term_no,
+                             row_number() OVER(PARTITION BY ta.product_code ORDER BY ta.term_no) row_no
+                        FROM jhdc.v_fxjh_info ta
+                        LEFT JOIN jhdc.productproperty tb
+                          ON ta.product_code = tb.product_code
+                       WHERE tb.sub_type IN ('F1', 'F2', 'F3')
+                         and ta.sell_end_date &gt;= to_char(sysdate, 'yyyymmdd')) a
+              where a.row_no = 1
+             
+             UNION ALL
+             
+             SELECT tc.relate_code     product_code,
+                     tc.sell_start_date,
+                     tc.sell_end_date,
+                     1  term_no
+               FROM hs_opfund.productarg tc
+               LEFT JOIN jhdc.productproperty td
+                 ON tc.fund_code = td.product_code
+              WHERE td.sub_type IN ('F1', 'F2', 'F3')
+                and tc.sell_end_date &gt;= to_char(sysdate, 'yyyymmdd')
+                AND NOT EXISTS
+              (SELECT 1
+                       FROM jhdc.v_fxjh_info te
+                      WHERE te.relate_code = tc.fund_code)
+             
+             ) tresult
+    ON te.product_code = tresult.product_code
+
+  inner JOIN (select g.ryid, g.ryxm, to_char(g.khid) khid, g.khxm, a.jgid
+               from crm.t_gxgl_gxmx g
+              inner join crm.t_ehr_jjr_jbxx a
+                 on a.ryid = g.ryid
+              where 1 = 1
+               <if test="ryid!= null">
+			   and   g.ryid in
+			   <foreach collection="ryid" open="(" separator="," close=")" item="item">
+			   #{item}
+			   </foreach>
+		       </if> 
+		        <if test="jgid!= null">
+			   and  a.jgid in
+			   <foreach collection="jgid" open="(" separator="," close=")" item="item">
+			   #{item}
+			   </foreach>
+		       </if> 
+) tf
+    ON te.client_id = tf.khid
+  LEFT JOIN crm.t_kh_xx th
+    ON th.khid = te.client_id
+ WHERE 1=1 and th.khlx = 00
+ <if test="startTime!=null and endTime!=null">
+	and (
+	(tresult.sell_start_date &lt;=#{startTime} 
+	and tresult.sell_end_date&gt;=#{startTime}) 
+	or
+	(tresult.sell_start_date &gt;=#{startTime}
+	and  tresult.sell_start_date &lt;=#{endTime})
+	)
+ </if>
+ order by tf.ryid,te.client_id,te.product_code
+)
+</select>
+<select id="selectKhGxgl" parameterType="map" resultType="map">
+select t.ryxm, a.bgdh, a.jgid, crm.fn_get_branchname(a.jgid) jjrJgName,c.zhzt
+  from crm.t_Gxgl_Gxmx t
+ inner join crm.t_Ehr_Jjr_Jbxx a
+    on t.ryid = a.ryid
+ inner join crm.T_kh_xx c
+    on t.khid = c.khid
+ where c.khlx not in ('11', '10') /*剔除机构户*/
+   and c.zhzt in ( '0' ,'4')/*只要账户正常\未绑银行卡的状态*/
+   and t.gxly != '5' /*去除虚拟关系*/
+    and a.current_type!='13'/*去除网络经纪人挂的客户*/
+     and (to_char(t.khid) like trim(' ' FROM #{clientName})  or c.gtsj like trim(' ' FROM #{clientName})
+     or c.zjhm like trim(' ' FROM #{clientName})) 
+</select>
+<select id="selectKhnum" resultType="java.lang.Long"
+		parameterType="map">
+		select count(*)
+		from T_KH_XX /*LT*/
+		where
+		khid=#{khid}
+</select>
+</mapper>

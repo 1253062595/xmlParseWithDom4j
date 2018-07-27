@@ -1,0 +1,3656 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.customer.mapper.C100101Mapper">
+
+    <select id="selectCustInfoBySql" resultType="map" parameterType="map">
+		${sql}
+	</select>
+	<select id="getKhJb" parameterType="long" resultType="string">
+		SELECT
+		FLFJ_NAME FROM T_FLFJ_TAB
+		WHERE FLFJ_ID IN (SELECT FJ_ID FROM	T_FLFJ_FJ_CUST WHERE CUST_ID =
+		#{custId})
+	</select>
+	
+	<update id="UpKfStatus" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where DEAL_USER=#{dealUser}
+	</update>
+	
+	<update id="UpKfStatus1" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where 
+		DEAL_USER=#{dealUser} and tag=#{tag}
+	</update>
+	<update id="UpKfStatus2" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where 
+		DEAL_USER=#{dealUser} and status=#{status} 
+	</update>
+	<update id="UpKfStatus3" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where 
+		DEAL_USER=#{dealUser} and status=#{status} and tag=#{tag}
+	</update>
+	<update id="UpKfStatus4" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where DEAL_USER=#{dealUser} 
+	</update>
+	<update id="UpKfStatus5" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		status='3'
+		where 
+		DEAL_USER=#{dealUser} and status=#{status}
+	</update>
+	
+	
+	
+	
+
+   <update id="UpKfTask" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser}
+	</update>	
+	
+    <update id="UpKfTask1" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser} and TAG=#{tag}
+	</update>	
+	<update id="UpKfTask2" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser} and status=#{status} 
+	</update>	
+	<update id="UpKfTask3" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser} and tag=#{tag} and status=#{status}
+	</update>
+	<update id="UpKfTask4" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser} 
+	</update>		
+	 <update id="UpKfTask5" parameterType="map">
+		UPDATE T_KF_TASK
+		SET
+		DEAL_USER=#{dealUser} where DEAL_USER=#{ydealUser} and STATUS=#{status}
+	</update>
+	
+	
+	
+	
+	
+	
+	<select id="selectdealUser" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{dealUser}
+   </select>
+   
+   <select id="selectdealUser1" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{dealUser} and a.tag=#{tag} 
+   </select>
+   <select id="selectdealUser2" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{dealUser} and a.status=#{status} 
+   </select>
+   <select id="selectdealUser3" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{dealUser} and a.status=#{status} and a.tag=#{tag}
+   </select>
+<select id="selectdealUser4" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where trim(a.tag) is null and a.deal_user=#{dealUser}
+   </select>   
+<select id="selectdealUser5" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{dealUser} and a.status=#{status}
+   </select> 
+ 
+ 
+   
+   
+   <select id="updatedealUser" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{ydealUser}
+   </select>
+   <select id="updatedealUser1" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{ydealUser} and a.tag=#{tag}
+   </select>
+   
+   <select id="updatedealUser2" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a  where  a.deal_user=#{ydealUser} and status=#{status}
+   </select>
+ <select id="updatedealUser3" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a  where a.deal_user=#{ydealUser} and status=#{status} and a.tag=#{tag}
+   </select>  
+ <select id="updatedealUser4" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where  a.deal_user=#{ydealUser}
+   </select>  
+ <select id="updatedealUser5" parameterType="map" resultType="java.lang.String">
+select count(distinct a.deal_user) from crm.T_KF_TASK  a where a.deal_user=#{ydealUser} and a.status=#{status}
+   </select>  
+   
+   <update id="UpGiftPrice" parameterType="map">
+		UPDATE jhdc.giftsinfo
+		SET
+		price=#{price}
+		where 
+		id=#{id} 
+	</update>
+    
+	
+	 <update id="UpVmLs" parameterType="map">
+		UPDATE jhdc.vipusedjour
+		SET
+		reason=#{reason}
+		where 
+		id=#{id}
+	</update>
+   
+	<select id="getKhFxcsnl" parameterType="long" resultType="string">
+		SELECT FXCSNL from T_KH_XWTZ WHERE KHID = #{custId})
+	</select>
+	<!-- 根据人员id查找人员的部门所在的上级部门 -->
+	<select id="findSuperOrgByMemberId" parameterType="String"
+		resultType="com.linkstec.lmspcom.auth.org.po.LOrganization">
+		SELECT
+		TOP 1
+		org_id id,org_name name,org_desc 'desc',super_id
+		superId,org_type
+		type,DELETE_FLAG,ORG_NUM,REC_VERSION
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID IN (
+		SELECT
+		ORG_ID
+		FROM
+		L_MEMBER_ORGANIZATION_REL
+		WHERE
+		MEMBER_ID = #{createId}
+		)
+	</select>
+	<!-- 查询流程发起人所在部门的上级部门中属于对应角色的人员id -->
+	<select id="findMemberIdsByMemberidAndSuperId" parameterType="map"
+		resultType="String">
+		SELECT A.MEMBER_ID FROM L_MEMBER_ROLE_REL A, (
+		SELECT
+		*
+		FROM
+		L_MEMBER_ORGANIZATION_REL
+		WHERE
+		ORG_ID IN (
+		SELECT
+		B.SUPER_ID
+		FROM
+		L_MEMBER_ORGANIZATION_REL A,
+		L_ORGANIZATION B
+		WHERE
+		A.ORG_ID = B.ORG_ID
+		AND A.MEMBER_ID = #{createId}
+		)
+		) B WHERE A.MEMBER_ID = B.MEMBER_ID AND
+		A.ROLE_ID = #{roleId}
+	</select>
+
+	<select id="findOneBykhid" parameterType="long" resultType="map">
+		SELECT
+		A .KHLX "khlx",
+		A .KHLY "khly",
+		A .GTSJ "phone",
+		b.SCORE "score",
+		d.khdj "scorelevel",
+		(SELECT JG_NAME FROM L_ORGANIZATION_EXPAND
+		WHERE jgid = a.orgid) "orgname"
+		FROM
+		T_KH_XX  A
+		LEFT JOIN
+		jhdc.clientpropertyjour
+		b ON to_char(A.KHID) = b.CLIENT_ID
+		left join T_kh_xx_zh d on a.khid=d.khid
+		WHERE 
+		a.KHID=#{khid}
+	</select>
+	<select id="findOneInfo" parameterType="long" resultType="map">
+		SELECT
+		a.GTSJ "phone",
+		b.JTHM "jtdh",
+		b.DWHM "dwdh",
+		b.CHHM "chhm",
+		b.JTLXDZ
+		"homeAdress",
+		a.EMAIL "email",
+		b.KH_SF "sf",
+		b.SFZ_DZ "zjdz",
+		a.ZJHM
+		"zjNumber",
+		b.JG "jg",
+		b.BGDZ "bgdz",
+		a.MZ "mz",
+		b.XL "xl",
+		a.GJ "gj",
+		b.DWMC "szdw",
+		b.SFZ_HM "schy",
+		b.DWLX "qylx",
+		b.SR "nsr",
+		b.CSRQ "csrq"
+		FROM
+		T_KH_XX  a
+		LEFT JOIN
+		T_KH_XX_EXTEND b ON A.KHID = b.CLIENT_ID
+		WHERE
+		a.KHID=#{khid}
+	</select>
+	
+	<select id="findHyxx" parameterType="long" resultType="map">
+		select t.last_upgrade_date "lastUpgradeDate",/*最近升级时间*/
+       t.birthday_gift_flag "birthdayGiftFlag",/*是否领取生日礼*/
+       t.birthday_gift_time "birthdayGiftTime",/*领取时间*/
+       b.qualified_flag "qualifiedFlag",/*是否完成合格投资者认证*/
+       t.medal_flag "medalFlag",/*是否领取勋章礼*/
+       t.medal_time "medalTime",/*领取时间*/
+       t.used_vip "usedVip",/*使用优先购买兑换券*/
+       t.en_vip "enVip"/*剩余未使用优先购买兑换券*/
+ from jhdc.clientpropertyjour t left join jhdc.clientinfox b on t.client_id=b.client_id
+		WHERE
+		t.client_id=#{khid}
+	</select>
+	
+	<select id="selectZjlsView" parameterType="map" resultType="map">
+	select * 
+	  from(
+		SELECT
+		 to_date(to_char(A.Init_Date || lpad(A.INIT_TIME, 6, '0')),
+                          'yyyyMMdd hh24:mi:ss') "initDate",
+                 
+         to_date(to_char(A.CURR_DATE || lpad(A.CURR_TIME, 6, '0')),
+                          'yyyyMMdd hh24:mi:ss') "currDate",
+		A.OP_ENTRUST_WAY "opEntrustWay",
+		A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+		A.TREAT_STATUS,
+		A.CLIENT_ID,
+		A.CLIENT_NAME,
+		A.PRODUCT_TYPE,
+	    nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",
+		A.PRODUCT_NAME "productName",
+		A.PRODUCT_CODE "productCode",
+		A.SHARES ,
+		A.DEAL_SHARES,
+		A.BALANCE,
+		A.DEAL_BALANCE,
+		A.BS_FLAG,
+		A.OPBUSINESS_FLAG "businessFlag",
+		A.PAY_TYPE "payType",
+		do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,
+		A.TRADE_TYPE,
+		A.CURR_DATE CURRDATE1,
+		A.Init_Date,
+        A .CURR_TIME
+		FROM JHDC.HISFULLTRADEINFOJOUR
+		A
+		LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+		WHERE CLIENT_ID = #{khid} and A.OPBUSINESS_FLAG!=8017
+		UNION ALL
+	    SELECT
+	    to_date(to_char(A.Init_Date || lpad(A.INIT_TIME, 6, '0')),
+                          'yyyyMMdd hh24:mi:ss') "initDate",
+                 
+        to_date(to_char(A.CURR_DATE || lpad(A.CURR_TIME, 6, '0')),
+                          'yyyyMMdd hh24:mi:ss') "currDate",
+		A.op_entrust_way "opEntrustWay",
+		A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+		A.TREAT_STATUS,
+		A.CLIENT_ID,
+		A.CLIENT_NAME,
+		A.PRODUCT_TYPE,
+		nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",
+		A.PRODUCT_NAME "productName",
+		A.PRODUCT_CODE "productCode",
+		A.SHARES ,
+		A.DEAL_SHARES,
+		A.BALANCE,
+		A.DEAL_BALANCE,
+		A.BS_FLAG,
+		A.OPBUSINESS_FLAG "businessFlag",
+		A.PAY_TYPE "payType",
+		do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,
+		A.TRADE_TYPE,
+		A.CURR_DATE CURRDATE1,
+		A.Init_Date,
+        A .CURR_TIME
+		FROM JHDC.HISNEN_TRADEINFOJOUR A
+       LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+       WHERE CLIENT_ID = #{khid}  and A.product_code!='990001' and A.OPBUSINESS_FLAG!=8017
+       ) a
+       where 1=1
+		<if test="startTime==null and endTime==null">
+			and A.CURR_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and (A."productCode" like trim(' ' FROM #{cpdm})||'%' or A."productName" like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="wtzt!=null">
+		and a."entrustStatus"=#{wtzt}
+		</if>
+		<if test="productType!=null">
+			AND A.PRODUCT_TYPE IN
+		<foreach collection="productType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		
+		<if test="mmfx!=null">
+			AND A."businessFlag" IN
+		<foreach collection="mmfx" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="payType!=null">
+			AND A."payType" IN
+		<foreach collection="payType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="gmtj!=null">
+			and a.TRADE_TYPE=#{gmtj}
+		</if>
+		<if test="startTime!=null">
+			and  a.CURRDATE1 &gt;= #{startTime} 
+		</if>
+		<if test="endTime!=null">
+			and  a.CURRDATE1 &lt;= #{endTime}
+		</if>
+		<if test="orderStr!=null">
+		order by ${orderStr}
+		</if>
+		order by a."currDate"
+</select>
+
+
+<select id="selectTakeGoods" parameterType="map" resultType="map">
+	select * from (
+select a.fund_account,
+       to_date(to_char(a.CURR_DATE || lpad(a.CURR_TIME, 6, '0')),
+               'yyyyMMdd hh24:mi:ss') "currDate",
+       a.status,
+       a.fund_code,
+       b.product_name,
+       a.amount,
+       a.curr_date
+  from hs_opfund.takegoodsinfo a
+  left join jhdc.productproperty b
+    on a.fund_code = b.product_code
+    where a.fund_account= #{khid}
+    
+    union all
+    select a.fund_account,
+       to_date(to_char(a.CURR_DATE || lpad(a.CURR_TIME, 6, '0')),
+               'yyyyMMdd hh24:mi:ss') "currDate",
+       a.status,
+       a.fund_code,
+       b.product_name,
+       a.amount,
+       a.curr_date
+  from hs_his.histakegoodsinfo a
+  left join jhdc.productproperty b
+    on a.fund_code = b.product_code
+    where a.fund_account= #{khid})a
+	where 1=1
+		<if test="startTime!=null">
+			and  a.curr_date&gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and  a.curr_date&lt;=#{endTime}
+		</if>
+		<if test="cpdm!=null">
+			and (a.fund_code like trim(' ' FROM #{cpdm})||'%' or a.product_name like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		order by "currDate" desc
+</select>
+<select id="selectAdventrust" parameterType="map" resultType="map">
+	select * from (
+         	select   
+               t.business_flag,
+               t.fund_code,
+               t.CURR_DATE,
+               to_date(to_char(t.CURR_DATE || lpad(t.CURR_TIME, 6, '0')),
+                       'yyyyMMdd hh24:mi:ss') currDate,
+               a.product_type,
+               (select b.product_type_name
+                  from jhdc.producttypeconfig b
+                 where b.product_type = a.product_type) productTypeName, 
+               a.product_name,
+               t.balance,
+               t.shares
+          from hs_his.hisofadventrust t
+          left join jhdc.productproperty a
+            on t.fund_code = a.product_code
+           and t.fund_company = a.fund_company
+         where (a.product_type in ('op') or a.up_product_type in ('w'))
+           and t.business_flag in ('52', '24')  and t.fund_code not in ('Y80003','Y80004')  and t.client_id= #{khid}
+        
+        union all
+        
+            select   
+               t.business_flag,
+               t.fund_code,
+               t.CURR_DATE,
+               to_date(to_char(t.CURR_DATE || lpad(t.CURR_TIME, 6, '0')),
+                       'yyyyMMdd hh24:mi:ss') currDate,
+               a.product_type,
+               (select b.product_type_name
+                  from jhdc.producttypeconfig b
+                 where b.product_type = a.product_type) productTypeName,
+               a.product_name,
+               t.balance,
+               t.shares
+          from hs_opfund.ofadventrust t
+          left join jhdc.productproperty a
+            on t.fund_code = a.product_code
+           and t.fund_company = a.fund_company
+         where (a.product_type in ('op') or a.up_product_type in ('w'))
+           and t.business_flag in ('52', '24') and t.fund_code not in ('Y80003','Y80004') and t.client_id= #{khid}
+    )
+	where 1=1 
+		<if test="startTime!=null">
+			and  CURR_DATE&gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and  CURR_DATE&lt;=#{endTime}
+		</if>
+		<if test="cpdm!=null">
+			and (fund_code like trim(' ' FROM #{cpdm})||'%' or product_name like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="businessFlag!=null">
+			and business_flag=#{businessFlag}
+		</if>
+		order by  currDate
+</select>
+
+<select id="selectAllTradeInfo" parameterType="map" resultType="map">
+select * 
+    from(
+    SELECT
+    to_date(to_char(A.CURR_DATE||lpad(A.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  "currDate",
+     A.INIT_DATE,
+    (SELECT ORG_NAME FROM L_ORGANIZATION WHERE ORG_ID = C.ORGID) "orgname",
+    C.ORGID,
+    A.CLIENT_ID,
+    A.CLIENT_NAME,
+    B.Up_Product_Type "upProductType",
+    A.PRODUCT_TYPE "productType",
+    nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",
+    A.PRODUCT_NAME "productName",
+     A.PRODUCT_CODE,
+    decode(B.Up_Product_Type,'w',T.Relate_Code,A.PRODUCT_CODE) "productCode",
+    A.Fund_Company "fundCompany",  
+    A.DEAL_BALANCE,
+    A.BS_FLAG,
+    A.OPBUSINESS_FLAG "businessFlag",
+    A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+    A.PAY_TYPE "payType", 
+    do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,    
+    A.TREAT_STATUS,
+    A.OP_ENTRUST_WAY "opEntrustWay",
+    A.TRADE_TYPE,
+    D.RYID,
+    D.RYXM
+    FROM JHDC.HISFULLTRADEINFOJOUR  A
+    LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+    LEFT JOIN JHDC.PRODUCTPROPERTY T ON A.PRODUCT_CODE=T.PRODUCT_CODE
+    INNER JOIN T_KH_XX  C ON A.CLIENT_ID=C.KHID
+    INNER JOIN T_GXGL_GXMX  D ON A.CLIENT_ID=D.KHID
+    WHERE   A.OPBUSINESS_FLAG!=8017 
+    UNION ALL
+    SELECT
+    to_date(to_char(A.CURR_DATE||lpad(A.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  "currDate",
+     A.INIT_DATE,
+    (SELECT ORG_NAME FROM L_ORGANIZATION WHERE ORG_ID = C.ORGID) "orgname",
+    C.ORGID,
+    A.CLIENT_ID,
+    A.CLIENT_NAME, 
+    B.Up_Product_Type "upProductType",  
+    A.PRODUCT_TYPE "productType",
+    nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",    
+    A.PRODUCT_NAME "productName",
+    A.PRODUCT_CODE,
+    decode(B.Up_Product_Type,'w',T.Relate_Code,A.PRODUCT_CODE) "productCode",
+    A.Fund_Company "fundCompany",   
+    A.DEAL_BALANCE,
+    A.BS_FLAG,
+    A.OPBUSINESS_FLAG "businessFlag",
+   A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+    A.PAY_TYPE "payType",
+    do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,
+    A.TREAT_STATUS,
+    A.op_entrust_way "opEntrustWay",
+    A.TRADE_TYPE,
+    D.RYID,
+    D.RYXM
+    FROM JHDC.HISNEN_TRADEINFOJOUR  A
+    LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+    LEFT JOIN JHDC.PRODUCTPROPERTY T ON A.PRODUCT_CODE=T.PRODUCT_CODE
+    INNER JOIN T_KH_XX  C ON A.CLIENT_ID=C.KHID 
+    INNER JOIN T_GXGL_GXMX  D ON A.CLIENT_ID=D.KHID
+    WHERE A.product_code!='990001' and A.OPBUSINESS_FLAG!=8017
+     ) a
+       where 1=1
+		<if test="startTime==null and endTime==null">
+			and  A.INIT_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and (A.PRODUCT_CODE like trim(' ' FROM #{cpdm})||'%' or A."productName" like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="gmtj!=null">
+			and a.TRADE_TYPE=#{gmtj}
+		</if>
+		
+		<if test="wtzt!=null">
+			and a."entrustStatus" IN
+		<foreach collection="wtzt" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		
+		<if test="hzzt!=null">
+			and A.TREAT_STATUS  IN
+		<foreach collection="hzzt" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		
+		<if test="payType!=null">
+			AND A."payType" IN
+		<foreach collection="payType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="mmfx!=null">
+			AND A."businessFlag" IN
+		<foreach collection="mmfx" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="productType!=null">
+			AND A."productType" IN
+		<foreach collection="productType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="khid!=null">
+			and (A.CLIENT_ID like trim(' ' FROM #{khid})||'%' or A.CLIENT_NAME like trim(' ' FROM #{khid})||'%' )
+		</if>
+		<if test="jgid!=null">
+			AND A.ORGID IN
+		<foreach collection="jgid" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="bsFlag!=null">
+			and A.bs_flag=#{bsFlag}
+		</if>
+		<if test="startTime!=null">
+			and A.INIT_DATE &gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and A.INIT_DATE &lt;=#{endTime}
+		</if>
+		<if test="ryid!= null">
+			and A.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> 
+		order by A."currDate" desc,A.ryid,A.Client_Id,A.Product_Code
+</select>
+
+<select id="selectAllTradeInfoHz" parameterType="map" resultType="Double">
+select sum(nvl(DEAL_BALANCE,0)) from  (
+select * 
+    from(
+    SELECT
+    to_date(to_char(A.CURR_DATE||lpad(A.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  "currDate",
+    A.INIT_DATE,
+    (SELECT ORG_NAME FROM L_ORGANIZATION WHERE ORG_ID = C.ORGID) "orgname",
+    C.ORGID,
+    A.CLIENT_ID,
+    A.CLIENT_NAME,
+    A.PRODUCT_TYPE,
+    nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",
+    A.PRODUCT_NAME "productName",
+    A.PRODUCT_CODE "productCode",
+    A.DEAL_BALANCE,
+    A.BS_FLAG,
+    A.OPBUSINESS_FLAG "businessFlag",
+    A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+    A.PAY_TYPE "payType",  
+    do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,   
+    A.TREAT_STATUS,
+    A.OP_ENTRUST_WAY "opEntrustWay",
+    A.TRADE_TYPE,
+    D.RYID,
+    D.RYXM
+    FROM JHDC.HISFULLTRADEINFOJOUR  A
+    LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+    INNER JOIN T_KH_XX  C ON A.CLIENT_ID=C.KHID
+    INNER JOIN T_GXGL_GXMX  D ON A.CLIENT_ID=D.KHID
+    WHERE   A.OPBUSINESS_FLAG!=8017 
+    UNION ALL
+    SELECT
+    to_date(to_char(A.CURR_DATE||lpad(A.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  "currDate",
+    A.INIT_DATE,
+    (SELECT ORG_NAME FROM L_ORGANIZATION WHERE ORG_ID = C.ORGID) "orgname",
+    C.ORGID,
+    A.CLIENT_ID,
+    A.CLIENT_NAME,  
+    A.PRODUCT_TYPE,
+    nvl(B.PRODUCT_TYPE_NAME,'其他') "productTypeName",    
+    A.PRODUCT_NAME "productName",
+    A.PRODUCT_CODE "productCode",    
+    A.DEAL_BALANCE,
+    A.BS_FLAG,
+    A.OPBUSINESS_FLAG "businessFlag",
+   A.TRADE_TYPE||A.ENTRUST_STATUS "entrustStatus",
+    A.PAY_TYPE "payType",
+    do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,
+    A.TREAT_STATUS,
+    A.op_entrust_way "opEntrustWay",
+    A.TRADE_TYPE,
+    D.RYID,
+    D.RYXM
+    FROM JHDC.HISNEN_TRADEINFOJOUR  A
+    LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+    INNER JOIN T_KH_XX  C ON A.CLIENT_ID=C.KHID 
+    INNER JOIN T_GXGL_GXMX  D ON A.CLIENT_ID=D.KHID
+    WHERE A.product_code!='990001' and A.OPBUSINESS_FLAG!=8017
+     ) a
+       where 1=1
+		<if test="startTime==null and endTime==null">
+			and A.INIT_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and (A."productCode" like trim(' ' FROM #{cpdm})||'%' or A."productName" like trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="gmtj!=null">
+			and a.TRADE_TYPE=#{gmtj}
+		</if>
+		<if test="wtzt!=null">
+			and a."entrustStatus" IN
+		<foreach collection="wtzt" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		
+		<if test="hzzt!=null">
+			and A.TREAT_STATUS  IN
+		<foreach collection="hzzt" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="payType!=null">
+			AND A."payType" IN
+		<foreach collection="payType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="mmfx!=null">
+			AND A."businessFlag" IN
+		<foreach collection="mmfx" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="productType!=null">
+			AND A.PRODUCT_TYPE IN
+		<foreach collection="productType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="khid!=null">
+			and (A.CLIENT_ID like trim(' ' FROM #{khid})||'%' or A.CLIENT_NAME like trim(' ' FROM #{khid})||'%' )
+		</if>
+		<if test="jgid!=null">
+			AND A.ORGID IN
+		<foreach collection="jgid" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="bsFlag!=null">
+			and A.bs_flag=#{bsFlag}
+		</if>
+		<if test="startTime!=null">
+			and A.INIT_DATE&gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and A.INIT_DATE&lt;=#{endTime}
+		</if>
+		<if test="ryid!= null">
+			and A.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> 
+		order by A.INIT_DATE desc,A.ryid)
+</select>
+
+<select id="selectCurrentAllTradeInfo" parameterType="map" resultType="map">
+SELECT D.* from (
+SELECT to_date(to_char(A.CURR_DATE || lpad(A.CURR_TIME, 6, '0')),
+               'yyyyMMdd hh24:mi:ss') CURR_DATE,
+       A.client_id,
+       A.client_name,
+       C.ryid,
+       C.ryxm,
+       A.PRODUCT_TYPE,
+       nvl(B.PRODUCT_TYPE_NAME, '其他') "productTypeName",
+       A.PRODUCT_CODE,
+       A.SHARES,
+       A.BALANCE,
+       A.BUSINESS_FLAG,
+       A.PAY_TYPE,
+       A.TRADE_TYPE,
+       A.TRADE_TYPE || A.ENTRUST_STATUS ENTRUST_STATUS,
+       A.OP_ENTRUST_WAY,
+       A.TREAT_STATUS,
+       A.ADV_FLAG,
+       do_masking3(A.BANK_ACCOUNT) BANK_ACCOUNT,
+       A.BANK_NAME      
+  FROM JHDC.V_RT_TRADEINFO A
+  LEFT JOIN jhdc.productTypeConfig B
+    ON A.product_type = B.product_type
+  inner join crm.T_GXGL_GXMX C on a.client_id=C.khid
+ order by A.CURR_DATE) D
+       where 1=1
+		<if test="khid!=null">
+			and (D.CLIENT_ID like trim(' ' FROM #{khid})||'%' or D.CLIENT_NAME like trim(' ' FROM #{khid})||'%' )
+		</if>
+		<if test="ryid!= null">
+			and D.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> 
+</select>
+
+<select id="selectDailyStock" parameterType="map" resultType="map">
+select l.jg_name,g.*,j.fund_company "fundCompany",j.product_code,decode(p.Up_Product_Type, 'w', p.Relate_Code, j.PRODUCT_CODE) "productCode",p.product_name "productName",p.product_type "productType",p.up_product_type "upProductType",j.market_value
+		  from 
+		  (select j.client_id,sum(nvl(j.market_value,0)) market_value,
+		  j.product_type,j.product_code,j.fund_company
+               from jhdc.hisstockjour j
+              where j.init_date between #{startTime} and
+				#{endTime}
+              and j.current_share - j.back_share > 0
+             <if test="productType != null">
+              	and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+              </if>
+              <if test="cpdm!=null">
+			and (j.product_code like trim(' ' FROM #{cpdm})||'%' )
+		      </if>
+			   group by j.client_id,j.product_code,j.product_type,j.fund_company)j
+		  inner join (select g.ryid,g.ryxm, to_char(g.khid) khid,g.khxm from crm.t_gxgl_gxmx g 
+		  	where  exists(select 1 from crm.t_ehr_jjr_jbxx a where ryid=g.ryid)
+		  	    <if test="ryid!= null">
+			and  ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> ) g
+		  on g.khid = j.client_id
+		  left join (select c.client_id,c.branch_no from jhdc.clientinfox c ) c
+    		on c.client_id = g.khid
+		  left join(select l.jgid,l.jg_name from l_organization_expand l) l
+		  on l.jgid = c.branch_no
+		  inner join(select p.product_code,p.product_type,p.product_name,p.up_product_type,p.relate_code from jhdc.productproperty p
+		  where 1=1  
+<!-- 		  and p.up_product_type='w' -->
+		  <if test="productType != null">
+              	and p.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+           </if> ) p
+		  on p.product_code = j.product_code
+		  
+		  <if test="orderStr==null">
+		 order by l.jgid,g.ryid,g.khid,j.product_code
+		</if>
+		<if test="orderStr!=null">
+		order by ${orderStr}
+		</if>
+</select>
+
+<select id="selectOpendateFxjh" parameterType="map" resultType="map">
+select a.product_type,
+       t.relate_code,
+       a.product_name,
+       t.term_no,
+       a.product_type_name,
+       t.buy_open_date,
+       t.buy_close_date,
+       a.min_share
+  from jhdc.v_fxjh_info t
+  left join (select a.relate_code,
+                    a.product_name,
+                    a.product_type,
+                    a.min_share,
+                    b.product_type_name
+               from jhdc.productproperty a left join jhdc.producttypeconfig b on a.product_type=b.product_type
+              group by a.relate_code,
+                       a.product_name,
+                       a.product_type,
+                       a.min_share,
+                       b.product_type_name) a
+    on t.product_code = a.relate_code
+    <where>
+			<if test="productType!=null">
+				and a.PRODUCT_TYPE = #{productType}
+			</if>
+			<if test="productName!=null">
+				and (a.PRODUCT_NAME like '%'||trim(' ' FROM #{productName})||'%' or t.product_code = trim(' ' FROM #{productName}) )
+			</if>
+			<if test="buyOpenDateBegin!=null and buyOpenDateEnd!=null">
+				and (
+				(t.buy_open_date &lt;=to_number(to_char(#{buyOpenDateBegin},'yyyyMMdd')) 
+				and t.buy_close_date&gt;=to_number(to_char(#{buyOpenDateBegin},'yyyyMMdd'))) 
+				or
+				(t.buy_open_date &gt;=to_number(to_char(#{buyOpenDateBegin},'yyyyMMdd')) 
+				and t.buy_open_date &lt;=to_number(to_char(#{buyOpenDateEnd},'yyyyMMdd')))
+				)
+			</if>
+<!-- 			<if test="buyOpenDateEnd!=null"> -->
+<!-- 				and t.buy_open_date &lt;= -->
+<!-- 				to_number(to_char(#{buyOpenDateEnd},'yyyyMMdd')) -->
+<!-- 			</if> -->
+<!-- 			<if test="buyOpenDateBegin!=null"> -->
+<!-- 				and t.buy_close_date &gt;= -->
+<!-- 				to_number(to_char(#{buyOpenDateBegin},'yyyyMMdd')) -->
+<!-- 			</if> -->
+<!-- 			<if test="buyOpenDateEnd!=null"> -->
+<!-- 				and t.buy_close_date &lt;= -->
+<!-- 				to_number(to_char(#{buyOpenDateEnd},'yyyyMMdd')) -->
+<!-- 			</if> -->
+		</where>
+ order by t.buy_open_date,t.product_code, t.term_no
+</select>
+
+
+<select id="selectTodayStock" parameterType="map" resultType="map">
+select l.jg_name,g.*,j.fund_company "fundCompany",j.product_code , decode(p.Up_Product_Type, 'w', p.Relate_Code, j.PRODUCT_CODE) "productCode",p.product_name "productName",p.product_type "productType",p.up_product_type "upProductType",j.market_value
+		  from 
+		  (select j.client_id,nvl(j.market_value,0) market_value,
+		  j.product_type,j.product_code,j.fund_company
+               from jhdc.v_curr_stock j
+              where 1=1 
+              and j.current_share - j.back_share > 0
+             <if test="productType != null">
+              	and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+              </if>
+              <if test="cpdm!=null">
+			and (j.product_code like trim(' ' FROM #{cpdm})||'%' )
+		      </if>
+			   group by j.client_id,j.product_code,j.product_type,j.market_value, j.fund_company)j
+		  inner join (select g.ryid,g.ryxm, to_char(g.khid) khid,g.khxm from crm.t_gxgl_gxmx g 
+		  	where  exists(select 1 from crm.t_ehr_jjr_jbxx a where ryid=g.ryid)
+		  	    <if test="ryid!= null">
+			and  ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> ) g
+		  on g.khid = j.client_id
+		  left join (select c.client_id,c.branch_no from jhdc.clientinfox c ) c
+    		on c.client_id = g.khid
+		  left join(select l.jgid,l.jg_name from l_organization_expand l) l
+		  on l.jgid = c.branch_no
+		  inner join(select p.product_code,p.product_type,p.product_name,p.up_product_type, p.relate_code from jhdc.productproperty p
+		  where 1=1  
+<!-- 		  and p.up_product_type='w' -->
+		  <if test="productType != null">
+              	and p.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+           </if> ) p
+		  on p.product_code = j.product_code
+		  order by l.jgid,g.ryid,g.khid,j.product_code
+</select>
+
+
+<select id="selectTodayStockHz" parameterType="map" resultType="Double">
+
+select sum(nvl(market_value,0)) from  (
+select l.jg_name,g.*,j.fund_company "fundCompany",j.product_code , decode(p.Up_Product_Type, 'w', p.Relate_Code, j.PRODUCT_CODE) "productCode",p.product_name "productName",p.product_type "productType",p.up_product_type "upProductType",j.market_value
+		  from 
+		  (select j.client_id,nvl(j.market_value,0) market_value,
+		  j.product_type,j.product_code,j.fund_company
+               from jhdc.v_curr_stock j
+              where 1=1 
+              and j.current_share - j.back_share > 0
+             <if test="productType != null">
+              	and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+              </if>
+              <if test="cpdm!=null">
+			and (j.product_code like trim(' ' FROM #{cpdm})||'%' )
+		      </if>
+			   group by j.client_id,j.product_code,j.product_type,j.market_value, j.fund_company)j
+		  inner join (select g.ryid,g.ryxm, to_char(g.khid) khid,g.khxm from crm.t_gxgl_gxmx g 
+		  	where  exists(select 1 from crm.t_ehr_jjr_jbxx a where ryid=g.ryid)
+		  	    <if test="ryid!= null">
+			and  ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> ) g
+		  on g.khid = j.client_id
+		  left join (select c.client_id,c.branch_no from jhdc.clientinfox c ) c
+    		on c.client_id = g.khid
+		  left join(select l.jgid,l.jg_name from l_organization_expand l) l
+		  on l.jgid = c.branch_no
+		  inner join(select p.product_code,p.product_type,p.product_name,p.up_product_type, p.relate_code from jhdc.productproperty p
+		  where 1=1  
+<!-- 		  and p.up_product_type='w' -->
+		  <if test="productType != null">
+              	and p.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+           </if> ) p
+		  on p.product_code = j.product_code
+		  order by l.jgid,g.ryid,g.khid,j.product_code)
+</select>
+
+
+
+<select id="selectProductCloseday" parameterType="map" resultType="map">
+select y.*,
+       case
+         when y.close_day &lt; y.gbDay then
+          0 /*付息*/
+         when y.close_day = y.gbDay then
+          1 /*到期*/
+         else
+          null
+       end flag
+  from (select l.jg_name,
+               g.*,
+               (select jg_name
+                  from crm.l_organization_expand
+                 where g.jgid = jgid) jjrJgName,
+               j.product_code,
+               p.product_name,           
+               j.market_value,
+               (case
+                 when j.product_type in ('m', 'j') and m.defer_status = '2' then
+                  z.close_day
+                 when j.product_type in ('m', 'j') and
+                      (m.defer_status in ('0', '1') or m.defer_status is null) then
+                  z.close_day
+                 when p.up_product_type = 'w' and
+                      j.term_end_date_w is not null then
+                  j.term_end_date_w
+                 when p.up_product_type = 'zz' and j.product_type = 'op' and
+                      j.term_end_date_op is not null then
+                  j.term_end_date_op
+                 when p.up_product_type = 'hn' and
+                      j.term_end_date_jj is not null then
+                  j.term_end_date_jj
+                 else
+                  p.close_day
+               end) close_day,
+               
+               p.close_day gbDay
+          from (select k.client_id,
+                       k.market_value,
+                       k.product_type,
+                       k.product_code,
+                       k.init_date,
+                       k.fund_company,
+                       (select crm.get_bizdate_fxjhClose(min(term_end_date))
+                          from jhdc.v_fxjh_info f
+                         where k.init_date &lt;= f.term_end_date
+                           and f.product_code = pp.relate_code
+                           and f.fund_company = pp.fund_company) term_end_date_w,
+                       (select crm.get_bizdate_fxjhClose(min(due_date))
+                          from jhdc.producttrade_zhongzheng zz
+                         where k.init_date &lt;= zz.due_date
+                           and zz.product_code = pp.relate_code
+                           and zz.fund_company = pp.fund_company) term_end_date_op,
+                       (select crm.get_bizdate_fxjhClose(min(due_date))
+                          from jhdc.producttrade_jinjs jj
+                         where k.init_date &lt;= jj.due_date
+                           and jj.product_code = pp.relate_code
+                           and jj.fund_company = pp.fund_company) term_end_date_jj
+                  from jhdc.stockjour k
+                  left join jhdc.productproperty pp
+                    on k.product_code = pp.product_code
+                   and k.fund_company = pp.fund_company
+                 where k.current_share - k.back_share > 0
+                 <if test="productType != null">
+              	    and k.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+                </if>
+                <if test="cpdm!=null">
+			        and (k.product_code like trim(' ' FROM #{cpdm})||'%' )
+		        </if>
+                ) j
+         inner join (select g.ryid,
+                           g.ryxm,
+                           to_char(g.khid) khid,
+                           g.khxm,
+                           a.jgid,
+                           g.orgid
+                      from crm.t_gxgl_gxmx g
+                     inner join crm.t_ehr_jjr_jbxx a
+                        on a.ryid = g.ryid
+                      where 1=1
+               <if test="ryid!= null">
+			      and   g.ryid in
+			   <foreach collection="ryid" open="(" separator="," close=")" item="item">
+			     #{item}
+			   </foreach>
+		       </if> 
+		       <if test="jgid!= null">
+			     and  a.jgid in
+			   <foreach collection="jgid" open="(" separator="," close=")" item="item">
+			    #{item}
+			   </foreach>
+		       </if>) g
+            on g.khid = j.client_id
+         inner join (select c.client_id, c.branch_no
+                      from jhdc.clientinfox c
+                     where 1 = 1
+                     <if test="jgidKh!= null">
+	                and  c.branch_no in
+	                 <foreach collection="jgidKh" open="(" separator="," close=")" item="item">
+                     #{item}
+	                 </foreach>
+	                 </if> ) c
+            on c.client_id = g.khid
+          left join (select l.jgid, l.jg_name
+                      from crm.l_organization_expand l) l
+            on l.jgid = c.branch_no
+         inner join (select p.product_code,
+                           p.product_type,
+                           p.product_name,
+                           p.close_day,
+                           p.relate_code,
+                           p.up_product_type,
+                           p.fund_company
+                      from jhdc.productproperty p
+                     where 1 = 1
+<!--                        and p.up_product_type in ('w', 'zz', 'mi', 'jh', 'kl', 'hn') -->
+                       and p.up_product_type not in ('so')
+                       and p.product_type not in ('2')
+                        <if test="productType != null">
+              	         and p.product_type in
+				        <foreach collection="productType" open="(" separator=","
+					     close=")" item="item">
+					    #{item}
+				        </foreach>
+                       </if>) p
+            on p.product_code = j.product_code
+           and j.fund_company = p.fund_company
+          left join hs_opfund.productinfo z
+            on z.fund_code = j.product_code
+           and z.fund_company = j.fund_company
+           and j.init_date between z.Setup_Date and z.Close_Day
+          left join hs_opfund.deferregist m
+            on m.client_id = j.client_id
+           and p.product_code = m.fund_code
+         where (case
+                 when j.product_type in ('m', 'j') and m.defer_status = '2' then
+                  z.close_day
+                 when j.product_type in ('m', 'j') and
+                      (m.defer_status in ('0', '1') or m.defer_status is null) then
+                  z.close_day
+                 when p.up_product_type = 'w' and
+                      j.term_end_date_w is not null then
+                  j.term_end_date_w
+                 when p.up_product_type = 'zz' and j.product_type = 'op' and
+                      j.term_end_date_op is not null then
+                  j.term_end_date_op
+                 when p.up_product_type = 'hn' and
+                      j.term_end_date_jj is not null then
+                  j.term_end_date_jj
+                 else
+                  p.close_day
+               end) between #{startTime} and #{endTime}
+         order by l.jgid, g.ryid, g.khid, j.product_code) y
+         where 1=1 
+         <if test="flag!=null">
+	 and ((case when y.close_day &lt; y.gbDay then 0 when y.close_day = y.gbDay then 1 else null end) = #{flag})
+		 </if>
+
+<!-- select l.jg_name, g.*, (select jg_name from crm.l_organization_expand where g.jgid=jgid)jjrJgName, j.product_code, p.product_name, j.market_value, -->
+<!--        (case -->
+<!--          when j.product_type in ('m', 'j') and m.defer_status='2' then -->
+<!--           (select nvl(max(close_day),z.close_day) from hs_opfund.productinfo where fund_code =z.fund_code and stage_no=z.stage_no+1) -->
+<!--          when j.product_type in ('m', 'j') and (m.defer_status in ('0','1') or m.defer_status is null) then -->
+<!--            z.close_day -->
+<!--          when j.term_end_date is not null then -->
+<!--           j.term_end_date -->
+<!--          else -->
+<!--           p.close_day -->
+<!--        end) close_day -->
+<!--   from (select k.client_id, -->
+<!--                k.market_value, -->
+<!--                k.product_type, -->
+<!--                k.product_code, -->
+<!--                k.init_date, -->
+<!--                k.fund_company, -->
+<!--                 (select get_bizdate_fxjhClose(min(term_end_date)) -->
+<!--                     from jhdc.v_fxjh_info f -->
+<!--                    where  k.init_date &lt;= f.term_end_date -->
+<!--                      and f.product_code = pp.relate_code) term_end_date -->
+<!--            from jhdc.stockjour  k -->
+<!--            left join jhdc.productproperty pp -->
+<!--              on  k.product_code = pp.product_code -->
+<!--           where  k.current_share -  k.back_share > 0 -->
+<!--           <if test="productType != null"> -->
+<!--               	and k.product_type in -->
+<!-- 				<foreach collection="productType" open="(" separator="," -->
+<!-- 					close=")" item="item"> -->
+<!-- 					#{item} -->
+<!-- 				</foreach> -->
+<!--               </if> -->
+<!--               <if test="cpdm!=null"> -->
+<!-- 			and (k.product_code like trim(' ' FROM #{cpdm})||'%' ) -->
+<!-- 		      </if> -->
+<!--          ) j -->
+<!--  inner join (select g.ryid, g.ryxm, to_char(g.khid) khid, g.khxm ,a.jgid,g.orgid -->
+<!--                from crm.t_gxgl_gxmx g -->
+<!--                inner join  crm.t_ehr_jjr_jbxx a on a.ryid=g.ryid -->
+<!--               where 1=1 -->
+<!--                 <if test="ryid!= null"> -->
+<!-- 			   and   g.ryid in -->
+<!-- 			   <foreach collection="ryid" open="(" separator="," close=")" item="item"> -->
+<!-- 			   #{item} -->
+<!-- 			   </foreach> -->
+<!-- 		       </if>  -->
+<!-- 		        <if test="jgid!= null"> -->
+<!-- 			   and  a.jgid in -->
+<!-- 			   <foreach collection="jgid" open="(" separator="," close=")" item="item"> -->
+<!-- 			   #{item} -->
+<!-- 			   </foreach> -->
+<!-- 		       </if>  -->
+
+<!-- 		) g -->
+<!--     on g.khid = j.client_id -->
+<!--   inner join (select c.client_id, c.branch_no from jhdc.clientinfox c -->
+<!--   where 1=1  -->
+<!--   <if test="jgidKh!= null"> -->
+<!-- 	 and  c.branch_no in -->
+<!-- 	 <foreach collection="jgidKh" open="(" separator="," close=")" item="item"> -->
+<!--      #{item} -->
+<!-- 	 </foreach> -->
+<!-- 	 </if>  -->
+<!--   ) c -->
+<!--     on c.client_id = g.khid -->
+<!--   left join (select l.jgid, l.jg_name from crm.l_organization_expand l) l -->
+<!--     on l.jgid = c.branch_no -->
+<!--  inner join (select p.product_code, p.product_type, p.product_name, -->
+<!--                     p.close_day, p.relate_code, p.up_product_type -->
+<!--                from jhdc.productproperty p -->
+<!--               where 1 = 1 -->
+<!--                 and p.up_product_type in ('w', 'zz', 'mi', 'jh', 'kl') -->
+<!--                 and p.product_type not in ('2') -->
+<!--                 <if test="productType != null"> -->
+<!--               	and p.product_type in -->
+<!-- 				<foreach collection="productType" open="(" separator="," -->
+<!-- 					close=")" item="item"> -->
+<!-- 					#{item} -->
+<!-- 				</foreach> -->
+<!--               </if>  -->
+<!--                 ) p -->
+<!--     on p.product_code = j.product_code -->
+    
+<!--     left join hs_opfund.productinfo z on z.fund_code=j.product_code and   -->
+<!--          z.fund_company = j.fund_company -->
+<!--          and j.init_date between z.Setup_Date and z.Close_Day -->
+<!--     left join hs_opfund.deferregist m on m.client_id=j.client_id and p.product_code=m.fund_code -->
+<!--     where (case -->
+<!--          when j.product_type in ('m', 'j') and m.defer_status='2' then -->
+<!--           (select nvl(max(close_day),z.close_day) from hs_opfund.productinfo where fund_code =z.fund_code and stage_no=z.stage_no+1) -->
+<!--          when j.product_type in ('m', 'j') and (m.defer_status in ('0','1') or m.defer_status is null) then -->
+<!--            z.close_day -->
+<!--          when j.term_end_date is not null then -->
+<!--           j.term_end_date -->
+<!--          else -->
+<!--           p.close_day -->
+<!--        end) between #{startTime} and #{endTime} -->
+<!--  order by l.jgid, g.ryid, g.khid, j.product_code -->
+</select>
+
+<select id="selectProductClosedayHz" parameterType="map" resultType="Double">
+select sum(nvl(market_value, 0)) from (select y.*,
+       case
+         when y.close_day &lt; y.gbDay then
+          0 /*付息*/
+         when y.close_day = y.gbDay then
+          1 /*到期*/
+         else
+          null
+       end flag
+  from (select l.jg_name,
+               g.*,
+               (select jg_name
+                  from crm.l_organization_expand
+                 where g.jgid = jgid) jjrJgName,
+               j.product_code,
+               p.product_name,           
+               j.market_value,
+               (case
+                 when j.product_type in ('m', 'j') and m.defer_status = '2' then
+                  z.close_day
+                 when j.product_type in ('m', 'j') and
+                      (m.defer_status in ('0', '1') or m.defer_status is null) then
+                  z.close_day
+                 when p.up_product_type = 'w' and
+                      j.term_end_date_w is not null then
+                  j.term_end_date_w
+                 when p.up_product_type = 'zz' and j.product_type = 'op' and
+                      j.term_end_date_op is not null then
+                  j.term_end_date_op
+                 when p.up_product_type = 'hn' and
+                      j.term_end_date_jj is not null then
+                  j.term_end_date_jj
+                 else
+                  p.close_day
+               end) close_day,
+               
+               p.close_day gbDay
+          from (select k.client_id,
+                       k.market_value,
+                       k.product_type,
+                       k.product_code,
+                       k.init_date,
+                       k.fund_company,
+                       (select crm.get_bizdate_fxjhClose(min(term_end_date))
+                          from jhdc.v_fxjh_info f
+                         where k.init_date &lt;= f.term_end_date
+                           and f.product_code = pp.relate_code
+                           and f.fund_company = pp.fund_company) term_end_date_w,
+                       (select crm.get_bizdate_fxjhClose(min(due_date))
+                          from jhdc.producttrade_zhongzheng zz
+                         where k.init_date &lt;= zz.due_date
+                           and zz.product_code = pp.relate_code
+                           and zz.fund_company = pp.fund_company) term_end_date_op,
+                       (select crm.get_bizdate_fxjhClose(min(due_date))
+                          from jhdc.producttrade_jinjs jj
+                         where k.init_date &lt;= jj.due_date
+                           and jj.product_code = pp.relate_code
+                           and jj.fund_company = pp.fund_company) term_end_date_jj
+                  from jhdc.stockjour k
+                  left join jhdc.productproperty pp
+                    on k.product_code = pp.product_code
+                   and k.fund_company = pp.fund_company
+                 where k.current_share - k.back_share > 0
+                 <if test="productType != null">
+              	    and k.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+                </if>
+                <if test="cpdm!=null">
+			        and (k.product_code like trim(' ' FROM #{cpdm})||'%' )
+		        </if>
+                ) j
+         inner join (select g.ryid,
+                           g.ryxm,
+                           to_char(g.khid) khid,
+                           g.khxm,
+                           a.jgid,
+                           g.orgid
+                      from crm.t_gxgl_gxmx g
+                     inner join crm.t_ehr_jjr_jbxx a
+                        on a.ryid = g.ryid
+                      where 1=1
+               <if test="ryid!= null">
+			      and   g.ryid in
+			   <foreach collection="ryid" open="(" separator="," close=")" item="item">
+			     #{item}
+			   </foreach>
+		       </if> 
+		       <if test="jgid!= null">
+			     and  a.jgid in
+			   <foreach collection="jgid" open="(" separator="," close=")" item="item">
+			    #{item}
+			   </foreach>
+		       </if>) g
+            on g.khid = j.client_id
+         inner join (select c.client_id, c.branch_no
+                      from jhdc.clientinfox c
+                     where 1 = 1
+                     <if test="jgidKh!= null">
+	                and  c.branch_no in
+	                 <foreach collection="jgidKh" open="(" separator="," close=")" item="item">
+                     #{item}
+	                 </foreach>
+	                 </if> ) c
+            on c.client_id = g.khid
+          left join (select l.jgid, l.jg_name
+                      from crm.l_organization_expand l) l
+            on l.jgid = c.branch_no
+         inner join (select p.product_code,
+                           p.product_type,
+                           p.product_name,
+                           p.close_day,
+                           p.relate_code,
+                           p.up_product_type,
+                           p.fund_company
+                      from jhdc.productproperty p
+                     where 1 = 1
+<!--                        and p.up_product_type in ('w', 'zz', 'mi', 'jh', 'kl', 'hn') -->
+                       and p.up_product_type not in ('so')
+                       and p.product_type not in ('2')
+                        <if test="productType != null">
+              	         and p.product_type in
+				        <foreach collection="productType" open="(" separator=","
+					     close=")" item="item">
+					    #{item}
+				        </foreach>
+                       </if>) p
+            on p.product_code = j.product_code
+           and j.fund_company = p.fund_company
+          left join hs_opfund.productinfo z
+            on z.fund_code = j.product_code
+           and z.fund_company = j.fund_company
+           and j.init_date between z.Setup_Date and z.Close_Day
+          left join hs_opfund.deferregist m
+            on m.client_id = j.client_id
+           and p.product_code = m.fund_code
+         where (case
+                 when j.product_type in ('m', 'j') and m.defer_status = '2' then
+                  z.close_day
+                 when j.product_type in ('m', 'j') and
+                      (m.defer_status in ('0', '1') or m.defer_status is null) then
+                  z.close_day
+                 when p.up_product_type = 'w' and
+                      j.term_end_date_w is not null then
+                  j.term_end_date_w
+                 when p.up_product_type = 'zz' and j.product_type = 'op' and
+                      j.term_end_date_op is not null then
+                  j.term_end_date_op
+                 when p.up_product_type = 'hn' and
+                      j.term_end_date_jj is not null then
+                  j.term_end_date_jj
+                 else
+                  p.close_day
+               end) between #{startTime} and #{endTime}
+         order by l.jgid, g.ryid, g.khid, j.product_code) y
+         where 1=1 
+         <if test="flag!=null">
+	 and ((case when y.close_day &lt; y.gbDay then 0 when y.close_day = y.gbDay then 1 else null end) = #{flag})
+		 </if>)
+</select>
+
+<select id="selectDailyStockHz" parameterType="map" resultType="Double">
+select sum(nvl(market_value,0)) from  (
+select l.jg_name,g.*,j.product_code,p.product_name,j.market_value
+		  from 
+		  (select j.client_id,sum(nvl(j.market_value,0)) market_value,
+		  j.product_type,j.product_code
+               from jhdc.hisstockjour j
+              where j.init_date between #{startTime} and
+				#{endTime}
+              and j.current_share - j.back_share > 0
+             <if test="productType != null">
+              	and j.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+              </if>
+               <if test="cpdm!=null">
+			  and (j.product_code like trim(' ' FROM #{cpdm})||'%' )
+		      </if>
+			   group by j.client_id,j.product_code,j.product_type)j
+		  inner join (select g.ryid,g.ryxm, to_char(g.khid) khid,g.khxm from crm.t_gxgl_gxmx g 
+		  	where  exists(select 1 from crm.t_ehr_jjr_jbxx a where ryid=g.ryid)
+		  	    <if test="ryid!= null">
+			and  ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> ) g
+		  on g.khid = j.client_id
+		  left join (select c.client_id,c.branch_no from jhdc.clientinfox c ) c
+    		on c.client_id = g.khid
+		  left join(select l.jgid,l.jg_name from l_organization_expand l) l
+		  on l.jgid = c.branch_no
+		  inner join(select p.product_code,p.product_type,p.product_name from jhdc.productproperty p
+		  where 1=1 
+<!-- 		  and p.up_product_type='w' -->
+		  <if test="productType != null">
+              	and p.product_type in
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+           </if> ) p
+		  on p.product_code = j.product_code
+		  order by l.jgid,g.ryid,g.khid,j.product_code)
+</select>
+
+<!-- 我的有效户明细 -->
+	<select id="MyJinhuiValiDetial" parameterType="map" resultType="map">
+		select c.* from crm.t_ehr_jjr_jbxx j
+		  inner join (select g.ryid, g.ryxm, g.khid, g.khxm,  c.first_trade_date,         
+                    crm.fn_get_branchname(c.branch_no) branch_no,         
+                    SUM (NVL(a.buy_amount, 0))  buy_amount
+            from (select ryid,ryxm,to_char(khid) khid,khxm,fprq,zxrq from crm.t_gxgl_gxmx) g
+            left join  jhdc.clientinfox  c  on c.client_id = g.khid
+            left join jhdc.hisclient_product_trade a on a.client_id = g.KHID
+            where c.use_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+				and a.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+				and g.fprq &lt;= to_number(to_char(#{endDate},'yyyyMMdd')) and
+				decode( g.zxrq,null,'99999999',0,'99999999',g.zxrq) &gt;= to_number(to_char(#{endDate},'yyyyMMdd'))
+				<if test="jgid != null">
+					and c.branch_no in
+				<foreach collection="jgid" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				</if>
+				<if test="ryid != null">
+					and g.ryid in
+				<foreach collection="ryid" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				</if> 
+				group by  g.ryid, g.ryxm,g.khid,g.khxm,c.first_trade_date,c.branch_no
+				) c
+		  on c.ryid = j.ryid
+		  order by c.ryid, c.branch_no,c.khid
+	</select>
+
+<!-- 我的有效户明细认购金额合计 -->
+	<select id="MyJinhuiValiDetialHz" parameterType="map" resultType="Double">
+		select SUM(NVL(a.buy_amount, 0)) buy_amount
+            from (select ryid,ryxm,to_char(khid) khid,khxm,fprq,zxrq from crm.t_gxgl_gxmx) g
+            left join  jhdc.clientinfox  c  on c.client_id = g.khid
+            left join jhdc.hisclient_product_trade a on a.client_id = g.KHID
+            where c.use_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+				and a.init_date between to_number(to_char(#{beginDate},'yyyyMMdd')) and
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+				and g.fprq &lt;= to_number(to_char(#{endDate},'yyyyMMdd')) and
+				decode( g.zxrq,null,'99999999',0,'99999999',g.zxrq) &gt;= to_number(to_char(#{endDate},'yyyyMMdd'))
+				<if test="jgid != null">
+					and c.branch_no in
+				<foreach collection="jgid" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				</if>
+				<if test="ryid != null">
+					and g.ryid in
+				<foreach collection="ryid" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+				</if> 
+	</select>
+
+<select id="selectPtjjView" parameterType="map" resultType="map">
+
+select D.PRODUCT_CODE,
+       D.product_name,
+       d.CURRENT_SHARE,
+       D.MARKET_VALUE,
+       D.FROZEN_SHARE,
+       D.BUSINESS_FROZEN_SHARE,
+       D.Long_Frozen_Share,
+       D.EXPECT_INCOME,
+       D.BUY_DATE,
+       D.init_date,
+       (case
+         when D.product_type in ('m', 'j') then
+          c.close_day
+         when D.Sub_Type = 'C2' then
+          to_number(to_char(to_date(to_char(D.Buy_Date), 'yyyymmdd') +
+                            D.product_term,
+                            'yyyymmdd'))
+         else
+          D.CLOSE_DAY
+       end) CLOSE_DAY,
+       nvl(h.income_balance,0) income_balance
+  from (select A.product_code,
+               a.product_type,
+               a.fund_company,
+               b.product_name,
+               a.CURRENT_SHARE - a.back_share CURRENT_SHARE,
+               a.market_value,
+               a.frozen_share,
+               a.business_frozen_share,
+               a.long_frozen_share,
+               a.expect_income,
+               a.BUY_DATE,
+               b.close_day,
+               B.Sub_Type,
+               b.product_term,
+               A.init_date
+          from jhdc.hisstockjour A, jhdc.productProperty B
+         where A.product_code = B.product_code
+           and (a.CURRENT_SHARE - a.BACK_SHARE)&gt; 0
+           
+           and a.client_id = #{khid}
+<!--            and a.init_date >= 20161201 -->
+<!--            AND a.init_date <= 20161222 -->
+           
+           <if test="startDate!=null">
+             AND a.init_date&gt;=#{startDate}
+          </if>
+          <if test="endDate!=null">
+          AND a.init_date&lt;=#{endDate}
+         </if>  
+         <if test="productName!=null">
+          AND b.product_name like '%'|| trim(' ' FROM #{productName}) ||'%'
+        </if>  
+          and b.Sub_Type not in ('C4')        
+        union all 
+        select A.product_code,
+               a.product_type,
+               a.fund_company,
+               b.product_name,
+               decode( c.shares,null, a.CURRENT_SHARE - a.back_share,c.shares) CURRENT_SHARE,
+<!--                c.shares CURRENT_SHARE, -->
+<!--                c.shares market_value, -->
+               decode(c.shares,null, a.market_value,c.shares) market_value,
+               0 frozen_share,
+               0 business_frozen_share,
+               0 long_frozen_share,
+               decode( trunc(c.shares*c.income_ratio*b.product_term/365, 2),null,0,trunc(c.shares*c.income_ratio*b.product_term/365, 2)) expect_income,
+<!--                trunc(c.shares*c.income_ratio*b.product_term/365, 2) expect_income, -->
+                decode(c.BUY_DATE,null,0,c.BUY_DATE) BUY_DATE,
+<!--                c.BUY_DATE, -->
+<!--                c.end_date, -->
+               decode(c.end_date,null,0,c.end_date) end_date,
+               B.Sub_Type,
+               b.product_term,
+               A.Init_Date
+          from jhdc.hisstockjour A inner join  jhdc.productProperty B on A.product_code = B.product_code
+                                   left join   hs_opfund.ofholddaystock C on  a.client_id = c.client_id
+                                                                             and a.product_code = c.fund_code
+                                                                             and c.fund_company = a.fund_company
+                                                                             and a.init_date&gt;=c.buy_date
+                                                                             and a.init_date&lt;jhdc.get_bizdate_self(c.end_date,1)
+         where 1=1
+           and (a.CURRENT_SHARE - a.BACK_SHARE) &gt;0
+           and a.client_id = #{khid}
+<!--            and a.init_date >= 20161201 -->
+<!--            AND a.init_date <= 20161222 -->
+           
+           <if test="startDate!=null">
+             AND a.init_date&gt;=#{startDate}
+          </if>
+          <if test="endDate!=null">
+          AND a.init_date&lt;=#{endDate}
+         </if>  
+         <if test="productName!=null">
+          AND b.product_name like '%'|| trim(' ' FROM #{productName}) ||'%'
+        </if>   
+           and b.Sub_Type = 'C4' 
+           ) D
+  left join hs_opfund.productinfo C
+    on D.Product_Code = C.Fund_Code
+   and D.fund_company = c.fund_company
+   and D.init_date between C.Setup_Date and C.Close_Day
+   
+   left join (select e.fund_code,e.init_date,
+       sum((case when f.product_type!='gy' then nvl(e.income_balance,0)
+          when f.product_type='gy' and e.income_type!='A6' then  nvl(e.income_balance,0)
+            else 0 end)) income_balance
+        from hs_opfund.clientincomes e left join jhdc.productproperty f on e.fund_code=f.product_code
+ where e.client_id =#{khid}
+          <if test="startDate!=null">
+             AND e.init_date&gt;=#{startDate}
+          </if>
+          <if test="endDate!=null">
+          AND e.init_date&lt;=#{endDate}
+         </if>  
+ group by e.init_date,e.fund_code, f.product_type) h
+           on h.fund_code=D.product_code and d.init_date=h.init_date
+ order by D.init_date,D.PRODUCT_CODE  
+</select>
+
+<select id="selectStockjourView" parameterType="map" resultType="map">
+select D.PRODUCT_CODE,
+       D.product_name,
+       d.CURRENT_SHARE,
+       D.MARKET_VALUE,
+       D.FROZEN_SHARE,
+       D.BUSINESS_FROZEN_SHARE,
+       D.Long_Frozen_Share,
+       D.EXPECT_INCOME,
+       D.BUY_DATE,
+       D.BIZ_DATE,
+       (case
+         when D.product_type in ('m', 'j') then
+          c.close_day
+         when D.Sub_Type = 'C2' then
+          to_number(to_char(to_date(to_char(D.Buy_Date), 'yyyymmdd') +
+                            D.product_term,
+                            'yyyymmdd'))
+         else
+          D.CLOSE_DAY
+       end) CLOSE_DAY
+  from (select A.product_code,
+               a.product_type,
+               a.fund_company,
+               a.product_name,
+               a.CURRENT_SHARE - a.back_share CURRENT_SHARE,
+               a.market_value,
+               a.frozen_share,
+               a.business_frozen_share,
+               a.long_frozen_share,
+               a.expect_income,
+               a.BUY_DATE,
+               b.close_day,
+               B.Sub_Type,
+               b.product_term,
+               (SELECT max(BIZ_DATE)
+                  FROM crm.T99_ACALENDAR_HRS
+                 WHERE CALENDAR_DATE &lt; to_char(sysdate, 'yyyymmdd')) BIZ_DATE
+          from jhdc.v_curr_stock A, jhdc.productProperty B
+         where A.product_code = B.product_code
+           and (a.CURRENT_SHARE - a.BACK_SHARE) &gt; 0
+           and a.client_id = #{khid} 
+           and b.Sub_Type not in ('C4')        
+        union all 
+        select A.product_code,
+               a.product_type,
+               a.fund_company,
+               a.product_name,
+               decode( c.shares,null, a.CURRENT_SHARE - a.back_share,c.shares) CURRENT_SHARE,
+<!--                c.shares CURRENT_SHARE, -->
+<!--                c.shares market_value, -->
+               decode(c.shares,null, a.market_value,c.shares) market_value,
+               0 frozen_share,
+               0 business_frozen_share,
+               0 long_frozen_share,
+               decode( trunc(c.shares*c.income_ratio*b.product_term/365, 2),null,0,trunc(c.shares*c.income_ratio*b.product_term/365, 2)) expect_income,
+<!--               trunc(c.shares*c.income_ratio*b.product_term/365, 2) expect_income, -->
+                decode(c.BUY_DATE,null,0,c.BUY_DATE) BUY_DATE,
+<!--                c.BUY_DATE, -->
+<!--               c.end_date, -->
+               decode(c.end_date,null,0,c.end_date) end_date,
+               B.Sub_Type,
+               b.product_term,
+               (SELECT max(BIZ_DATE)
+                  FROM crm.T99_ACALENDAR_HRS
+                 WHERE CALENDAR_DATE &lt; to_char(sysdate, 'yyyymmdd')) BIZ_DATE
+          from jhdc.v_curr_stock A inner join  jhdc.productProperty B on A.product_code = B.product_code
+                                   left join   hs_opfund.ofholddaystock C on  a.client_id = c.client_id
+                                                                        and a.product_code = c.fund_code
+                                                                       and c.fund_company = a.fund_company
+                                                                       and c.deal_flag = '0'   
+         where 1=1
+           and (a.CURRENT_SHARE - a.BACK_SHARE) &gt; 0
+           and a.client_id = #{khid} 
+           and b.Sub_Type = 'C4'     
+           ) D
+  left join hs_opfund.productinfo C
+    on D.Product_Code = C.Fund_Code
+   and D.fund_company = c.fund_company
+   and D.BIZ_DATE between C.Setup_Date and C.Close_Day
+ order by D.PRODUCT_CODE
+</select>
+
+<select id="selectDayCustomer" parameterType="map" resultType="map">
+SELECT a.*,c.jg_name 
+FROM ( 
+   SELECT 
+       a.client_id,
+       nvl(d.orgid, case when a.dev_branch_no in('88','1002') then 8888 else a.dev_branch_no end) dev_branch_no,
+       a.client_name,
+       a.id_no,
+       a.id_begindate,
+       a.open_date,
+       b.mobile_tel
+  FROM hs_user.client a
+  left join hs_user.clientinfo b on a.client_id = b.client_id
+  left join  crm.T_KH_XX d on a.client_id = d.khid) a  left join crm.L_ORGANIZATION_EXPAND c on 
+ a.dev_branch_no = c.jgid
+<where>
+<if test="clientName!=null">
+and (a.client_name like '%'|| trim(' ' FROM #{clientName})||'%' or a.client_id like trim(' ' FROM #{clientName}) or a.id_no like trim(' ' FROM #{clientName}) or a.mobile_tel like trim(' ' FROM #{clientName}))
+</if>
+and a.open_date&gt;=to_char(sysdate,'yyyymmdd')
+</where>
+order by a.client_id 
+</select>
+<select id="selectClientGrade" parameterType="map" resultType="map">
+select t.client_id,
+       a.khxm,
+       a.xb,
+       a.age,
+       t.client_grade,
+       t.client_type,
+       t.daliy_amount,
+       t.open_date,
+       (select b.first_trade_date from  crm.t_Kh_Xx_Zh b where client_id=b.khid) first_trade_date,
+       t.last_trade_date,
+       t.vip_begin_date,
+       decode(t.vip_begin_date, 0, (select sc.int_config
+           from jhdc.sysconfig sc
+          where sc.config_no = '4005'), ((select sc.int_config
+           from jhdc.sysconfig sc
+          where sc.config_no = '4005') -
+        (to_date(to_char ((select biz_date from jhdc.mot_taskstatus)),
+                 'yyyyMMdd') - 1 -
+        to_date(to_char(t.vip_begin_date), 'yyyyMMdd')))) validDays
+  from jhdc.clientpropertyjour t
+ left join crm.t_Kh_Xx a on t.client_id=a.khid
+<where>
+<if test="clientName!=null">
+and (a.khxm like '%'|| trim(' ' FROM #{clientName})||'%' or t.client_id like trim(' ' FROM #{clientName}))
+</if>
+<if test="clientGrade!=null">
+and ( t.client_grade=#{clientGrade})
+</if>
+</where>
+order by t.client_id 
+</select>
+
+<select id="selectClientGrade_ag" parameterType="map" resultType="map">
+select t.curr_date,
+       t.client_id,
+       a.khxm,
+       t.old_grade,
+       t.client_grade,
+       t.init_date,
+       t.hope_date,
+       t.adjuster,
+       (select b.member_name from L_MEMBER b where t.adjuster=to_char(b.member_id)) memberName,
+       t.remark
+  from jhdc.clientgradedeal_rg t inner join crm.T_KH_XX a on t.client_id=to_char(a.khid)
+  <where>
+<if test="clientName!=null">
+and (a.khxm like '%'|| trim(' ' FROM #{clientName})||'%' or t.client_id like trim(' ' FROM #{clientName}))
+</if>
+<if test="clientGrade!=null">
+and ( t.client_grade=#{clientGrade})
+</if>
+</where>
+  
+  order by t.init_date desc
+</select>
+
+<delete id = "selectKh" parameterType="map" >
+	delete  from jhdc.clientgradedeal_rg  a where a.client_id= #{clientId} and a.init_date=#{initDate}
+</delete>
+
+<select id="selectClientGradejour" parameterType="map" resultType="map">
+select t.init_date,
+       t.client_id,
+       a.khxm,
+       t.old_grade,
+       t.client_grade,
+       t.grade_flag,
+       t.daliy_amount,
+       t.vip_due_date,
+       t.rg_flag,
+       t.remark
+  from jhdc.hisclientgradejour t left join crm.T_KH_XX  a on t.client_id=a.khid
+  <where>
+<if test="clientName!=null">
+and (a.khxm like '%'|| trim(' ' FROM #{clientName})||'%' or t.client_id like trim(' ' FROM #{clientName}))
+</if>
+<if test="clientGrade!=null">
+and ( t.client_grade=#{clientGrade})
+</if>
+</where>
+  
+  order by t.init_date desc
+</select>
+
+<select id="findAllKh" parameterType="map"
+		resultType="map">
+		SELECT 
+		a.khid "khid",
+		name_alias(a.khxm)||'(' || khid || ')' "khxm" 
+		from crm.T_KH_XX   a 
+		where 1=1
+		<if test="clientName!=null">
+			and (a.khxm like '%'||trim(' ' FROM #{clientName})||'%' or a.khid like
+			trim(' ' FROM #{clientName}))
+		</if>
+		order by a.khid
+	</select>
+
+<!-- <select id = "selectClientById" parameterType="java.lang.Long" resultType="com.linkstec.crm.customer.dto.C200203SDto">
+    select a.client_id,a.client_name, b.mobile_tel 
+    FROM 
+    hs_user.client a left join hs_user.clientinfo b on a.client_id=b.client_id 
+    where a.client_id=#{clientId}
+</select> -->
+
+
+<!-- 查询客服名称与编号 -->
+	<select id="findKfNameId" parameterType="map"
+		resultType="com.linkstec.crm.customer.dto.C200107SDto">
+		select
+		a.id,
+		b.member_name||'(' || a.id || ')'  "memberName" 
+		FROM
+		L_member_kf /*LT*/ a left join L_member b on a.id=b.member_id
+		order by a.id
+	</select>
+	
+	<!-- 根据客服编号查询客服姓名 -->
+	<select id="findKfNamebyId" parameterType="list"
+		resultType="map">
+	select a.member_name,a.member_id
+         from l_member a
+         where a.member_id in  
+         <foreach collection="list" item="listid" index="index"
+            open="(" close=")" separator=",">
+            #{listid}
+        </foreach>
+	</select>
+<!-- 查询所有客户 -->
+	<select id="findKh" parameterType="map"
+		resultType="map">
+		select 
+		t.client_id "clientId", 
+		t.client_name||'(' || t.client_id || ')'  "clientName"
+		from hs_user.client t 
+		where 1=1
+		<if test="clientName!=null">
+			and (t.client_name like '%'|| trim(' ' FROM #{clientName}) ||'%' or t.client_id  like
+			'%'||trim(' ' FROM #{clientName})||'%')
+		</if>
+	</select>	
+		
+<!-- 未接电话一览展示 -->
+	<select id="selectMissedcall" parameterType="map"
+		resultType="map">
+		select t.*,  a.member_name||' '||t.id  member_name,c.khid
+  from (select 
+               t.call_no,
+               t.called_no,
+               t.ring,
+               t.state,
+               t.agent,
+               t.queue,
+               T.CALL_SHEET_ID,
+           (select A.ID  from crm.l_Member_kf A where A.ACCOUNT = t.AGENT || '@jhch') id,
+               row_number() over(partition by t.call_no order by t.ring desc) rn
+          from T_call_record /*LT*/ t
+         where to_date(t.ring, 'yyyy/mm/dd hh24:mi:ss') between sysdate - 3 and sysdate
+         group by 
+                  t.call_no,
+                  t.called_no,
+                  t.ring,
+                  t.state,
+                  t.agent,
+                  t.queue,
+                  T.CALL_SHEET_ID
+                 ) t
+  left join crm.l_Member a on t.id = a.member_id
+  left join crm.T_KH_XX c  on t.call_no=c.gtsj or t.called_no=c.gtsj
+		<where>
+			<if test="jtzx!=null">
+				and ( t.id=#{jtzx})
+			</if>
+			<if test="clzx!=null">
+				and ( t.id=#{clzx})
+			</if>
+			<if test="callNo!=null">
+				and ( t.call_no = trim(' ' FROM #{callNo}) or t.called_no = trim(' ' FROM #{callNo}))
+			</if>
+			<if test="status!=null">
+				and ( t.state =#{status})
+			</if>
+			and rn = 1 and t.state='notDeal' 
+		</where>
+  order by T.ring desc,T.called_no
+	</select>	
+	
+<!-- 通话记录一览展示 -->
+	<select id="selectCallLog" parameterType="map"
+		resultType="map">
+		SELECT T.*,
+       case
+         when T.call_type = 'dialout' and  (select count(*) from crm.t_kf_task kf where kf.client_id=t.khid) is not null then
+          '0'
+         else
+          '1'
+       end MarketCust
+  FROM (SELECT T.call_no, T.called_no, T.call_type, T.state, T.agent, T.queue,
+                T.surveycontent, T.ring, T.begin, T.remark, T.busi_type,
+                T.CALL_SHEET_ID,
+                ROUND(TO_NUMBER(TO_DATE(T.END, 'yyyy-mm-dd hh24:mi:ss') -
+                                 TO_DATE(T.BEGIN, 'yyyy-mm-dd hh24:mi:ss')) * 24 * 60 * 60) time,
+                a.ID, c.khid, lm.member_name || ' ' || a.id member_name,
+                tzyx.tzyx, tzyx.btzly, 
+<!--                 kf.client_id , -->
+                tzyx.channel
+           FROM T_CALL_RECORD /*LT*/ t
+           LEFT JOIN crm.l_Member_kf A
+             on t.AGENT || '@jhch' = A.ACCOUNT
+           left join crm.l_Member lm
+             on a.id = lm.member_id
+           left join crm.T_KH_XX c
+             on t.call_no = c.gtsj
+             or t.called_no = c.gtsj
+           left join crm.t_kh_tzyx tzyx
+             on tzyx.client_id = c.khid
+<!--            left join crm.t_kf_task kf -->
+<!--              on c.khid = kf.client_id  -->
+             ) T
+		<where>
+			<if test="jtzx!=null">
+				and ( t.id=#{jtzx})
+			</if>
+			<if test="callType!=null">
+				and ( t.call_type=#{callType})
+			</if>
+			<if test="callNo!=null">
+				and ( t.call_no = trim(' ' FROM #{callNo}) or t.called_no = trim(' ' FROM #{callNo}))
+			</if>
+			<if test="status!=null">
+				and ( t.state =#{status})
+			</if>
+			<if test="surveyContent!=null">
+				and ( t.surveycontent =#{surveyContent})
+			</if>
+
+			<if test="startTime!=null">
+			and t.begin&gt;=TO_CHAR(TO_DATE(#{startTime}, 'yyyy-mm-dd'),'yyyy-mm-dd')
+		   </if>
+		   <if test="overTime!=null">
+			and t.begin&lt;=TO_CHAR(TO_DATE(#{overTime}, 'yyyy-mm-dd'),'yyyy-mm-dd')
+		   </if>
+		   <if test="minTimes!=null">
+			and t.time &gt;=#{minTimes}
+		   </if>
+		   <if test="maxTimes!=null">
+			and t.time &lt;=#{maxTimes}
+		   </if>
+		</where>
+  order by T.ring desc，T.BEGIN DESC
+	</select>	
+	
+	
+<!-- 客服任务一览展示 -->
+	<select id="selectKfTask" parameterType="map"
+		resultType="map">
+	select 
+       t.client_id,
+       b.khxm,
+       b.xb,
+       b.gtsj,
+       b.khlx,
+       b.orgid,
+       (select org_name from l_organization where org_id = b.orgid) "orgname",
+       b.zhzt,
+       t.tag,
+       t.status,
+       t.deal_user,
+       t.call_status,
+       t.open_user,
+       t.id, 
+       t.open_date,
+       (select a.member_name from crm.l_Member a where a.member_id = t.deal_user)||' '||t.deal_user  "dealUser",
+       (select b.member_name from crm.l_Member b where b.member_id = t.open_user)||' '|| t.open_user  "openUser"
+ from crm.t_Kf_Task t
+  left join crm.T_kh_xx b on t.client_id = b.khid
+		<where>
+			<if test="dealUser!=null">
+				and ( t.deal_user=#{dealUser})
+			</if>
+			<if test="khid!=null">
+				AND (t.client_id like trim(' ' FROM  #{khid}) or b.khxm like trim(' ' FROM  #{khid})||'%' or  b.gtsj like trim(' ' FROM  #{khid}))
+			</if>
+			
+			<if test="tag!=null">
+				and ( t.tag=trim(' ' FROM #{tag}))
+			</if>
+		
+			<if test="status!=null">
+				and ( t.status =#{status})
+			</if>
+			<if test="bk != null ">
+				and ( t.tag like '@绑卡客户%')
+			</if>
+			<if test="zc != null">
+					and ( t.tag like '@注册客户%')
+			</if>
+			<if test="beginDate!=null ">			
+			and to_char(t.open_date,'yyyyMMdd') &gt;= to_char(#{beginDate},'yyyyMMdd') 
+			</if>
+			<if test=" endDate!=null">			
+			and to_char(t.open_date,'yyyyMMdd') &lt;= to_char(#{endDate},'yyyyMMdd')
+			</if>
+			<if test="callStatus != null ">
+			and t.call_status = #{callStatus}
+			</if>
+		</where>
+   order by t.client_id	
+	</select>		
+	<!-- 根据手机号查询客户信息 -->
+	<select id="findKhXX" parameterType="map" resultType="map">
+		select t.*,a.member_name
+  from (select (select g.id
+                  from crm.l_Member_kf g
+                 where g.ACCOUNT = t.AGENT || '@jhch') id,
+               t.call_type,
+               t.queue,
+               t.state,
+               t.call_no,
+               t.client_id,
+               t.rec_gen_time,
+               t.remark
+          from t_call_record t
+          where 
+          <if test="call_no != null ">
+           t.call_no = #{call_no}   or
+          t.called_no = #{call_no}
+          </if>
+        ) t
+  left join l_member a
+    on a.member_id = t.id
+    
+	</select>
+	<!-- 单客服任务一览展示 -->
+	<select id="selectSingleKfTask" parameterType="map"
+		resultType="map">
+	select t.deal_user,
+	       (select a.member_name from crm.l_Member a where a.member_id = t.deal_user)||' '||t.deal_user  "dealUser",
+	       t.id,
+           t.client_id,
+           b.khxm "CLIENT_NAME",
+           b.xb,
+           b.khlx,
+           b.khly,
+           b.zhzt,
+           b.gtsj,
+           t.tag,
+           t.status,
+           t.call_status,
+           t.open_user,
+           t.open_date,
+          (select b.member_name from crm.l_Member b where b.member_id = t.open_user)||' '|| t.open_user  "openUser"
+   from crm.t_Kf_Task  t 
+   left join t_kh_xx b on t.client_id=b.khid
+ 
+		<where>
+			<if test="memberid!=null">
+				and (t.deal_user=#{memberid})
+			</if>
+			<if test="tag!=null">
+				and ( t.tag=trim(' ' FROM #{tag}))
+			</if>
+			<if test="status!=null">
+				and ( t.status =#{status})
+			</if>
+			<if test="beginDate!=null">
+				and trunc(t.open_date) &gt;= #{beginDate}
+			</if>
+			<if test="endDate!=null">
+				and trunc(t.open_date) &lt;= #{endDate}
+			</if>
+			<if test="callStatus != null">
+				and t.call_status = #{callStatus}
+			</if>
+		</where>	
+		order by t.client_id asc
+	</select>		
+	
+<select id = "selectKfTaskById" parameterType="java.lang.Long" resultType="com.linkstec.crm.customer.dto.C200113SDto">
+select t.id "id",t.tag  "tag",t.client_id  "clientId",a.khxm  "clientName",
+t.deal_user,b.member_name "dealUser" ,t.status  "status" from crm.t_Kf_Task t
+left join crm.T_kh_xx a on t.client_id=a.khid 
+left join (select t.id,a.member_name from crm.l_Member_Kf t left join crm.l_Member a on  t.id=a.member_id)b on t.deal_user=b.id
+ where t.id = #{id}
+</select>	
+
+<select id = "selectKjdjById" parameterType="java.lang.String" resultType="com.linkstec.crm.customer.dto.C200115SDto">
+select  t.client_id,t.client_grade,a.khxm from jhdc.clientpropertyjour t left join crm.t_Kh_Xx a on t.client_id=a.khid
+ where t.client_id = #{clientId}
+</select>
+
+<insert id="insertIntoClientgradedeal_rg" parameterType="map">
+insert into
+	jhdc.clientgradedeal_rg
+(init_date,curr_date,curr_time,hope_date,adjuster,client_id,old_grade,client_grade,remark)
+values (#{initDate},#{currDate} ,#{currTime},#{hopeDate} ,#{adjuster},#{clientId} ,#{clientGrade},#{upGrade} ,#{remark} )
+</insert>
+<select id="selectP2pView" parameterType="map" resultType="map">
+		SELECT
+		A.INIT_DATE,
+		A.FUND_COMPANY,
+		A.CLIENT_ID,
+		A.FUND_ACCOUNT,
+		A.FUND_CODE,
+		A.PROJECT_CODE,
+		C.PRODUCT_TYPE_NAME,
+		A.BANK_NO,
+		A.BANK_ACCOUNT,
+		A.BUY_DATE,
+		A.BRANCH_NO,
+		A.PROJECT_TYPE,
+		A.BEGIN_BALANCE,
+		A.CURRENT_BALANCE,
+		A.BACK_BALANCE,
+		A.BACK_INTEREST,
+		A.FROZEN_BALANCE,
+		A.BUSINESS_FROZEN_BALANCE,
+		A.SHARE_RATIO,
+		A.PLAN_INTEREST,
+		B.CLOSE_DAY,
+		B.PRODUCT_NAME
+		FROM
+		hs_his.hisppstock A
+		LEFT JOIN jhdc.productProperty B ON A
+		.fund_code = B.PRODUCT_CODE
+		LEFT JOIN jhdc.productTypeConfig C ON decode(A.project_type,'1','q','4','r','x') = C.PRODUCT_TYPE
+		WHERE A.CLIENT_ID=#{khid}
+		     and (A.CURRENT_BALANCE-A.BACK_BALANCE)&gt;0
+<if test="startDate!=null">
+AND a.init_date&gt;=#{startDate}
+</if>
+<if test="endDate!=null">
+AND a.init_date&lt;=#{endDate}
+</if>
+<if test="fundCode != null">
+and a.fund_code=trim(' ' FROM #{fundCode})
+</if>
+order by A.INIT_DATE desc,A.FUND_CODE
+	</select>
+
+	<select id="selectMoneyView" parameterType="map" resultType="map">
+		select
+		a.INIT_DATE "initdate",
+		a.CLIENT_ID "clientid",
+		a.BUSITYPE
+		"busitype",
+		a.BEGIN_BALANCE "beginbalance",
+		b.BANK_NO "bankno",
+		a.BANK_ACCOUNT "bankaccount",
+		a.EXCH_STATUS "exchstatus",
+		a.BALANCE
+		"balance"
+		from T_KH_FUND_LS b
+		where
+		a.BANK_ACCOUNT=b.BANK_ACCOUNT and
+		a.CLIENT_ID=#{khid}
+		<if test="date!=null">
+			and INIT_DATE=#{date}
+		</if>
+	</select>
+	<select id="SelectYear" resultType="String" parameterType="map">
+		SELECT "TO_CHAR"(KHSJ, 'yyyy') "year"
+		FROM T_KH_XX WHERE KHID = #{khid}
+	</select>
+	<!-- 查询客户产品购买情况 -->
+	<select id="selectBuyProductInfo" resultType="map"
+		parameterType="map">
+SELECT
+	CLIENT_ID,
+	CLIENT_NAME,
+	PRODUCT_TYPE_NAME,
+	A.PRODUCT_TYPE,
+	SUM (NVL(DEAL_BALANCE, 0)) DEAL_BALANCE
+FROM
+	JHDC.CLIENTOFFERJOUR A
+LEFT JOIN jhdc.productTypeConfig B ON A .PRODUCT_TYPE = B.PRODUCT_TYPE
+WHERE
+	A .CLIENT_ID = to_char(#{khid})
+<!-- 	and A.PRODUCT_TYPE NOT IN('2','gy') -->
+GROUP BY
+	CLIENT_ID,
+	CLIENT_NAME,
+	A.PRODUCT_TYPE,
+	PRODUCT_TYPE_NAME
+	union all
+	SELECT
+	CLIENT_ID,
+	CLIENT_NAME,
+	'总计' as PRODUCT_TYPE_NAME,
+	'总计' as PRODUCT_TYPE,
+	 SUM(NVL(DEAL_BALANCE, 0)) DEAL_BALANCE
+FROM
+	JHDC.CLIENTOFFERJOUR A
+LEFT JOIN jhdc.productTypeConfig B ON A .PRODUCT_TYPE = B.PRODUCT_TYPE
+WHERE
+	A .CLIENT_ID = to_char(#{khid})
+<!-- 	and A.PRODUCT_TYPE NOT IN('2','gy') -->
+GROUP BY
+	CLIENT_ID,
+	CLIENT_NAME
+	
+	</select>
+	
+	
+<!-- 查询客户累计购买次数和金额-->
+	<select id="selectTotalBuyBalanceInfo" resultType="map"
+		parameterType="map">
+select
+	a.total_buy_times "totalBuyTimes",
+    (SELECT SUM(NVL(DEAL_BALANCE, 0)) DEAL_BALANCE FROM JHDC.CLIENTOFFERJOUR 
+   where client_id=#{khid} GROUP BY CLIENT_ID) "totalBuyBalance",
+    a.top_buy_balance "topBuyBanlance",
+    a.total_balance "totalBalance",
+      case when a.max_stock_date='0' then null else 
+    to_date(a.max_stock_date,'yyyymmdd') end  "maxStockDate",
+    a.max_stock "maxStock",
+    case when a.max_balance_date='0' then null else 
+    to_date(a.max_balance_date,'yyyymmdd')end "maxBalanceDate",
+    a.max_balance "maxBalance"
+from crm.T_KH_XX_ZH a where a.khid=#{khid}
+
+	</select>	
+
+	<!-- 查询客户绑卡信息 -->
+	<select id="selectKhBKXX" resultType="map">
+		SELECT
+		A.client_id,
+		A.bank_account,
+		A.main_flag,
+		 (case when A.modify_date='0' then A.open_date else  A.modify_date end )  open_date,
+		(
+		SELECT
+		bank_name
+		FROM
+		hs_fund.bankarg
+		WHERE
+		BANK_NO = A
+		.BANK_NO 
+		) bank_name
+		FROM
+		BANKEXCHACCOUNT /*LT*/ A
+		WHERE A.BANK_NO not in('JHB','XJY','ZLRT') and A.bkaccount_status not in('3')  and A.CLIENT_ID = #{khid}
+	</select>
+
+
+	<!-- 查询客户查询昨日余额红包在途 -->
+	<select id="selectKhYeHbZt" resultType="map">
+		SELECT
+		A.CLIENT_ID,
+		NVL(B.CURRENT_BALANCE,0) CURRENT_BALANCE,
+		NVL(C.bonus_balance,0)
+		BONUS_BALANCE,
+		NVL(D.onway_balance,0) ONWAY_BALANCE
+		FROM
+		hs_user.client A
+		LEFT
+		JOIN (SELECT * FROM JHDC.PAYFUND WHERE INIT_DATE = GET_BIZ_DATE()) B ON
+		A.CLIENT_ID = B.CLIENT_ID
+		LEFT JOIN (
+		SELECT
+		client_id,
+		SUM
+		(bonus_balance) bonus_balance
+		FROM
+		JHDC.bonusjour
+		WHERE
+		give_status IN ('1',
+		'3')
+		AND INIT_DATE = GET_BIZ_DATE ()
+		GROUP BY
+		CLIENT_ID
+		) C ON A.CLIENT_ID
+		= C.CLIENT_ID
+		LEFT JOIN
+		(
+		SELECT
+		CLIENT_ID,
+		SUM (onway_balance)
+		onway_balance
+		FROM
+		jhdc.stockjour
+		WHERE
+		INIT_DATE = GET_BIZ_DATE ()
+		AND
+		hold_type = '3'
+		GROUP BY CLIENT_ID
+		) D ON A.CLIENT_ID = D.CLIENT_ID
+		WHERE A.CLIENT_ID = #{khid}
+	</select>
+
+
+	<!-- 查询客户装让标志 -->
+	<select id="selectKhZrjyxx" resultType="map">
+			SELECT * FROM 
+		(	
+			SELECT
+				A.*,
+				to_date(to_char(A.CURR_DATE||lpad(A.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  "currDate",
+				CASE WHEN A.CLIENT_ID_S = #{khid} THEN 'S' 
+				WHEN A.CLIENT_ID_B = #{khid} THEN 'B' END AS BUY_SELL
+				FROM hs_opfund.ofrealtime A 
+				WHERE (A.CLIENT_ID_S = #{khid}  OR A.CLIENT_ID_B = #{khid})
+		) A
+		WHERE 1= 1
+		<if test="startTime==null and endTime==null">
+			and A.INIT_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and A.FUND_CODE= trim(' ' FROM #{cpdm})
+		</if>
+		
+		<if test="ywbz!=null">
+			AND BUY_SELL IN
+		<foreach collection="ywbz" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="startTime!=null">
+			and TO_CHAR(A.CURR_DATE)&gt;= TO_CHAR(#{startTime},'yyyyMMdd')
+		</if>
+		<if test="endTime!=null">
+			and TO_CHAR(A.CURR_DATE)&lt;=TO_CHAR(#{endTime},'yyyyMMdd')
+		</if>
+		order by A.INIT_DATE desc
+	</select>
+	
+	<select id="selectKhBonus" parameterType="map"  resultType="map">
+			select 
+	   decode(t.use_date||t.use_time,'00',' ',to_char(to_date(to_char(t.use_date||lpad(t.use_time,6,'0')),'yyyy/mm/dd hh24:mi:ss'),'yyyy/mm/dd hh24:mi:ss')) use_date,/*使用时间,\*(使用时间是客户用了红包的时间)*\*/
+       t.bonus_name,/*红包名称*/
+       t.begin_date,/*有效起始日期*/
+       t.end_date,/*有效结束日期*/
+       t.give_type,/*红包类型*/
+       t.en_buy_balance,/* 起购金额,\*(起购金额是指一个红包是购买5万可用还是10万可用，就是购买金额的下限要求)*\*/
+      
+      t.en_stock_type_name ,/*可购买产品类型*/
+       t.en_sub_type_name,/*可购买产品子类型*/
+       t.en_fund_name,/*可购买产品*/
+       t.forbid_fund_name, /*不可购买产品*/
+       
+       t.bonus_balance,/*红包金额*/
+       t.give_status,/*红包状态*/
+<!--       (select b.product_type_name from jhdc.producttypeconfig b  -->
+<!-- where  b.product_type=( select a.product_type -->
+<!--   from jhdc.productproperty a -->
+<!--     where  t.product_code = a.product_code )) product_type_name,/*购买产品类型*/ -->
+       t.product_code,/*购买产品代码*/
+       t.product_name,/*购买产品名称*/
+       t.deal_balance /*购买金额*/
+ from jhdc.hisbonusjour t  where 1=1 and  t.CLIENT_ID = #{khid}
+		<if test="giveStatus!=null">
+			AND t.give_status IN
+		<foreach collection="giveStatus" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="bonusType != null">
+			and t.give_type=#{bonusType}
+		</if>
+		<if test="bonusName!=null">
+			and (t.bonus_name like '%'||trim(' ' FROM #{bonusName})||'%')
+		</if>
+		<if test="startTime!=null">
+			and TO_CHAR(t.use_date)&gt;= TO_CHAR(#{startTime},'yyyyMMdd')
+		</if>
+		<if test="endTime!=null">
+			and TO_CHAR(t.use_date)&lt;=TO_CHAR(#{endTime},'yyyyMMdd')
+		</if>
+		order by t.use_date desc,t.bonus_name,t.give_status,t.give_type
+	</select>
+	
+	
+	
+	
+	<select id="selectVm" parameterType="map"  resultType="map">
+			select 
+       t.vip_code,/*V码编号*/
+       t.reason,/*发放原因*/
+       t.end_at,/*有效期至*/
+       t.min_balance,/*起购金额*/
+       t.max_balance,/*最高金额*/
+       t.enable_product_code,/*可用产品代码*/
+       (select LISTAGG(c.product_name, ',') WITHIN GROUP(ORDER BY c.product_code) 
+          from jhdc.productproperty c
+         where t.enable_product_code = c.product_code) enable_product_name, /*可用产品名称*/
+       
+<!--        (select b.product_type_name from jhdc.producttypeconfig b  -->
+<!-- where  b.product_type=( select a.product_type -->
+<!--   from jhdc.productproperty a -->
+<!--     where  t.enable_product_code = a.product_code )) enable_product_type_name,/*可用产品类型*/ -->
+    
+       t.status,/*V码状态*/
+       decode(t.used_date||t.used_time,'00',' ',to_char(to_date(to_char(t.used_date||lpad(t.used_time,6,'0')),'yyyy/mm/dd hh24:mi:ss'),'yyyy/mm/dd hh24:mi:ss')) used_date,/*使用时间*/
+       t.buy_product_code,/*购买产品代码*/
+       (select  LISTAGG(c.product_name, ',') WITHIN GROUP(ORDER BY c.product_code) 
+          from jhdc.productproperty c
+         where t.buy_product_code = c.product_code) buy_product_name, /*购买产品名称*/
+<!--        (select b.product_type_name from jhdc.producttypeconfig b  -->
+<!-- where  b.product_type=( select a.product_type -->
+<!--   from jhdc.productproperty a -->
+<!--     where  t.buy_product_code = a.product_code )) buy_product_type_name,/*购买产品类型*/ -->
+       t.buy_balance/*购买金额 */
+ from jhdc.vipusedjour t   where 1=1 and  t.CLIENT_ID = #{khid}
+		<if test="vmStatus!=null">
+			AND t.status IN
+		<foreach collection="vmStatus" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="reason!=null">
+			and t.reason=#{reason}
+		</if>
+		<if test="startTime!=null">
+			and TO_CHAR(t.used_date)&gt;= TO_CHAR(#{startTime},'yyyyMMdd')
+		</if>
+		<if test="endTime!=null">
+			and TO_CHAR(t.used_date)&lt;=TO_CHAR(#{endTime},'yyyyMMdd')
+		</if>
+		order by t.used_date desc,t.status
+	</select>
+	
+	
+	
+	
+	
+	
+	<select id="selectGift" parameterType="map"  resultType="map">
+			select t.init_date,/*业务日期*/
+       t.gift_type,/*礼品类型*/
+       t.end_date,/*有效期至*/
+       t.status,/*领取状态*/
+       b.birth_day,/*客户生日*/
+       t.gift_name,/*礼品名称*/
+       t.order_id,/*订单号*/
+       t.price,/*礼品单价*/
+       t.get_at,/*领取时间*/
+       t.receiver,/*收货人姓名*/
+       t.receiver_phone,/*收货人手机号*/
+       t.address,/*收货人地址*/
+       t.zipcode,/*收货人邮编*/
+       t.tracking_time,/*发货时间*/
+       t.tracking_no,/*顺丰单号*/
+       t.express_company,
+       t.tracking_status
+ from jhdc.giftsexchangejour t left join jhdc.clientinfox b on t.client_id=b.client_id   where 1=1 and  t.CLIENT_ID = #{khid}
+		<if test="giftStatus!=null">
+			AND  t.status IN
+		<foreach collection="giftStatus" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="giftType != null">
+			and t.gift_type=#{giftType}
+		</if>
+		<if test="giftName!=null">
+			and (t.gift_name like '%'||trim(' ' FROM #{giftName})||'%')
+		</if>
+		<if test="startTime!=null">
+			and TO_CHAR(t.get_at,'yyyyMMdd')&gt;= TO_CHAR(#{startTime},'yyyyMMdd')
+		</if>
+		<if test="endTime!=null">
+			and TO_CHAR(t.get_at,'yyyyMMdd')&lt;=TO_CHAR(#{endTime},'yyyyMMdd')
+		</if>
+		order by t.get_at desc,t.status,t.gift_type,t.gift_name
+	</select>
+	
+	<!-- 查询客户收益明细 -->
+	<select id="selectKhSymx" resultType="map" parameterType="map">
+		SELECT
+		*
+		FROM hs_opfund.clientincomes WHERE
+		1=1 and income_type not in ('A6') and fund_code not in ('Y80003','Y80004')
+		<if test="clientId != null">
+			and CLIENT_ID = #{clientId}
+		</if>
+		<if test="date != null">
+			AND "SUBSTR"(INIT_DATE,1,6) =#{date}
+		</if>
+		<if test="startTime != null">
+			AND substr(INIT_DATE,1,6) &gt;= TO_CHAR(#{startTime})
+		</if>
+		<if test="endTime != null">
+			AND substr(INIT_DATE,1,6) &lt;= TO_CHAR(#{endTime})
+		</if>
+        ORDER BY INIT_DATE ASC
+	</select>
+	<select id="selectMonthlyInfo" parameterType="map" resultType="map">
+		SELECT
+		INIT_MONTH,
+		CLIENT_ID,
+		TOTAL_BALANCE
+		FROM
+		T_KH_INCOMES_MM
+		WHERE
+		1= 1
+		<if test="khid != null">
+			and client_id = #{khid}
+		</if>
+		<if test="startTime != null">
+			AND INIT_MONTH &gt;= TO_CHAR(#{startTime})
+		</if>
+		<if test="endTime != null">
+			AND INIT_MONTH &lt;= TO_CHAR(#{endTime})
+		</if>
+		ORDER BY INIT_MONTH ASC
+	</select>
+	<select id="selectClientBSInfo" parameterType="map" resultType="map">
+		SELECT
+		SUM (nvl(
+		DECODE (BS_FLAG, 'S', deal_balance)
+		,0)) "sellBalance",
+		SUM (nvl(
+		DECODE (BS_FLAG, 'B', deal_balance)
+		,0))
+		"buyBalance",
+		SUM (nvl(
+		DECODE (BS_FLAG, 'S', bs_times)
+		,0)) "sellAmount",
+		SUM (nvl(
+		DECODE (BS_FLAG, 'B', bs_times)
+		,0)) "buyAmount",
+		INIT_MONTH "initMonth",
+		CLIENT_ID
+		FROM
+		jhdc.histradeinfoM
+		where
+		CLIENT_ID = #{khid}
+		<if test="year!=null">
+		and "SUBSTR"(INIT_MONTH,1,4) = #{year}
+		</if>
+		<if test="productType!=null">
+		and PRODUCT_TYPE NOT IN (#{productType})
+		</if>
+		GROUP BY
+		init_month,
+		client_id
+
+	</select>
+
+<select id="selectZjyeHis" parameterType="map" resultType="map">
+SELECT
+	*
+FROM
+	JHDC.hispayfund
+WHERE
+	CLIENT_ID = #{khid}
+<if test="startDate!=null">
+	AND INIT_DATE &gt;=#{startDate}
+</if>	
+<if test="endDate!=null">
+	AND INIT_DATE &lt;=#{endDate}
+</if>	
+order by INIT_DATE desc
+	</select>
+
+<select id="selectKhTradeInfo"	parameterType="map" resultType="map">
+ 		SELECT DISTINCT
+ 		D.JG_NAME,
+        D.BRANCH_NO,
+		t.CLIENT_ID "clientId",
+		name_alias(t.CLIENT_NAME) CLIENT_NAME,
+		t.FUND_COMPANY,
+		t.PRODUCT_TYPE,
+		B.PRODUCT_TYPE_NAME "productTypeName",
+		t.PRODUCT_NAME,
+		t.PRODUCT_CODE "productCode",
+		t.SHARES,
+		t.DEAL_SHARES,
+		t.BALANCE,
+		t.DEAL_BALANCE,
+		t.BS_FLAG,
+		t.OP_ENTRUST_WAY,
+		t.OPBUSINESS_FLAG,
+		t.PAY_TYPE,
+		t.TRADE_TYPE||t.ENTRUST_STATUS ENTRUST_STATUS,
+		t.TRADE_TYPE,
+		t.INIT_DATE "initDate",
+		pro.CLOSE_DAY "closeDay",
+		(SELECT
+		bank_name
+		FROM
+		hs_fund.bankarg b
+		where t.BANK_NO = b
+		.BANK_NO 
+		) bankName
+		from
+		JHDC.HISFULLTRADEINFOJOUR t
+		  LEFT JOIN
+		  T_KH_FZGX kh ON t.CLIENT_ID =kh.KHID
+		  LEFT JOIN
+		  jhdc.productProperty pro ON t.product_code =pro.PRODUCT_CODE
+		  LEFT JOIN 
+		  jhdc.productTypeConfig B ON t.product_type = B.product_type
+		  LEFT JOIN (SELECT * FROM JHDC.CLIENTINFOX  C, L_ORGANIZATION_EXPAND org
+    WHERE C.BRANCH_NO = org.JG_CODE)D
+    ON t.Client_Id=D.CLIENT_ID
+		where
+          kh.KHFZID =#{khfzid}
+		<if test="khid!=null">
+			AND (t.CLIENT_ID like trim(' ' FROM  #{khid})||'%' or t.CLIENT_NAME like trim(' ' FROM  #{khid})||'%')
+		</if>
+		<if test="fundcompany!=null">
+			AND pro.FUND_COMPANY = #{fundcompany}
+		</if>
+		<if test="producttype!=null">
+			AND t.PRODUCT_TYPE IN
+			<foreach collection="producttype" open="(" separator=","
+				close=")" item="item">
+					#{item}
+			</foreach>
+		</if>
+		<if test="closeDayS!=null">
+			AND pro.CLOSE_DAY &gt;=(to_char(#{closeDayS},'yyyyMMdd'))
+		</if>
+		<if test="closeDayE!=null">
+			AND pro.CLOSE_DAY &lt;=(to_char(#{closeDayE},'yyyyMMdd'))
+		</if>
+		<if test="productname!=null">
+			AND (pro.PRODUCT_NAME like trim(' ' FROM #{productname})||'%' or t.product_code like trim(' ' FROM #{productname})||'%')
+		</if>
+		<if test="productstatus!=null">
+			AND pro.sale_status = #{productstatus}
+		</if>
+			<if test="buystarttime!=null">
+			AND t.INIT_DATE &gt;=(to_char(#{buystarttime},'yyyyMMdd'))
+		</if>
+		<if test="buyendtime!=null">
+			AND t.INIT_DATE &lt;=(to_char(#{buyendtime},'yyyyMMdd'))
+		</if>
+		
+		<if test="payType!=null">
+			AND t.PAY_TYPE IN
+		<foreach collection="payType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="clstartdate!=null">
+			AND t.INIT_DATE &gt;=(to_char(#{clstartdate},'yyyyMMdd'))
+		</if>
+		<if test="clenddate!=null">
+			AND t.INIT_DATE &lt;=(to_char(#{clenddate},'yyyyMMdd'))
+		</if>
+		<if test="startratio!=null">
+			AND pro.CONFIRM_INCOME &gt;=#{startratio}
+		</if>
+		<if test="endratio!=null">
+			AND pro.CONFIRM_INCOME &lt;=#{endratio}
+		</if>
+		<if test="productdays!=null">
+			AND pro.PRODUCT_TERM =#{productdays}
+		</if>
+		<if test="zrflag!=null">
+			AND pro.PRODUCT_TRANSFER_FLAG =#{zrflag}
+		</if>
+		<if test="gzflag!=null">
+			AND pro.PRODUCT_ROLL_FLAG =#{gzflag}
+		</if>
+		<if test="gzflag!=null">
+			AND pro.PRODUCT_ROLL_FLAG =#{gzflag}
+		</if>
+		<if test="buylimit!=null">
+			AND pro.MIN_SHARE =#{buylimit}
+		</if>
+		
+		<if test="bsflag!=null">
+			AND t.BUSINESS_FLAG IN
+		<foreach collection="bsflag" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="tradeType!=null">
+			AND t.TRADE_TYPE =#{tradeType}
+		</if>
+		<if test="entruststatus!=null">
+			AND t.ENTRUST_STATUS =#{entruststatus}
+		</if>
+		<if test="entrustway!=null">
+			AND t.OP_ENTRUST_WAY =#{entrustway}
+		</if>
+		<if test="dealBalanceL!=null">
+			AND t.DEAL_BALANCE &gt;=#{dealBalanceL}
+		</if>
+		<if test="dealBalanceM!=null">
+			AND t.DEAL_BALANCE &lt;=#{dealBalanceM}
+		</if>
+		order by "initDate" desc
+</select> 
+
+<select id="selectKhInfoCount" parameterType="map" resultType="map">
+ select 
+  DISTINCT  (select sum(DEAL_BALANCE) from jhdc.TRADEINFOJOUR where BS_FLAG='B') "buySum",
+   ((select count(1) from jhdc.TRADEINFOJOUR where TRADE_TYPE='0')||'/'||
+    (select count(1) from jhdc.TRADEINFOJOUR where TRADE_TYPE='1')) "tradetype"
+    
+    from
+		JHDC.HISTRADEINFOJOUR t
+		 LEFT JOIN
+		 L_ORGANIZATION_EXPAND org ON t.BRANCH_NO = org.JG_CODE
+		  LEFT JOIN
+		  T_KH_FZGX kh ON t.CLIENT_ID =kh.KHID
+		  where
+          kh.KHFZID =#{khfzid}
+		<if test="clientId!=null">
+			AND (t.CLIENT_ID like #{khid}||'%' or t.CLIENT_NAME like #{khid}||'%')
+		</if>
+		<if test="fundcompany!=null">
+			AND pro.FUND_COMPANY = #{fundcompany}
+		</if>
+		<if test="producttype!=null">
+			AND pro.PRODUCT_TYPE = #{producttype}
+		</if>
+		<if test="productname!=null">
+			AND pro.PRODUCT_NAME = #{productname}
+		</if>
+		<if test="productstatus!=null">
+			AND pro.FUND_STATUS = #{productstatus}
+		</if>
+			<if test="buystarttime!=null">
+			AND t.INIT_DATE &gt;=#{buystarttime}
+		</if>
+		<if test="buyendtime!=null">
+			AND t.INIT_DATE &lt;=#{buyendtime}
+		</if>
+		<if test="payType!=null">
+			AND t.PAY_TYPE = #{payType}
+		</if>
+		<if test="clstartdate!=null">
+			AND pro.SETUP_DATE &gt;=#{clstartdate}
+		</if>
+		<if test="clenddate!=null">
+			AND pro.SETUP_DATE &lt;=#{clenddate}
+		</if>
+		<if test="startratio!=null">
+			AND pro.CONFIRM_INCOME &gt;=#{startratio}
+		</if>
+		<if test="endratio!=null">
+			AND pro.CONFIRM_INCOME &lt;=#{endratio}
+		</if>
+		<if test="productdays!=null">
+			AND pro.PRODUCT_TERM =#{productdays}
+		</if>
+		<if test="zrflag!=null">
+			AND pro.PRODUCT_TRANSFER_FLAG =#{zrflag}
+		</if>
+		<if test="gzflag!=null">
+			AND pro.PRODUCT_ROLL_FLAG =#{gzflag}
+		</if>
+		<if test="gzflag!=null">
+			AND pro.PRODUCT_ROLL_FLAG =#{gzflag}
+		</if>
+		<if test="buylimit!=null">
+			AND pro.MIN_SHARE =#{buylimit}
+		</if>
+		<if test="bsflag!=null">
+			AND t.BS_FLAG =#{bsflag}
+		</if>
+		<if test="tradeType!=null">
+			AND t.TRADE_TYPE =#{tradeType}
+		</if>
+		<if test="entruststatus!=null">
+			AND t.ENTRUST_STATUS =#{entruststatus}
+		</if>
+		<if test="entrustway!=null">
+			AND t.OP_ENTRUST_WAY =#{entrustway}
+		</if>
+		<if test="dealBalanceL!=null">
+			AND t.DEAL_BALANCE &gt;=#{dealBalanceL}
+		</if>
+		<if test="dealBalanceM!=null">
+			AND t.DEAL_BALANCE &lt;=#{dealBalanceM}
+		</if>
+</select>
+
+	
+	
+<!-- 	查询客户持仓信息 -->
+	<select id="selectMonthkhccInfo" parameterType="map" resultType="map">
+		SELECT
+		init_month,
+		client_id,
+		SUM (MARKET_VALUE) total_balance
+		FROM
+		T_KH_STOCK_MM
+		WHERE
+		1= 1
+		<if test="khid != null">
+			and client_id = #{khid}
+		</if>
+		<if test="startTime != null">
+			AND substr(init_month,1,6) &gt;= #{startTime}
+		</if>
+		<if test="endTime != null">
+			AND substr(init_month,1,6) &lt;= #{endTime}
+		</if>
+		GROUP BY init_month ,client_id
+		ORDER BY init_month ASC
+	</select>
+	
+		<!-- 查询客户持仓明细 -->
+	<select id="selectKhCcmx" resultType="map" parameterType="map">
+		SELECT * FROM T_KH_STOCK_MM WHERE
+		1=1
+		<if test="clientId != null">
+			and CLIENT_ID = #{clientId}
+		</if>
+		<if test="date != null">
+			AND INIT_MONTH =#{date}
+		</if>
+		<if test="startTime != null">
+			AND INIT_MONTH &gt;=#{startTime}
+		</if>
+		<if test="endTime != null">
+			AND INIT_MONTH &lt;=#{endTime}
+		</if>
+		order by init_month asc
+		</select>
+ <select id="jhhjzx" resultType="map" parameterType="map">
+ SELECT to_char(a.KHID) "khid",
+       a.KHXM "khxm",
+       to_char(a.ORGID) "orgid",
+       a.GTSJ "sjhm",
+       (SELECT ORG_NAME FROM L_ORGANIZATION WHERE ORG_ID = a.ORGID) "orgname",
+       to_char(a.KHSJ) "khsj",
+       '0' khlx
+  FROM T_KH_XX a
+  where 1=1 
+	<if test="sjhm != null">
+	AND  a.GTSJ=#{sjhm}
+	</if>
+	union all
+SELECT a."khid",
+       a."khxm",
+       to_char(a."orgid"),
+       a."sjhm",
+       c.jg_name "orgname",
+       to_char(a."khsj"),
+       '1' khlx
+  FROM (SELECT a.client_id "khid",
+               nvl(d.orgid,
+                   case
+                     when a.dev_branch_no in ('88', '1002') then
+                      6666
+                     else
+                      a.dev_branch_no
+                   end) "orgid",
+               a.client_name "khxm",
+               a.id_no,
+               a.open_date "khsj",
+               b.mobile_tel "sjhm"
+          FROM hs_user.client a
+          left join hs_user.clientinfo b
+            on a.client_id = b.client_id
+          left join crm.T_GXGL_GXMX d
+            on a.client_id = d.khid) a
+  left join crm.L_ORGANIZATION_EXPAND c
+    on a."orgid" = c.jgid
+ where 
+<if test="sjhm !=null">
+ a."sjhm" =#{sjhm}
+</if>
+and a."khid">(select d.table_key from jhdc.SYN_TABLE_KEY d where d.table_name='clientinfox')
+
+</select>
+	
+<select id="selectUtActivityinfo" parameterType="map" resultType="map">
+select t.ut_code,
+       t.ut_type,
+       t.ut_name utName,
+      trim(t.record_date) record_date
+  from jhdc.ut_activityinfo t
+<where>
+<if test="ut!=null">
+and (t.ut_name like '%'|| trim(' ' FROM #{ut})||'%' or t.ut_code like trim(' ' FROM #{ut}))
+</if>
+<if test="utType!=null">
+and ( t.ut_type=#{utType})
+</if>
+</where>
+order by t.ut_type
+</select>
+
+<select id="selectUtActivityinfoByCode" parameterType="java.lang.String" resultType="com.linkstec.crm.customer.dto.C200212SDto">
+select t.ut_code,
+       t.ut_type,
+       t.ut_name ,
+      trim(t.record_date) record_date
+  from jhdc.ut_activityinfo t
+where t.ut_code=#{utCode}
+</select>
+<select id="selectCountUt" parameterType="map" resultType="java.lang.String">
+select count(*) from jhdc.ut_activityinfo where ut_code=#{utCode}
+</select>
+
+<insert id="insertIntoUtActivityinfo" parameterType="map">
+		insert into
+		jhdc.ut_activityinfo
+		(ut_code,ut_name,ut_type,record_date)
+		values (#{utCode},#{utName} ,#{utType},#{recordDate})
+</insert>
+<update id="updateUtActivityinfo" parameterType="map">
+	update jhdc.ut_activityinfo set ut_name=#{utName},ut_type=#{utType},record_date=#{recordDate} where ut_code=#{utCode} 
+</update>
+
+<insert id="insertIntoUtActivityinfojour" parameterType="map">
+		insert into
+		jhdc.ut_activityinfojour
+		(ut_code,ut_name,ut_type,adjuster,update_at,mode_type,record_date)
+		values (#{utCode},#{utName} ,#{utType} ,#{adjuster} ,#{updateAt} ,#{modeType},#{recordDate})
+</insert>
+
+<select id="selectRecordDate" parameterType="map" resultType="java.lang.String">
+select record_date from jhdc.ut_activityinfo where ut_code=#{utCode}
+</select>
+
+<select id="selectClientActivity" parameterType="map" resultType="map">
+select t.client_id,b.khxm, t.ut_code, a.ut_name, a.ut_type
+  from jhdc.client_activity t
+ inner join jhdc.ut_activityinfo a
+    on t.ut_code = a.ut_code
+ left  join crm.T_kh_xx b 
+ on t.client_id=b.khid
+<where>
+<if test="ut!=null">
+and (a.ut_name like '%'|| trim(' ' FROM #{ut})||'%' or t.ut_code like trim(' ' FROM #{ut}))
+</if>
+<if test="utType!=null">
+and (  a.ut_type=#{utType})
+</if>
+<if test="khid!=null">
+and (b.khxm like  '%'|| trim(' ' FROM #{khid})||'%' or t.client_id like trim(' ' FROM #{khid}))
+</if>
+</where>
+  order by t.client_id, t.curr_date desc
+</select>
+<insert id="insertIntoClientActivity" parameterType="map">
+		insert into
+		jhdc.client_activity
+		(ut_code,client_id,curr_date)
+		values (#{utCode},#{clientId} ,#{currDate})
+</insert>
+<select id="selectCountKhid" parameterType="map" resultType="java.lang.String">
+select count(*) from crm.T_kh_xx where to_char(khid)=#{khid}
+</select>
+<select id="selectCountKhidAndUtcode" parameterType="map" resultType="java.lang.String">
+select count(*) from jhdc.client_activity where ut_code=#{utCode} and client_id=#{clientId}
+</select>
+
+<select id="selectRiskLevelJh" parameterType="map" resultType="map">
+select * from (
+select b.client_id,
+       c.khxm,
+       a.risk_rank, 
+       substr(TO_CHAR(a.update_at / (1000 * 60 * 60 * 24) +
+               TO_DATE('1970-01-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'),
+               'YYYYMMDD  HH24:MI:SS'),0,8) update_time,     
+       TO_CHAR(a.update_at / (1000 * 60 * 60 * 24) +
+               TO_DATE('1970-01-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'),
+               'YYYY/MM/DD HH24:MI:SS') update_at
+  from jhdc.risk_grade_evaluation a
+  left join hs_opfund.ofclienttoclient b
+    on to_char(a.user_id) = b.client_id_dd
+  inner join crm.T_kh_xx c on b.client_id=to_char(c.khid))
+where 1=1
+<if test="khid!=null">
+and (khxm like '%'|| trim(' ' FROM #{khid})||'%' or client_id like trim(' ' FROM #{khid}))
+</if>
+<if test="riskLevelJh!=null">
+and ( to_char(risk_rank)=#{riskLevelJh})
+</if>
+<if test="beginDate!=null">
+and update_time &gt;=to_number(to_char(#{beginDate},'yyyyMMdd')) 
+</if>
+<if test="endDate!=null">
+and update_time &lt;=to_number(to_char(#{endDate},'yyyyMMdd')) 
+</if>
+order by client_id,update_at
+</select>
+
+<select id="selectTradeLs" parameterType="map" resultType="map">
+select 
+       to_date(to_char(t.CURR_DATE||lpad(t.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  currDate,
+       t.curr_date,
+       t.client_id,
+       b.khxm,
+       t.client_risk,  
+       t.product_code,
+       t.product_name,
+       c.risklevel,
+       b.gtsj,
+       b.zjhm||' ' zjhm,
+       (select d.jg_name from crm.l_Organization_Expand d where d.jgid=b.orgid) khJgName,
+       a.ryid,
+       a.ryxm
+  from jhdc.histradeinfojour t
+  left join crm.t_Gxgl_Gxmx a
+    on to_number(t.client_id) = a.khid
+  inner join crm.T_kh_xx b
+    on to_number(t.client_id) = b.khid
+  inner join jhdc.productproperty c
+    on t.product_code = c.product_code and c.sub_type in ('S1','S2')
+where 1=1 and t.bs_flag='B'
+<if test="khid!=null">
+and (b.khxm like '%'|| trim(' ' FROM #{khid})||'%' or t.client_id like trim(' ' FROM #{khid}))
+</if>
+<if test="cpdm!=null">
+and ( t.product_code like trim(' ' FROM #{cpdm})||'%' or t.product_name like trim(' ' FROM #{cpdm})||'%' )
+</if>
+<if test="riskLevelHc!=null">
+and ( t.client_risk=#{riskLevelHc})
+</if>
+<if test="riskLevelProduct!=null">
+and ( c.risklevel=#{riskLevelProduct})
+</if>
+<if test="beginDate!=null">
+and  t.curr_date &gt;=to_number(to_char(#{beginDate},'yyyyMMdd')) 
+</if>
+<if test="endDate!=null">
+and  t.curr_date &lt;=to_number(to_char(#{endDate},'yyyyMMdd')) 
+</if>
+order by to_date(to_char(t.CURR_DATE||lpad(t.CURR_TIME,6,'0')),'yyyyMMdd hh24:mi:ss')  desc
+</select>
+
+<select id="selectSmVisitjour" parameterType="map" resultType="map">
+     select * from (
+     select t.curr_date,
+       t.client_id,
+       (select khxm from crm.T_kh_xx where khid=t.client_id)  khxm,
+       t.hc_risk,
+       t.risk,
+       t.l_url,
+      t.read_doc_at,
+      t.check_buy_at,
+       t.product_code,
+       (case when t.product_code  like '无' then '无' else 
+       (select product_name from jhdc.productproperty where product_code=t.product_code )  end)  productName,
+       t.target,
+       t.l_desc
+  from jhdc.smvisitjour t )
+    <where>
+			<if test="productName!=null">
+				and (productName like '%'||trim(' ' FROM #{productName})||'%' or product_code = trim(' ' FROM #{productName}) )
+			</if>
+			<if test="khxm!=null">
+				and (khxm like '%'||trim(' ' FROM #{khxm})||'%' or client_id = trim(' ' FROM #{khxm}) )
+			</if>
+			
+			<if test="beginDate!=null">
+				and to_number(to_char(curr_date,'yyyyMMdd')) &gt;=
+				to_number(to_char(#{beginDate},'yyyyMMdd'))
+			</if>
+			<if test="endDate!=null">
+				and to_number(to_char(curr_date,'yyyyMMdd')) &lt;=
+				to_number(to_char(#{endDate},'yyyyMMdd'))
+			</if>
+		</where>
+ order by curr_date desc
+</select>
+<select id="selectEmployeeTwoGxgl" parameterType="map" resultType="map">
+select f.ryid ryidOne,
+       f.ryxm ryxmOne,
+       g.ryidTwo,
+       g.ryxmTwo,
+       g.khid,
+       m.khxm ,
+       (select jg_name from crm.l_Organization_Expand where jgid = m.orgid) khjgName,
+       m.age,
+       m.xb,
+       m.khlx,
+       m.zhzt,
+       n.zrcc,
+       m.khly,
+       n.zrye,
+       n.khdj,
+       n.total_buy_times + n.buy_times_shhb "total_buy_times",
+       n.total_buy_balance + n.total_balance_shhb "total_buy_balance",
+       n.by_buy_balance,
+       n.sy_buy_balance,
+       n.first_trade_date,
+       n.last_trade_date,
+       m.khsj,
+       m.fxcsnl,
+       m.gtsj,
+       (SELECT RISK_VALUE
+          FROM JHDC.CLIENT_RISK
+         WHERE CLIENT_ID = to_char(m.KHID)
+           AND RISK_TYPE = 'hc') "riskvaluehc",
+       (SELECT RISK_VALUE
+          FROM JHDC.CLIENT_RISK
+         WHERE CLIENT_ID = to_char(m.KHID)
+           AND RISK_TYPE = 'gjs') "riskvaluejjs"
+  from (select d.ryid ryidTwo, d.ryxm ryxmTwo, d.khid
+          from crm.t_Gxgl_Gxmx d
+         where d.ryid in
+               (select t.khid ryid2
+                  from crm.t_Gxgl_Gxmx t
+                 where t.ryid in
+                       (select b.ryid
+                          from crm.t_Ehr_Jjr_Jbxx b
+                         where b.jgid in (select b.jgid
+                                            from crm.l_Organization_Expand b
+                                           where b.jg_type = '4')
+                           and b.current_type = '14'
+                           and b.flow_status = '3')
+                   and t.khid in (select c.ryid from crm.t_Ehr_Jjr_Jbxx c)
+                   and t.ryid != t.khid)) g
+  left join crm.t_Gxgl_Gxmx f
+    on f.khid = g.ryidTwo
+  left join crm.T_kh_xx m
+    on m.khid = g.khid
+  left join crm.t_Kh_Xx_Zh n
+    on n.khid = g.khid
+    where 1=1 
+        <if test="khid!=null">
+		and (m.khxm    like '%'|| trim(' ' FROM #{khid})||'%' or g.khid like trim(' ' FROM #{khid}))
+		</if>
+		<if test="ryidTwo!=null">
+		and (g.ryxmTwo    like '%'|| trim(' ' FROM #{ryidTwo})||'%' or g.ryidTwo like trim(' ' FROM #{ryidTwo}))
+		</if>
+		<if test="ryid!= null">
+	    and  f.ryid in
+		<foreach collection="ryid" open="(" separator="," close=")" item="item">
+		#{item}
+		</foreach>
+		</if> 
+	order by f.ryid, g.ryidTwo, g.khid
+</select>
+<select id="selectEmployeeTwoTradeInfo" parameterType="map" resultType="map">
+
+select *
+  from (
+        
+        select  m.init_date,
+                m."currDate",
+                g.ryid ryidOne,
+                g.ryxm ryxmOne,
+                f.jgid jgidOne,
+                (select jg_name
+                   from crm.l_Organization_Expand
+                  where jgid = f.jgid) jgNameOne,
+                to_char(m.ryid) ryidTwo,
+                m.ryxm ryxmTwo,
+                m.client_id khid,
+                m.client_name khxm,
+                m.orgid,
+                m."orgname",
+                m.PRODUCT_NAME,
+                m.PRODUCT_CODE,
+                m."businessFlag",
+                m.DEAL_BALANCE
+          from (SELECT to_date(to_char(A.CURR_DATE ||
+                                        lpad(A.CURR_TIME, 6, '0')),
+                                'yyyyMMdd hh24:mi:ss') "currDate",
+                        D.RYID,
+                        D.RYXM,
+                        A.CLIENT_ID,
+                        A.CLIENT_NAME,
+                        A.INIT_DATE,
+                        (SELECT ORG_NAME
+                           FROM crm.L_ORGANIZATION
+                          WHERE ORG_ID = C.ORGID) "orgname",
+                        C.ORGID,
+                        A.PRODUCT_NAME,
+                        A.PRODUCT_CODE,
+                        A.DEAL_BALANCE,
+                        A.OPBUSINESS_FLAG "businessFlag"
+                   FROM JHDC.HISFULLTRADEINFOJOUR A
+                  INNER JOIN crm.T_KH_XX C
+                     ON A.CLIENT_ID = C.KHID
+                  INNER JOIN crm.T_GXGL_GXMX D
+                     ON A.CLIENT_ID = D.KHID
+                  WHERE A.OPBUSINESS_FLAG != 8017
+                    and A.Client_Id in
+                        (select d.khid
+                           from crm.t_Gxgl_Gxmx d
+                          where d.ryid in
+                                (
+                                 
+                                 select t.khid ryid2
+                                   from crm.t_Gxgl_Gxmx t
+                                  where t.ryid in
+                                        (select b.ryid
+                                           from crm.t_Ehr_Jjr_Jbxx b
+                                          where b.jgid in
+                                                (select b.jgid
+                                                   from crm.l_Organization_Expand b
+                                                  where b.jg_type = '4')
+                                            and b.current_type = '14'
+                                            and b.flow_status = '3')
+                                    and t.khid in
+                                        (select c.ryid from crm.t_Ehr_Jjr_Jbxx c)
+                                    and t.ryid != t.khid))
+                 UNION ALL
+                 SELECT to_date(to_char(A.CURR_DATE ||
+                                        lpad(A.CURR_TIME, 6, '0')),
+                                'yyyyMMdd hh24:mi:ss') "currDate",
+                        D.RYID,
+                        D.RYXM,
+                        A.CLIENT_ID,
+                        A.CLIENT_NAME,
+                        A.INIT_DATE,
+                        (SELECT ORG_NAME
+                           FROM crm.L_ORGANIZATION
+                          WHERE ORG_ID = C.ORGID) "orgname",
+                        C.ORGID,
+                        A.PRODUCT_NAME,
+                        A.PRODUCT_CODE,
+                        A.DEAL_BALANCE,
+                        A.OPBUSINESS_FLAG "businessFlag"
+                   FROM JHDC.HISNEN_TRADEINFOJOUR A
+                  INNER JOIN crm.T_KH_XX C
+                     ON A.CLIENT_ID = C.KHID
+                  INNER JOIN crm.T_GXGL_GXMX D
+                     ON A.CLIENT_ID = D.KHID
+                  WHERE A.product_code != '990001'
+                    and A.OPBUSINESS_FLAG != 8017
+                    and A.Client_Id in
+                        (select d.khid
+                           from crm.t_Gxgl_Gxmx d
+                          where d.ryid in
+                                (
+                                 
+                                 select t.khid ryid2
+                                   from crm.t_Gxgl_Gxmx t
+                                  where t.ryid in
+                                        (select b.ryid
+                                           from crm.t_Ehr_Jjr_Jbxx b
+                                          where b.jgid in
+                                                (select b.jgid
+                                                   from crm.l_Organization_Expand b
+                                                  where b.jg_type = '4')
+                                            and b.current_type = '14'
+                                            and b.flow_status = '3')
+                                    and t.khid in
+                                        (select c.ryid from crm.t_Ehr_Jjr_Jbxx c)
+                                    and t.ryid != t.khid))) m
+          left join crm.t_Gxgl_Gxmx g
+            on m.ryid = g.khid
+          left join crm.t_Ehr_Jjr_Jbxx f
+            on g.ryid = f.ryid
+         where 1=1
+		<if test="startTime==null and endTime==null">
+			and  m.INIT_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and (m.PRODUCT_CODE like trim(' ' FROM #{cpdm}) or m.PRODUCT_NAME like '%'||trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="mmfx!=null">
+			AND m."businessFlag" IN
+		<foreach collection="mmfx" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="khid!=null">
+			and (m.CLIENT_ID like trim(' ' FROM #{khid}) or m.CLIENT_NAME like '%'|| trim(' ' FROM #{khid})||'%' )
+		</if>
+		<if test="ryidTwo!=null">
+			and (m.ryxm like   '%'|| trim(' ' FROM #{ryidTwo})||'%' or m.ryid like trim(' ' FROM #{ryidTwo}) )
+		</if>
+		<if test="startTime!=null">
+			and m.INIT_DATE &gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and m.INIT_DATE &lt;=#{endTime}
+		</if>
+		<if test="ryid!= null">
+			and g.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if>         
+        union all
+        
+        select
+        
+         m.init_date,
+          m."currDate",
+          m.ryid ryidOne,
+          m.ryxm ryxmOne,
+          m.jgid jgidOne,
+          m."jjrJgName" as jgNameOne,
+          m.client_id ryidTwo,
+          m.client_name ryxmTwo,
+          ' ' as khid,
+          ' ' as khxm,
+          ' ' as orgid,
+          ' ' as "orgname",
+          m.PRODUCT_NAME,
+          m.PRODUCT_CODE,
+          m."businessFlag",
+          m.DEAL_BALANCE
+          from (SELECT to_date(to_char(A.CURR_DATE ||
+                                        lpad(A.CURR_TIME, 6, '0')),
+                                'yyyyMMdd hh24:mi:ss') "currDate",
+                        D.RYID,
+                        D.RYXM,
+                        A.CLIENT_ID,
+                        A.CLIENT_NAME,
+                        A.INIT_DATE,
+                        (SELECT ORG_NAME
+                           FROM crm.L_ORGANIZATION
+                          WHERE ORG_ID = C.ORGID) "orgname",
+                        C.ORGID,
+                        A.PRODUCT_NAME,
+                        A.PRODUCT_CODE,
+                        A.DEAL_BALANCE,
+                        A.OPBUSINESS_FLAG "businessFlag",
+                        i.jgid,
+                        (select jg_name
+                           from crm.l_Organization_Expand
+                          where jgid = i.jgid) "jjrJgName"
+                   FROM JHDC.HISFULLTRADEINFOJOUR A
+                  INNER JOIN crm.T_KH_XX C
+                     ON A.CLIENT_ID = C.KHID
+                  INNER JOIN crm.T_GXGL_GXMX D
+                     ON A.CLIENT_ID = D.KHID
+                  inner join crm.T_ehr_jjr_jbxx i
+                     on i.ryid = d.ryid
+                  WHERE A.OPBUSINESS_FLAG != 8017
+                    and A.CLIENT_ID in
+                        (select t.khid ryid2
+                           from crm.t_Gxgl_Gxmx t
+                          where t.ryid in (select b.ryid
+                                             from crm.t_Ehr_Jjr_Jbxx b
+                                            where b.jgid in
+                                                  (select b.jgid
+                                                     from crm.l_Organization_Expand b
+                                                    where b.jg_type = '4')
+                                              and b.current_type = '14'
+                                              and b.flow_status = '3'))
+                 UNION ALL
+                 SELECT to_date(to_char(A.CURR_DATE ||
+                                        lpad(A.CURR_TIME, 6, '0')),
+                                'yyyyMMdd hh24:mi:ss') "currDate",
+                        D.RYID,
+                        D.RYXM,
+                        A.CLIENT_ID,
+                        A.CLIENT_NAME,
+                        A.INIT_DATE,
+                        (SELECT ORG_NAME
+                           FROM crm.L_ORGANIZATION
+                          WHERE ORG_ID = C.ORGID) "orgname",
+                        C.ORGID,
+                        A.PRODUCT_NAME,
+                        A.PRODUCT_CODE,
+                        A.DEAL_BALANCE,
+                        A.OPBUSINESS_FLAG "businessFlag",
+                        i.jgid,
+                        (select jg_name
+                           from crm.l_Organization_Expand
+                          where jgid = i.jgid) "jjrJgName"
+                   FROM JHDC.HISNEN_TRADEINFOJOUR A
+                  INNER JOIN crm.T_KH_XX C
+                     ON A.CLIENT_ID = C.KHID
+                  INNER JOIN crm.T_GXGL_GXMX D
+                     ON A.CLIENT_ID = D.KHID
+                  inner join crm.T_ehr_jjr_jbxx i
+                     on i.ryid = d.ryid
+                  WHERE A.product_code != '990001'
+                    and A.OPBUSINESS_FLAG != 8017
+                    and A.Client_Id in
+                        (select t.khid ryid2
+                           from crm.t_Gxgl_Gxmx t
+                          where t.ryid in (select b.ryid
+                                             from crm.t_Ehr_Jjr_Jbxx b
+                                            where b.jgid in
+                                                  (select b.jgid
+                                                     from crm.l_Organization_Expand b
+                                                    where b.jg_type = '4')
+                                              and b.current_type = '14'
+                                              and b.flow_status = '3')
+                         
+                         )) m
+         where 1 = 1
+         <if test="startTime==null and endTime==null">
+			and  m.INIT_DATE=GET_BIZ_DATE()
+		</if>
+		<if test="cpdm!=null">
+			and (m.PRODUCT_CODE like trim(' ' FROM #{cpdm}) or m.PRODUCT_NAME like '%'||trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="mmfx!=null">
+			AND m."businessFlag" IN
+		<foreach collection="mmfx" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="khid!=null">
+		and 1=2
+<!-- 			and (khid like trim(' ' FROM #{khid}) or khxm like '%'|| trim(' ' FROM #{khid})||'%' ) -->
+		</if>
+		<if test="ryidTwo!=null">
+			and (m.client_name like   '%'|| trim(' ' FROM #{ryidTwo})||'%' or m.client_id like trim(' ' FROM #{ryidTwo}) )
+		</if>
+		<if test="startTime!=null">
+			and m.INIT_DATE &gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and m.INIT_DATE &lt;=#{endTime}
+		</if>
+		<if test="ryid!= null">
+			and m.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if>   
+         
+         )
+         
+         
+         
+ order by ryidOne, "currDate" desc
+</select>
+
+<insert id="insertTKhOrgExtend" parameterType="com.linkstec.crm.customer.po.TKhOrgExtend">
+		INSERT INTO T_KH_ORG_EXTEND
+    (bz, ryid, khid, jgid, bgr, bgrq, yjgid, id)
+	values (#{bz},#{ryid},#{khid},#{jgid},#{bgr},#{bgrq},#{yjgid},gjOrg.Nextval)
+</insert>
+<select id="selectkhOfadventrust" parameterType="map" resultType="map">
+select to_date(to_char(t.CURR_DATE || lpad(t.CURR_TIME, 6, '0')),
+               'yyyyMMdd hh24:mi:ss') "currDate",
+       t.CURR_DATE,
+       t.client_id,
+       t.client_name,
+       b.ryid,
+       b.ryxm,
+       t.fund_code,
+       c.product_type,
+       (select b.product_type_name
+          from jhdc.producttypeconfig b
+         where b.product_type = c.product_type) "productTypeName",
+       c.product_name,
+       t.shares,
+       t.balance,
+       t.entrust_status
+  from hs_opfund.ofadventrust t
+  left join crm.t_Gxgl_Gxmx b
+    on t.client_id = b.khid
+  left join jhdc.productproperty c
+    on t.fund_company = c.fund_company
+   and t.fund_code = c.product_code
+       where 1=1 and c.product_type in ('xs', 'xv') and t.fund_code not in ('Y80003','Y80004') 
+		<if test="cpdm!=null">
+			and (t.fund_code like trim(' ' FROM #{cpdm}) or c.product_name like '%'||trim(' ' FROM #{cpdm})||'%' )
+		</if>
+		<if test="wtzt!=null">
+			and t.entrust_status IN
+		<foreach collection="wtzt" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		</foreach>
+		</if>
+		<if test="khid!=null">
+			and (t.client_id like trim(' ' FROM #{khid}) or t.client_name like '%'|| trim(' ' FROM #{khid})||'%' )
+		</if>
+		<if test="startTime!=null">
+			and t.CURR_DATE &gt;=#{startTime}
+		</if>
+		<if test="endTime!=null">
+			and t.CURR_DATE &lt;=#{endTime}
+		</if>
+		<if test="ryid!= null">
+			and b.ryid in
+			<foreach collection="ryid" open="(" separator="," close=")" item="item">
+			#{item}
+			</foreach>
+		</if> 
+		order by "currDate" desc
+</select>
+<select id="selectKhTradeDf" parameterType="map" resultType="map">
+select *
+  from (select a.init_date,
+               a.client_id,
+               a.client_name,
+               (select c.gtsj from crm.T_kh_xx c where c.khid = a.client_id) gtsj,
+               (select d.khdj
+                  from crm.T_kh_xx_zh d
+                 where d.khid = a.client_id) khdj,
+               a.product_code,
+               a.product_name,
+               a.product_type,
+               nvl((select f.product_type_name from jhdc.producttypeconfig f where a.product_type=f.product_type),'其他') product_type_name,
+               (select e.close_day
+                  from jhdc.productproperty e
+                 where e.product_code = a.product_code) close_day,
+               sum(a.deal_balance) deal_balance,
+               (case
+                 when a.bs_flag = 'B' then
+                  '3'
+                 when (sum(a.deal_balance) - b.income_balance = 0) then
+                  '1'
+                 when (sum(a.deal_balance) - b.income_balance > 0) then
+                  '2'
+                 else
+                  '-1'
+               end) flag
+          from (select t.init_date,
+                       t.client_id,
+                       t.client_name,
+                       t.deal_balance,
+                       t.product_code,
+                       t.product_type,
+                       t.bs_flag,
+                       t.product_name
+                  from jhdc.HISNEN_TRADEINFOJOUR t
+                 where 1=1
+                 <if test="startTime!=null">
+			       and t.INIT_DATE &gt;=#{startTime}
+		         </if>
+		         <if test="endTime!=null">
+			       and t.INIT_DATE &lt;=#{endTime}
+		         </if>
+                   and product_type not in ('2', 'gy')
+                      /*线上交易*/
+                   and trade_type = '0'
+                     /* 卖出*/
+                   and bs_flag = 'S'
+                union all
+                select t1.init_date,
+                       t1.client_id,
+                       t1.client_name,
+                       t1.deal_balance,
+                       t1.product_code,
+                       t1.product_type,
+                       t1.bs_flag,
+                       t1.product_name
+                  from jhdc.histradeinfojour t1
+                 where 1=1
+                 <if test="startTime!=null">
+			       and t1.INIT_DATE &gt;=#{startTime}
+		         </if>
+		         <if test="endTime!=null">
+			       and t1.INIT_DATE &lt;=#{endTime}
+		         </if>
+                   and product_type not in ('2', 'gy')
+                   /*线上交易*/
+                   and trade_type = '0'
+                     /* 卖出*/
+                   and bs_flag = 'S') a
+          left join (select init_date,
+                           client_id,
+                           sum(income_balance) income_balance,
+                           fund_code
+                      from hs_opfund.clientincomes t
+                     where fund_code in
+                           (select product_code
+                              from jhdc.productproperty t2
+                             where t2.product_type not in ('2', 'gy'))
+                     group by init_date, client_id, fund_code) b
+            on a.init_date = b.init_date
+           and a.client_id = b.client_id
+           and a.product_code = b.fund_code
+           
+          where 1=1
+          <if test="khid!=null">
+			and (a.CLIENT_ID like trim(' ' FROM #{khid}) or a.CLIENT_NAME like '%'||trim(' ' FROM #{khid})||'%' )
+		  </if>
+          <if test="cpdm!=null">
+			and (a.PRODUCT_CODE like trim(' ' FROM #{cpdm}) or a.product_name like '%'|| trim(' ' FROM #{cpdm})||'%')
+		  </if> 
+          <if test="productType!=null">
+			AND a.product_type IN
+		   <foreach collection="productType" open="(" separator=","
+				close=")" item="item">
+				#{item}
+		   </foreach>
+		 </if> 
+         group by a.client_id,
+                  a.client_name,
+                  a.product_code,
+                  a.product_name,
+                  a.product_type,
+                  a.init_date,
+                  b.income_balance,
+                  a.bs_flag)
+ where flag = '2' 
+   <if test="dealBalanceMin!=null">
+			and deal_balance &gt;=#{dealBalanceMin}
+	</if>
+	<if test="dealBalanceMax!=null">
+			and deal_balance &lt;=#{dealBalanceMax}
+	</if>
+ order by init_date desc, client_id
+</select>
+</mapper>

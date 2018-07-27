@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.phoneapp.mapper.QuerySchemeMapper">
+
+<!-- 1获取客户列表 -->
+<select id="QueryS001" resultType="com.linkstec.phoneapp.subDto.QueryS001subDto" parameterType="map">
+ SELECT T_KH_XX.KHID "khid",
+		T_KH_XX.KHXM "name",
+		T_KH_XX.XB "sex",
+		T_KH_XX.GTSJ "phone",
+		T_KH_XX.ORGID "orgid",
+		org.JG_NAME "qdName"
+FROM T_KH_XX  T_KH_XX inner join T_GXGL_GXMX b on (T_KH_XX.KHID = b.KHID AND b.RYID = #{memberId}) LEFT JOIN L_ORGANIZATION_EXPAND org ON T_KH_XX.ORGID=org.JGID
+WHERE 1=1
+<if test="keyword!=null">
+and (T_KH_XX.KHXM like '%'||#{keyword}||'%' 
+</if> 
+<if test="keyword!=null">
+<!-- OR TO_CHAR(T_KH_XX.KHID) = #{keyword}) -->
+OR TO_CHAR(T_KH_XX.KHID) like '%'||#{keyword}||'%')
+</if> 
+order by T_KH_XX .khsj desc, T_KH_XX.KHID desc
+</select>
+
+<!--2 查询客户详细信息 -->
+<select id="QueryS002" resultType="com.linkstec.phoneapp.subDto.QueryS002subDto" parameterType="map">
+
+SELECT "a".KHID "khId",
+		"a".KHXM "Name",
+		"a".XB "Sex",
+		case when "a".SR = '0' then '0' else to_char(to_date(to_char("a".SR),'yyyyMMdd'),'yyyy-MM-dd') end "birthday",
+		"a".GTSJ "Phone",
+		"a".KHLY "khFrom",
+		"a".ORGID "orgId",
+		"d".JG_NAME "qdName",	
+		case when "b".OPEN_DATE = '0' then '0' else to_char(to_date(to_char("b".OPEN_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "openDate",
+		case when "b".BOUND_CARD_DATE = '0' then '0' else to_char(to_date(to_char("b".BOUND_CARD_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "bcDate",
+		case when "b".FIRST_TRADE_DATE = '0' then '0' else to_char(to_date(to_char("b".FIRST_TRADE_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "ftDate",
+		"c".RYID "ryId",
+		"c".RYXM "ryxm",
+		NVL("e".BGDH,'0') "jgPhone"
+FROM 	T_KH_XX "a"	
+LEFT JOIN T_KH_XX_ZH "b" ON "a".KHID = "b".KHID
+LEFT JOIN T_GXGL_GXMX "c" ON "a".KHID ="c".KHID
+LEFT JOIN L_ORGANIZATION_EXPAND "d" on "a".ORGID = "d".JGID
+LEFT JOIN T_EHR_JJR_JBXX "e" ON "c".RYID = "e".RYID
+WHERE 1=1
+<if test="khid!=null">
+and "a".KHID = #{khid}
+</if>
+</select>
+
+<!--2 查询客户详细信息 2016.6.14 asked by yang to translate info of user-->
+<select id="QueryS002two" resultType="com.linkstec.phoneapp.subDto.QueryS002subDto" parameterType="map">
+
+    SELECT "a".KHID "khId",
+    "a".KHXM "Name",
+    "a".XB "Sex",
+    case when "a".SR = '0' then '0' else to_char(to_date(to_char("a".SR),'yyyyMMdd'),'yyyy-MM-dd') end "birthday",
+    "a".GTSJ "Phone",
+    crm.fn_get_dictvalue('client_source',to_char("a".KHLY)) "khFrom",
+    crm.fn_get_dictvalue('client_type',to_char("a".KHLX)) "khlx",
+    "h".client_grade "khdj",
+    "a".ORGID "orgId",
+    "d".ORG_NAME "qdName",  
+    case when "b".OPEN_DATE = '0' then '0' else to_char(to_date(to_char("b".OPEN_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "openDate",
+    case when "b".BOUND_CARD_DATE = '0' then '0' else to_char(to_date(to_char("b".BOUND_CARD_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "bcDate",
+    case when "b".FIRST_TRADE_DATE = '0' then '0' else to_char(to_date(to_char("b".FIRST_TRADE_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "ftDate",
+    case when "b".LAST_TRADE_DATE = '0' then '0' else to_char(to_date(to_char("b".LAST_TRADE_DATE),'yyyyMMdd'),'yyyy-MM-dd') end "ltDate",
+    "c".RYID "ryId",
+    "c".RYXM "ryxm",
+    NVL("e".BGDH,'0') "jgPhone"
+FROM  crm.T_KH_XX "a" 
+LEFT JOIN crm.T_KH_XX_ZH "b" ON "a".KHID = "b".KHID
+LEFT JOIN crm.T_GXGL_GXMX "c" ON "a".KHID ="c".KHID
+LEFT JOIN crm.L_ORGANIZATION "d" on "a".ORGID = "d".ORG_ID
+LEFT JOIN crm.T_EHR_JJR_JBXX "e" ON "c".RYID = "e".RYID
+LEFT JOIN JHDC.clientpropertyjour "h" ON "a".KHID = "h".CLIENT_ID
+WHERE 1=1
+<if test="khid!=null">
+and "a".KHID = #{khid}
+</if>
+</select>
+
+<!--3 客户资产查询 -->
+<select id="QueryS003" resultType="com.linkstec.phoneapp.subDto.QueryS003subDto" parameterType="map">
+SELECT "r".KHID "khid",
+		"r".TOTAL_ASSET "allmoney",
+		"r".CURRENT_BALANCE "nowmoney",
+		"r".BALANCE "yumoney",
+		"s".CLIENT_ID "khid1",
+		"s".PROJECT_TYPE "classa"	
+FROM RES_SALARY_GXMX_ZC "r"
+LEFT JOIN T_KH_PPSTOCK_LS "s" ON "r".KHID =	"s".CLIENT_ID
+WHERE 1=1	
+<if test="khid!=null">
+and "r".KHID = #{khid}
+</if>
+</select> 	
+
+<!--4 客户交易查询 -->
+<select id="QueryS004" resultType="com.linkstec.phoneapp.subDto.QueryS004subDto" parameterType="map">
+select A.* from (
+SELECT to_char(to_date(to_char(A.CURR_DATE),'yyyyMMdd'),'yyyy-MM-dd') "currDate",
+    to_char(to_date(to_char(A.CURR_TIME,'000000'),'HH24:mi:ss'),'HH24:mi:ss') "currTime",
+    a.client_id,
+    a.stock_name || ( crm.fn_get_dictvalue('CP_business_flag',to_char(A.BUSINESS_FLAG)) ) "productName",
+    	A.BUSINESS_FLAG "businessFlag",
+		A.SHARES ,
+		A.DEAL_SHARE DEAL_SHARES,
+		A.BALANCE,
+		a.occur_balance 	DEAL_BALANCE	
+
+FROM
+  JHDC.V_RT_TRADEINFO A
+LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+  WHERE 1=1
+and to_char(A.CLIENT_ID)  = to_char(#{khid} )   
+<if test="endTime!=null and startTime!=null">
+and  A.CURR_DATE &gt;= #{startTime} and A.CURR_DATE &lt;= #{endTime}
+</if>
+ <if test="endTime=null and startTime!=null">
+and A.CURR_DATE &gt;= #{startTime}
+</if> 
+<if test="endTime!=null and startTime=null">
+and A.CURR_DATE &lt;= #{endTime}
+</if>
+union
+SELECT 
+		to_char(to_date(to_char(A.CURR_DATE),'yyyyMMdd'),'yyyy-MM-dd') "currDate",
+		to_char(to_date(to_char(A.CURR_TIME,'000000'),'HH24:mi:ss'),'HH24:mi:ss') "currTime",
+		A.CLIENT_ID,		
+			A.PRODUCT_NAME || ( crm.fn_get_dictvalue('CP_business_flag',to_char(A.OPBUSINESS_FLAG)) ) "productName",
+		A.BUSINESS_FLAG "businessFlag",
+		A.SHARES ,
+		A.DEAL_SHARES,
+		A.BALANCE,
+		A.DEAL_BALANCE
+FROM JHDC.HISTRADEINFOJOUR A 
+WHERE 1=1
+and to_char(A.CLIENT_ID)  = to_char(#{khid} )     
+<if test="endTime!=null and startTime!=null">
+and  A.CURR_DATE &gt;= to_number( #{startTime}) and A.CURR_DATE &lt;= to_number(#{endTime})
+</if>
+ <if test="endTime=null and startTime!=null">
+and A.CURR_DATE &gt;= to_number( #{startTime})
+</if> 
+<if test="endTime!=null and startTime=null">
+and A.CURR_DATE &lt;= to_number(#{endTime})
+</if>
+) a
+ ORDER BY A."currDate" desc,a."currTime" desc
+</select>
+
+<!-- 获取交易统计数据 -->
+<select id="getTotalJYData" parameterType="map" resultType="com.linkstec.phoneapp.subDto.QueryS004StaticsubDto">
+	select
+	count(*) totalDealTimes,
+	sum(a.dealBalance) totalDealBalance
+	from (
+	SELECT to_char(to_date(to_char(A.CURR_DATE),'yyyyMMdd'),'yyyy-MM-dd')
+	"currDate",
+	to_char(to_date(to_char(A.CURR_TIME,'000000'),'HH24:mi:ss'),'HH24:mi:ss')
+	"currTime",
+	a.client_id,
+	a.stock_name || ( crm.fn_get_dictvalue('CP_business_flag',to_char(A.OPBUSINESS_FLAG)) ) "productName",
+	A.BUSINESS_FLAG "businessFlag",
+	A.SHARES ,
+	A.DEAL_SHARE DEAL_SHARES,
+	A.BALANCE,
+	a.occur_balance dealBalance
+
+	FROM
+	JHDC.V_RT_TRADEINFO A
+	LEFT JOIN jhdc.productTypeConfig B ON A.product_type = B.product_type
+	WHERE 1=1
+	and A.bs_flag = 'B'
+	and to_char(A.CLIENT_ID)  = to_char(#{khid} )   
+	and  A.CURR_DATE &gt;= #{startTime,jdbcType=BIGINT} and A.CURR_DATE &lt;= #{endTime,jdbcType=BIGINT}
+	union
+	SELECT
+	to_char(to_date(to_char(A.CURR_DATE),'yyyyMMdd'),'yyyy-MM-dd') "currDate",
+	to_char(to_date(to_char(A.CURR_TIME,'000000'),'HH24:mi:ss'),'HH24:mi:ss')
+	"currTime",
+	A.CLIENT_ID,
+	A.PRODUCT_NAME || (SELECT business_name from hs_user.businflag b where
+	b.business_flag = A.BUSINESS_FLAG) "productName",
+	A.BUSINESS_FLAG "businessFlag",
+	A.SHARES ,
+	A.DEAL_SHARES,
+	A.BALANCE,
+	A.DEAL_BALANCE dealBalance
+	FROM JHDC.HISTRADEINFOJOUR A
+	WHERE 1=1
+	and A.bs_flag = 'B'
+	and to_char(A.CLIENT_ID)  = to_char(#{khid} )     
+	and  A.CURR_DATE &gt;= to_number( #{startTime,jdbcType=BIGINT}) and A.CURR_DATE &lt;= to_number(#{endTime,jdbcType=BIGINT})
+	) a
+	group by a.client_id
+</select>
+
+
+<!--5 资金查询 -->
+<select id="QueryS005" resultType="com.linkstec.phoneapp.subDto.QueryS005subDto" parameterType="map">
+SELECT A.CLIENT_ID,
+(select product_name from JHDC.PRODUCTPROPERTY a where a.product_code = A.PRDCODE)|| a.busiTypeDesc
+ product_name,
+		to_char(to_date(to_char(A.INIT_DATE),'yyyyMMdd'),'yyyy-MM-dd') dateInit,
+		A.PRDTYPE,
+		TO_CHAR((A.INCOMEBALANCE-A.PAY_BALANCE),'9999999990.00') "yuE",
+		A.BALANCE,
+		A.BUSITYPE
+FROM JHDC.HISPAYFUNDJOUR A
+
+WHERE 1=1
+<if test="khid!=null">
+and A.CLIENT_ID = to_char(#{khid} )
+</if>  
+<if test="endTime!=null and startTime!=null">
+and  A.INIT_DATE &gt;= #{startTime} and A.INIT_DATE &lt;= #{endTime}
+</if>
+<if test="endTime=null and startTime!=null">
+and A.INIT_DATE &gt;= #{startTime}
+</if> 
+<if test="endTime!=null and startTime=null">
+and A.INIT_DATE &lt;= #{endTime}
+</if>	
+ORDER BY A.INIT_DATE DESC
+</select>
+<!-- 6 普通持仓查询 -->
+<select id="QueryS006" resultType="com.linkstec.phoneapp.subDto.QueryS006subDto" parameterType="map">
+ SELECT 		
+ 		to_char(to_date(to_char(A.INIT_DATE),'yyyyMMdd'),'yyyy-MM-dd') "time",
+ 		A.CLIENT_ID "cid",  
+		A.EXPECT_INCOME "expmoney",
+		A.PRODUCT_CODE "proid",
+		B.PRODUCT_NAME "proname",
+		A.CURRENT_SHARE "curnum",
+		A.MARKET_VALUE "marvalue"
+FROM JHDC.STOCKJOUR A
+LEFT JOIN JHDC.PRODUCTPROPERTY B ON B.PRODUCT_CODE = A.PRODUCT_CODE
+WHERE 1=1
+<if test="khid!=null">
+and A.CLIENT_ID = #{khid}
+</if>
+<if test="time!=null">
+and A.INIT_DATE = #{time}
+</if>
+ORDER BY A.INIT_DATE  DESC
+</select>
+
+<!-- 6-2 2016.6.2更新后的 普通持仓查询 -->
+<select id="QueryS006two" resultType="com.linkstec.phoneapp.subDto.QueryS006subDto" parameterType="map">
+SELECT 
+	to_char(to_date(to_char(D.INIT_DATE),'yyyyMMdd'),'yyyy-MM-dd') "time",
+	D.CLIENT_ID "cid",
+	D.PRODUCT_CODE "proid",
+	D.product_name "proname",
+	(NVL(D.CURRENT_SHARE, 0) - NVL(D.BACK_SHARE, 0)) "curnum",
+  D.MARKET_VALUE "marvalue",
+	D.EXPECT_INCOME "expmoney",
+  (
+      case when D.product_type in ('m','j')
+           then C.close_day           
+           when D.sub_type = 'C2'
+           then to_number(to_char(to_date(to_char(D.buy_date), 'yyyymmdd') + D.product_term, 'yyyymmdd'))           
+           else D.cdate
+      end        
+  ) "closeDay"
+
+	from (select A.*, B.product_name, B.product_term, B.sub_type, B.close_day cdate
+	from JHDC.HISSTOCKJOUR A, jhdc.productProperty B
+	where A.product_code = B.product_code
+	and (A.CURRENT_SHARE - A.BACK_SHARE) > 0
+	<if test="khid!=null">
+		and A.CLIENT_ID = #{khid}
+	</if>
+	<if test="time!=null">
+		and A.INIT_DATE = #{time}
+	</if>
+    and B.sub_type not in ('C4')
+	) D
+	left join hs_opfund.productinfo C
+	on D.Product_Code = C.Fund_Code
+	and D.fund_company = C.fund_company
+	and D.Init_Date between C.Setup_Date and C.Close_Day
+	order by D.INIT_DATE,D.ALLOTNO
+</select>
+
+
+<select id="QueryS006twoToday" resultType="com.linkstec.phoneapp.subDto.QueryS006subDto"
+	parameterType="map">
+	select
+  to_char(sysdate,'yyyy-MM-dd') "time",
+  A.client_id "cid",
+  A.product_code "proid",
+  B.product_name "proname",
+  (NVL(A.CURRENT_SHARE, 0) - NVL(A.BACK_SHARE, 0)) "curnum",
+  A.MARKET_VALUE  "marvalue",
+  A.EXPECT_INCOME "expmoney",  
+  (
+      case 
+        when A.product_type in ('m','j')
+        then D.close_day
+        when B.sub_type = 'C2'
+        then to_number(to_char(to_date(to_char(C.buy_date), 'yyyymmdd') + B.product_term, 'yyyymmdd'))
+        else B.close_day
+      end
+  ) "closeDay"
+  
+  from jhdc.v_curr_stock A 
+    inner join jhdc.productProperty B
+      on A.product_code = B.product_code 
+    left join hs_opfund.ofholddaystock C
+      on A.product_code = C.fund_code
+      and A.client_id = C.client_id
+      and A.fund_company = C.fund_company
+    left join hs_opfund.productinfo D
+      on A.Product_Code = D.Fund_Code
+      and A.fund_company = D.fund_company
+      and to_number(to_char(sysdate,'yyyymmdd')) between D.Setup_Date and D.Close_Day
+  
+  where 1 = 1
+      and (A.CURRENT_SHARE - A.BACK_SHARE) > 0
+      <if test="khid!=null">
+		and A.CLIENT_ID = #{khid}
+	 </if>
+	order by A.ALLOTNO
+</select>
+<!--7 信贷持仓查询-->
+<select id="QueryS007" resultType="com.linkstec.phoneapp.subDto.QueryS007subDto" parameterType="map">
+SELECT 
+		to_char(to_date(to_char(A.INIT_DATE),'yyyyMMdd'),'yyyy-MM-dd') "time",
+		A.CLIENT_ID "cid",
+		A.PROJECT_CODE "proid",
+		A.PROJECT_TYPE "protype",
+		A.CURRENT_BALANCE "curB",
+		A.BACK_BALANCE "backB",
+		A.BACK_INTEREST "backI"
+FROM T_KH_PPSTOCK_LS A
+WHERE 1=1
+<if test="khid!=null">
+and A.CLIENT_ID = #{khid}
+</if>	
+<if test="time!=null">
+ and A.INIT_DATE = #{time}
+</if>	
+ORDER BY A.INIT_DATE  DESC
+</select>
+
+<!--8 转让交易查询-->
+<select id="QueryS008" resultType="com.linkstec.phoneapp.subDto.QueryS008subDto" parameterType="map">
+SELECT 
+		to_char(to_date(to_char(A.CURR_DATE),'yyyyMMdd'),'yyyy-MM-dd') "currdate",
+		to_char(to_date(to_char(A.CURR_TIME,'000000'),'HH24:mi:ss'),'HH:mi:ss') "currTime",
+		A.CLIENT_ID_S "cids",
+		A.STOCK_NAME || BUY_SELL "stname",
+		A.BUSINESS_FLAG "busflag",
+		A.BUSINESS_AMOUNT "busamount",
+		A.BUSINESS_BALANCE "busbalance"
+FROM (	
+			SELECT
+				A.*,
+				CASE WHEN A.CLIENT_ID_S = #{khid} THEN '转让交易卖出' 
+				WHEN A.CLIENT_ID_B = #{khid} THEN '转让交易买入' END AS BUY_SELL
+				FROM hs_opfund.ofrealtime A 
+				WHERE (A.CLIENT_ID_S = #{khid}  OR A.CLIENT_ID_B = #{khid})
+		) A
+WHERE 1=1  
+<if test="endTime!=null and startTime!=null">
+and  A.CURR_DATE >= #{startTime} and A.CURR_DATE &lt;= #{endTime}
+</if>
+ <if test="endTime=null and startTime!=null">
+and A.CURR_DATE >= #{startTime}
+</if> 
+<if test="endTime!=null and startTime=null">
+and A.CURR_DATE &lt;= #{endTime}
+</if>
+ORDER BY A.CURR_DATE,A.CURR_TIME desc
+</select>
+
+<!--9 查询经纪人列表  -->
+<select id="QueryS009" resultType="com.linkstec.phoneapp.subDto.QueryS009subDto" parameterType="map">
+select 
+		A.RYID "ryid",
+		A.XM "name",
+		A.BGDH "phone"
+FROM T_EHR_JJR_JBXX A
+WHERE 1=1
+<if test ="keyword!=null">
+and A.XM like '%'||#{keyword}||'%'
+</if>		
+</select>
+
+<!--10 查询证件类型  -->
+<select id="QueryS0010" resultType="com.linkstec.phoneapp.subDto.QueryS010subDto" parameterType="map">
+select 
+		A.DD_TYPE "dtype",
+		A.DD_KEY "dkey",
+		A.DD_VALUE "dvalue"
+FROM LMSP_DATADICT A
+WHERE 1=1	
+and A.DD_TYPE = 'zjlx'
+</select>
+
+<!--12 饼图查询  -->
+<select id="QueryS0012" parameterType="Long" resultType="map">
+		SELECT
+			A.client_id,
+			A.product_type,
+			B.PRODUCT_TYPE_NAME,
+			SUM (A.market_value) MARKET_VALUE
+		FROM
+			jhdc.stockjour A
+		LEFT JOIN jhdc.productTypeConfig B ON B.PRODUCT_TYPE = A.PRODUCT_TYPE 
+		WHERE CLIENT_ID = #{khid}
+		AND a.MARKET_VALUE > 0
+<!-- 		and A.HOLD_TYPE NOT IN ('4') -->
+		GROUP BY
+			A.CLIENT_ID,
+			A.PRODUCT_TYPE,
+		B.PRODUCT_TYPE_NAME
+	</select>
+<!--13 高级查询  -->
+<select id="QueryS0013" parameterType="map" resultType="com.linkstec.phoneapp.subDto.QueryS001subDto">
+SELECT B.KHID    "khid",
+       B.KHXM    "name",
+       B.XB      "sex",
+       B.KHSJ    "KHSJ",
+       B.GTSJ    "phone",
+       B.ORGID   "orgid",
+       C.ORG_NAME "qdName"
+  FROM T_KH_XX_ZH A
+  inner JOIN T_KH_XX  B 
+    ON A.KHID = B.KHID inner join T_GXGL_GXMX D on (B.KHID = D.KHID AND D.RYID = #{memberId})
+  LEFT JOIN L_ORGANIZATION C
+    ON B.ORGID = C.ORG_ID
+ WHERE 1 = 1
+<if test=" startTime!=null">
+and  B.KHSJ &gt;= #{startTime}
+</if>
+<if test="endTime!=null ">
+and  B.KHSJ &lt;= #{endTime}
+</if>
+<if test="sql != null and sql != ''">
+${sql}
+</if>
+</select>
+
+<!--14 高级查询下拉列表数据字典  -->
+<select id="QueryS0014" resultType="com.linkstec.phoneapp.subDto.QueryS010subDto" parameterType="map">
+select 
+		A.DD_TYPE "dtype",
+		A.DD_KEY "dkey",
+		A.DD_VALUE "dvalue"
+FROM LMSP_DATADICT A
+WHERE 1=1	
+and A.DD_TYPE = 'T_KH_XX_ZH'
+</select>
+
+<!-- 待办 待阅 查询  -->
+<select id="QuerymobileWait" resultType="com.linkstec.phoneapp.subDto.QueryS017subDto" parameterType="map">
+ select    lmessage0_.msg_id as msgId,
+           to_char((lmessage0_.rec_gen_time),'yyyy/MM/dd') as genTime,
+           to_char((lmessage0_.rec_upd_time),'yyyy/MM/dd') as updTime,           
+           lmessage0_.cons_desc as faqirenName,
+           lmessage0_.cons_no as faqirenId,
+           lmessage0_.msg_cont as msgCont,
+           lmessage0_.flag_desc as flagDesc,        
+           lmessage0_.msg_title as msgTitle,
+           lmessage0_.msg_type as msgType,
+           lmessage0_.rel_flag as relFlag 
+        from
+            LMSP_MOM_MSG lmessage0_ 
+        where lmessage0_.msg_title not like '请查看公告'||'%'
+ <if test="msgType!=null">
+ and lmessage0_.msg_type = #{msgType}
+ </if>           
+<if test="consumerNo!=null">
+ and lmessage0_.cons_no = #{consumerNo}
+ </if>
+ <if test="keyword!=null">
+ and lmessage0_.msg_title like '%'||#{keyword}||'%'
+ </if>
+ ORDER BY lmessage0_.rec_gen_time DESC
+</select>
+<!-- 已办 查询  -->
+<select id="QueryMobileAlreaday" resultType="com.linkstec.phoneapp.subDto.QueryS017subDto" parameterType="map">
+ select
+             lmessagehi0_.msg_id as msgId,        
+             to_char((lmessagehi0_.rec_gen_time),'yyyy/MM/dd') genTime,
+             to_char((lmessagehi0_.rec_upd_time),'yyyy/MM/dd') updTime,                
+             lmessagehi0_.cons_desc as faqirenName,    
+             lmessagehi0_.cons_no as faqirenId,       
+             lmessagehi0_.msg_cont as msgCont,       
+             lmessagehi0_.flag_desc as flagDesc,          
+             lmessagehi0_.msg_title as msgTitle,      
+             lmessagehi0_.msg_type as msgType,
+             lmessagehi0_.rel_flag as relFlag        
+        from
+             LMSP_MOM_MSGHIST lmessagehi0_ 
+        where 1=1 
+        and lmessagehi0_.msg_type=2          
+ <if test="consumerNo!=null">
+ and lmessagehi0_.cons_no = #{consumerNo}
+ </if>
+ <if test="keyword!=null">
+ and lmessagehi0_.msg_title like '%'||#{keyword}||'%'
+ </if>
+ ORDER BY lmessagehi0_.rec_gen_time DESC
+</select>
+<!-- app我的任务概要查询  -->
+<select id="QueryMobileTask" resultType="com.linkstec.phoneapp.subDto.QueryS018subDto" parameterType="map">
+SELECT 
+    A.add_num "addnum",
+	A.task_num "taskNum",
+	A.task_name "taskName",
+	A.task_type "taskType",
+	A.product_type_name "productTypeName",
+   TO_CHAR (TO_NUMBER(A .task_quantity),'fm9999999990.00') "taskQuantity" ,
+  	A.task_cycle "taskCycle"	
+ FROM
+	T_TASK A 
+WHERE 1=1
+ <if test="task_type!=null">
+ and A.task_type = #{task_type}
+ </if>	
+  <if test="consumerNo!=null">
+ and A.add_num = #{consumerNo}
+ </if>
+ <if test="keyword!=null">
+ and A.task_name like '%'||#{keyword}||'%'
+ </if>		
+</select>
+<!-- app我的任务详细查询  -->
+<select id="QueryMobileTaskDt" resultType="com.linkstec.phoneapp.subDto.QueryS019subDto" parameterType="map">
+SELECT
+	A.task_num "taskNum",  
+	A.task_type "taskType", 
+    B.DD_VALUE "xxxx" ,      
+	A.task_year "taskyear", 
+	A.task_cycle "taskCycle",
+	A.fund_company "fundCompany",
+	A.task_unit "taskUnit",
+    C.DD_VALUE "taskFlag" ,
+ TO_CHAR (TO_NUMBER(A .task_complete/10000),'fm9999999990.00')"taskComplete" ,
+ TO_CHAR (TO_NUMBER(A .task_quantity),'fm9999999990.00')"taskQuantity" ,
+	A.product_type_name "productTypeName",
+	A.comp_rate "compRate",
+	TO_CHAR (to_number((A .task_complete/A .task_quantity/10000)*100),'fm9999999990.00')||'%' "zhanbi" ,
+	A.jgid "jgid",
+	A.jg_type "jgType",
+	A.jg_name "jgName",
+	A.task_name "taskName"
+FROM
+	T_TASK A
+LEFT JOIN LMSP_DATADICT B ON ( B.DD_KEY=A.TASK_TYPE AND B.DD_TYPE='TASK_TYPE')
+LEFT JOIN LMSP_DATADICT C ON ( C.DD_KEY=A.task_unit AND C.DD_TYPE='TASK_STATE')	
+	
+WHERE 1 = 1
+<if test="task_num!=null">
+and A.task_num =#{task_num}
+</if>	
+</select>
+
+
+<!-- 查询产品子类型 -->
+	<select id="selectProductTypeInfo" resultType="map" parameterType="map">
+		SELECT DISTINCT 
+		t.PRODUCT_TYPE,
+		t.PRODUCT_TYPE_NAME,
+		t.UP_PRODUCT_TYPE,
+		t.PRODUCT_TYPE_ORDER
+		FROM
+		jhdc.productTypeConfig t
+		inner join productProperty /*LT*/ p on p.product_type =t.product_type
+		where
+		t.UP_PRODUCT_TYPE != '0'
+		ORDER BY t.UP_PRODUCT_TYPE,t.PRODUCT_TYPE_ORDER
+	</select>
+	
+	<select id="selectProductTypeNew" resultType="map" parameterType="map">
+		SELECT DISTINCT 
+		t.PRODUCT_TYPE,
+		t.PRODUCT_TYPE_NAME,
+		t.UP_PRODUCT_TYPE,
+		t.PRODUCT_TYPE_ORDER
+		FROM
+		jhdc.productTypeConfig t 
+		where
+		1 = 1
+		<if test = "UP_PRODUCT_TYPE != null">
+		    and t.UP_PRODUCT_TYPE = #{UP_PRODUCT_TYPE}
+		</if>
+		ORDER BY t.UP_PRODUCT_TYPE,t.PRODUCT_TYPE_ORDER
+	</select>
+	
+	<!-- 查询产品概要-->
+	<select id="SelectGeneral" resultType="map" parameterType="map">
+		SELECT P.PRODUCT_CODE,
+		       P.PRODUCT_NAME,
+		       TO_CHAR (to_number(MFUND_YEAR_RATE*100),'9990.000')||'%' MFUND_YEAR_RATE,
+		       P.PRODUCT_TERM,
+		      (case when p.up_product_type = 'w' then (select min(fi.status) from jhdc.v_fxjh_info fi where fi.term_no = p.product_current_term
+		and p.relate_code = fi.product_code) else p.sale_status end) SALE_STATUS,
+		       P.MIN_SHARE
+		FROM PRODUCTPROPERTY /*LT*/  P
+		WHERE 1=1 and  p.relate_code = p.product_code
+			and ((p.up_product_type like 'mi' and
+			p.product_code not like 'P%') OR p.up_product_type not like 'mi')    
+	<if test="keyword!=null">
+		and ( p.product_name like '%'||#{keyword}||'%' 
+		or p.product_code = #{keyword})
+	</if> 
+	
+	<if test="productType!=null">
+		and p.product_type = #{productType}
+	</if>
+	order by P.PRODUCT_CODE 
+	</select>
+	<!-- 查询产品详细信息-->
+	<select id="selectProductInfo" resultType="com.linkstec.phoneapp.subDto.QueryS015subDto" parameterType="map">
+		select 
+		<!-- 1.7 2016.11.30 -->
+		u.curr_shares currShares, <!-- 当前持仓份额 -->
+		u.curr_amount currAmount, <!-- 当前持仓金额 -->
+      	u.redeem_shares redeemShares, <!-- 累计赎回份额 -->
+      	u.sale_amount saleAmount, <!-- 累计销售金额 -->
+      	u.redeem_amount redeemAmount, <!-- 累计赎回金额 -->
+      	u.cashed_amount cashedAmount, <!-- 累计兑付金额 -->
+		
+    crm.fn_get_dictvalue('CP_fund_company',to_char(p.fund_company)) fundCompany,
+    to_char(p.fund_company) fundCompanyForFXJH,
+    p.product_code,p.product_type,p.up_product_type,p.codesimple_name,p.product_name,
+   (case when p.up_product_type = 'w' then (select fi.status from jhdc.fxjh_info fi where fi.term_no = p.product_current_term and p.product_code = fi.product_code)
+    else p.sale_status end) sale_status,
+       p.min_share,p.min_share2,p.fund_status,
+    case when LENGTH(P .issue_date) = 8 then TO_CHAR (
+    TO_DATE (
+      TO_CHAR (P .issue_date),
+      'yyyyMMdd'
+    ),
+    'yyyy-MM-dd'
+  ) else TO_CHAR (P .issue_date) end "issue_date",
+  case when LENGTH(P .sub_day) = 8 then TO_CHAR (
+    TO_DATE (
+      TO_CHAR (P .sub_day),
+      'yyyyMMdd'
+    ),
+    'yyyy-MM-dd'
+  )  else TO_CHAR (P .sub_day) end "sub_day",
+  case when LENGTH(P .setup_date) = 8 then TO_CHAR (
+    TO_DATE (
+      TO_CHAR (P .setup_date),
+      'yyyyMMdd'
+    ),
+    'yyyy-MM-dd'
+  ) else TO_CHAR (P .setup_date) end  "setup_date",
+  case when LENGTH(P .close_day) = 8 then TO_CHAR (
+    TO_DATE (
+      TO_CHAR (P .close_day),
+      'yyyyMMdd'
+    ),
+    'yyyy-MM-dd' 
+  )  else TO_CHAR (P .close_day) end "close_day",
+     p.product_term,p.begin_price,p.back_price,p.product_roll_flag,p.product_transfer_flag,p.is_reprofit,p.income_unit,
+    p.product_transfer_ratio,TO_CHAR(p.product_scale,'9999999990.00') product_scale,p.preredeem_ratio,p.product_current_term,p.nav,p.mfund_year_rate,
+    to_char(round(p.float_Income*100,2),'990.99')||'%' "floatIncome",
+    to_char(round(p.confirm_Income*100,2),'990.99')||'%'  "confirmIncomePer" ,
+    t.product_type_name,tc.product_type_name
+    upProductTypeName
+    from productProperty  p
+    LEFT JOIN
+    jhdc.productTypeConfig t ON
+    p.product_type = t.product_type
+    LEFT JOIN
+    jhdc.productTypeConfig tc ON
+    p.up_product_type = tc.PRODUCT_TYPE
+    <!-- 1.7 2016.11.30 -->
+    left join jhdc.PRODUCTTRADE u
+    	on p.fund_company = u.fund_company
+   		and p.product_code = u.product_code
+    
+    where 1=1
+<!--     p.relate_code = p.product_code -->
+<!--       and ((p.up_product_type like 'mi' and -->
+<!--       p.product_code not like 'P%') OR p.up_product_type not like 'mi') -->
+ 
+	<if test="product_code!=null">
+		and p.product_code = #{product_code}
+	</if>
+	</select>
+	
+	<update id="updateUserDriver" parameterType="map">
+	update L_USER set DRIVER_SNO = #{driverSno},DRIVER_TYPE = #{driverType} where USER_ID = #{userId}
+	</update>
+	
+	<!-- 1.7 统计登录来源 -->
+	<insert id="insertLoginSrcIntoLmspRecord" parameterType="map">
+	insert into crm.lmsp_record
+		values
+		(
+			#{id},
+			#{userName},
+			sysdate,
+			#{userIp},
+			#{userId},
+			'com.linkstec.lmsp.inner.module.login.LoginBo',
+			'08',
+			sysdate,
+			null,
+			#{detail},
+			#{src}
+		)
+</insert>
+	
+	<!-- 预约查询 -->
+	<select id="QueryBook" resultType="com.linkstec.phoneapp.dto.QueryBookOutDto" parameterType="map">
+	   select 
+        t.khxm "khxm",
+        t.khsjh "khsjh",
+        to_char(TO_DATE(TO_CHAR(t.yysj,'yyyy-MM-dd'),'yyyy-MM-dd'),'yyyy-MM-dd') "yysj", 
+        crm.fn_get_dictvalue('GXGL_YYLX',t.yylx) "yylx",
+        crm.fn_get_dictvalue('GXGL_YYZT',t.yyzt) "yyzt" 
+      from crm.T_GXGL_KHYY t
+      where t.yyryid = #{yyryid}
+      <if test="keyword != null">
+          and t.khxm Like '%'||#{keyword}||'%'
+      </if>
+      order by t.yysj desc
+	</select>
+	
+	<!-- 1.5 预约不再使用dao.save，和施展保持一致 -->
+	<insert id="insertKHYY" parameterType="map">
+	    insert into t_gxgl_khyy 
+		    (
+				khsjh,
+				khxm,
+				yylx,
+				yyzt,
+				yysj,
+				yyryid,
+				yyryxm,
+				yyrysj,
+				id
+			) 
+		values 
+			(
+				#{khsjh},
+				#{khxm},
+				#{yylx},
+				#{yyzt},
+				#{yysj},
+				#{yyryid},
+				#{yyryxm},
+				#{yyrysj},
+				SEQ_KHYYID.nextval
+			)
+	</insert>
+	
+	<!-- 1.5 预约不再写入系统日志，写入T_LOG_KHYY -->
+	<insert id="insertYYJL" parameterType="map">
+	    insert into crm.t_log_khyy
+	       values(
+	       		crm.seq_khyy.nextval,
+	            #{brokerClientId},
+	            #{clientName},
+	            #{clientPhone},
+	            #{log},
+	            sysdate,
+	            sysdate,
+	            #{status},
+	            #{busi_type}
+	       )
+	</insert>
+		
+	
+	<!-- 查找公告 -->
+	<select id="queryAnnounce" parameterType="map" resultType="com.linkstec.crm.system.dto.AnnouncementDto">
+		SELECT A .*,
+		(
+			CASE WHEN TO_DATE(TO_CHAR(A .fbsj, 'yyyyMMdd'), 'yyyyMMdd' ) - 1 + zdts >= TO_DATE( TO_CHAR(SYSDATE, 'yyyyMMdd'), 'yyyyMMdd' )  THEN 
+				1
+			ELSE
+				0
+			END
+		) flag,
+		(
+			CASE
+			WHEN A .zdts != NULL THEN
+				1
+			ELSE
+				0
+			END
+		) flag1,
+		b.ckzt
+	FROM
+		(
+			SELECT
+				GGID,GGBT,FBSJ,SXSJ,GGLX,FBZID,SFSX,ZDTS,REC_GEN_TIME,GGNM
+			FROM
+			 	T_SYS_GGGL /*LT*/
+			WHERE
+				1 = 1
+			
+			<if test="title!=null and title!=''">
+				and GGBT like '%'||#{title}||'%'
+			</if>
+			
+			<if test="title==null||title==''">
+				and   SFSX = '0'
+			</if>
+		) A
+		LEFT JOIN crm.t_Sys_Gg_Ckzt b ON A .ggid = b.ggid
+		AND b.member_id = #{memberId}
+		WHERE
+			1 = 1
+		ORDER BY
+			SFSX,
+			flag1 DESC,
+			flag DESC,
+			FBSJ DESC,
+			ckzt
+	</select>
+	
+	
+	<!-- 通过公告Id查找公告 -->
+	
+	<select id="queryAnnounceById" parameterType="map" resultType="com.linkstec.crm.system.dto.AnnouncementDto">
+				SELECT A .*,
+		(
+			CASE WHEN TO_DATE(TO_CHAR(A .fbsj, 'yyyyMMdd'), 'yyyyMMdd' ) - 1 + zdts >= TO_DATE( TO_CHAR(SYSDATE, 'yyyyMMdd'), 'yyyyMMdd' )  THEN 
+				1
+			ELSE
+				0
+			END
+		) flag,
+		(
+			CASE
+			WHEN A .zdts != NULL THEN
+				1
+			ELSE
+				0
+			END
+		) flag1,
+		b.ckzt
+	FROM
+		(
+			SELECT
+				GGID,GGBT,FBSJ,CRM.FN_GET_DICTVALUE('GGZT',SFSX) sfsx,ZDTS,SXSJ,GGLX,GGNR,FBZID,FJID,GGNM,CRM.FN_GET_DICTVALUE('GGFL',GGFL) ggfl
+			FROM
+			 	T_SYS_GGGL /*LT*/
+			WHERE
+				1 = 1
+			
+			and GGID = #{noticeId}
+		
+		) A
+		LEFT JOIN crm.t_Sys_Gg_Ckzt b ON A .ggid = b.ggid
+		AND b.member_id = #{memberId}
+		WHERE
+			1 = 1
+	</select>
+	
+	<update id="UpCkzt" parameterType="map">
+		UPDATE T_SYS_GG_CKZT
+		SET
+		CKZT=1
+		where MEMBER_ID=#{memberId} AND GGID=#{noticeId}
+	</update>
+	<!-- 1.3 经纪人名下购买银杏债成功查询 -->
+	<select id="QueryWhoBoughtYXZSucc" resultType="com.linkstec.phoneapp.dto.GetWhoBoSYXZandSPOutDto"
+	parameterType="map">
+	select A.CLIENT_ID "khid",
+		A.CLIENT_NAME "khxm",
+		A.CURR_DATE "gmrq",
+		A.CURR_TIME "gmsj",
+		A.PRODUCT_NAME "pname",
+		CRM.FN_GET_DICTVALUE('CP_business_flag',A.BUSINESS_FLAG) "busiflag",
+		A.DEAL_BALANCE "cjje",
+		CRM.FN_GET_DICTVALUE('CP_fund_treat_status',A.TREAT_STATUS) "zt",
+		A.RETURN_INFO "rinfo"
+
+	from JHDC.HISFULLTRADEINFOJOUR A
+	LEFT JOIN jhdc.productTypeConfig B
+	ON A.product_type = B.product_type
+	where client_id in
+	(select khid from crm.t_gxgl_gxmx where ryid = #{ryid})
+	and A.PRODUCT_TYPE IN ('op')
+	<if test="keyword != null">
+		and A.CLIENT_NAME like '%'||#{keyword}||'%'
+	</if>
+	order by A.CURR_DATE DESC, A.CURR_TIME DESC
+</select>
+
+	<!-- 1.3.1 经纪人名下购买 银杏债+分享计划 成功查询（失败返回原因） -->
+	<select id="QueryWhoBoSYXZandSP" resultType="com.linkstec.phoneapp.dto.GetWhoBoSYXZandSPOutDto"
+		parameterType="map">
+	select
+		A.CLIENT_ID "khid",
+		A.CLIENT_NAME "khxm",
+		A.CURR_DATE "gmrq",
+		A.CURR_TIME "gmsj",
+		A.PRODUCT_NAME "pname",
+		CRM.FN_GET_DICTVALUE('CP_business_flag', A.BUSINESS_FLAG) "busiflag",
+		A.DEAL_BALANCE "cjje",
+		CRM.FN_GET_DICTVALUE('CP_fund_treat_status', A.TREAT_STATUS) "zt",
+		A.RETURN_INFO "rinfo"
+	from jhdc.hisfulltradeinfojour A
+	left join jhdc.productTypeConfig B
+	on A.PRODUCT_TYPE = B.PRODUCT_TYPE
+	left join crm.t_gxgl_gxmx gx
+	on a.client_id = to_char(gx.khid)
+	where 1 = 1
+	
+	<if test="startTime!=null and endTime!=null">
+		and A.CURR_DATE &gt;= #{startTime} and A.CURR_DATE &lt;= #{endTime}
+	</if>
+	<if test="endTime==null and startTime!=null">
+		and A.CURR_DATE &gt;= #{startTime}
+	</if>
+	<if test="endTime!=null and startTime==null">
+		and A.CURR_DATE &lt;= #{endTime}
+	</if>
+	
+	<if test="flag!=null">
+		and A.Bs_Flag = #{flag}
+	</if>
+	
+	<if test="ryid!=null">
+		and gx.ryid = #{ryid}
+	</if>
+	
+	<if test="keyword!=null">
+		and A.CLIENT_NAME like '%'||#{keyword}||'%'
+	</if>
+	
+	and (b.up_product_type = 'w' or b.product_type = 'op')
+	order by A.CURR_DATE DESC, A.CURR_TIME DESC
+	</select>
+
+	<select id="WhetherIhaveClients" resultType="Integer"
+		parameterType="map">
+		select count(khid) from crm.t_gxgl_gxmx where ryid = #{ryid}
+	</select>
+	
+	<!-- 1.4版 客户累计购买产品情况-->
+	<select id="ClientBuyProductsLJInfo" resultType="com.linkstec.phoneapp.subDto.GetCBPsSubDto" parameterType="map">
+		select
+			B.PRODUCT_TYPE_NAME "cplx",
+			SUM(NVL(A.DEAL_BALANCE, 0)) "ljje"
+		from JHDC.CLIENTOFFERJOUR A
+		left join JHDC.productTypeConfig B
+			ON A.PRODUCT_TYPE = B.PRODUCT_TYPE
+		where 1 = 1
+		<if test="khid!=null">
+			and A.CLIENT_ID = #{khid}
+		</if>
+		GROUP BY A.CLIENT_ID,
+		A.CLIENT_NAME,
+		A.PRODUCT_TYPE,
+		B.PRODUCT_TYPE_NAME
+	</select>
+	
+	<!-- 1.4版 客户绑卡信息-->
+	<select id="ClientBondCardsInfo" resultType="com.linkstec.phoneapp.subDto.GetCBCsSubDto" parameterType="map">
+		select 
+			A.BANK_ACCOUNT "yhkh",
+			A.OPEN_DATE "bkrq",
+			A.MAIN_FLAG "sfzk",
+			B.BANK_NAME "yhmc"
+		from hs_fund.bankexchaccount A
+		left join hs_fund.bankarg B
+			on A.BANK_NO = B.BANK_NO
+		where 1 = 1
+		<if test="khid!=null">
+			and A.CLIENT_ID = #{khid}
+		</if>
+		and A.BANK_NO not in ('JHB', 'XJY', 'ZLRT') and A.bkaccount_status not in ('3')
+</select>
+	  
+	<!--我发起的-->
+<select id="QueryMyIns" resultType="com.linkstec.phoneapp.subDto.QueryS017subDto" parameterType="map">
+
+    select PI_ID "relFlag",
+    PI_NAME "msgTitle",
+    to_char((PI_START_TIME),'yyyy/MM/dd') "genTime",
+    CREATOR_NAME "faqirenName"
+    from LMSP_LBPM_PINS
+    where 1=1
+    <if test="consumerNo!=null">
+        and CREATOR_NO = #{consumerNo}
+    </if>
+    <if test="keyword!=null">
+        and PI_NAME like '%'||#{keyword}||'%'
+    </if>
+    ORDER BY PI_START_TIME DESC
+</select>
+
+
+<!--历史发起、历史审核-->
+<select id="queryMyHistIns" resultType="com.linkstec.phoneapp.subDto.QueryS017subDto" parameterType="map">
+
+    select PI_ID "relFlag",
+    PI_NAME "msgTitle",
+    to_char((PI_START_TIME),'yyyy/MM/dd') "genTime",
+    CREATOR_NAME "faqirenName"
+	FROM LMSP_LBPM_HISTINS
+    where (
+    CREATOR_NO = #{consumerNo} or 
+    PI_ID IN (
+	SELECT INS_ID
+	FROM LMSP_LBPM_HISTTASK
+	WHERE EXECUTOR_NO = #{consumerNo})
+    )
+    <if test="keyword!=null">
+        and PI_NAME like '%'||#{keyword}||'%'
+    </if>
+    ORDER BY PI_START_TIME DESC
+</select>
+
+<select id="queryAllPeople" resultType="com.linkstec.phoneapp.subDto.QueryS001subDto" parameterType="map">
+      SELECT
+		"TO_CHAR"("ryid") "khid",
+		"membername" "name",
+		"jgid",
+		"orgname"  "qdName"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		ygztid,
+		current_type,
+		XM "membername",
+		JGID
+		"jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		)
+		"orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		A
+		) A
+		WHERE
+		1 = 1 and ygztid in ('1','4') and current_type not in ('15','16')
+		<if test="keyword!=null">
+        and ("membername" like '%'||#{keyword}||'%' or "TO_CHAR"("ryid") like '%'||#{keyword}||'%')
+    </if>
+    order by "jgid"
+	</select>
+
+</mapper>

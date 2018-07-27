@@ -1,0 +1,793 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.crm.employee.mapper.EMP0001Mapper">
+	<!-- 查询所有人员 --> 
+	<select id="findMemberForRyXzAllRY" parameterType="map"
+		resultType="map">
+		SELECT
+		"TO_CHAR"("ryid") "ryid",
+		"membername",
+		"jgid",
+		"orgname"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		ygztid,
+		XM ||
+		'(' || ryid || ')' "membername",
+		JGID
+		"jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		)
+		"orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		/*LT*/
+		A
+		) A
+		WHERE
+		1 = 1 and ygztid in
+		('1','4','6')
+		<if test="xm!=null">
+			and ("membername" like '%'||trim(' ' FROM #{xm})||'%' or "ryid" like
+			'%'||trim(' ' FROM #{xm})||'%')
+		</if>
+		<if test="orgName!=null">
+			and ("orgname" like '%'||trim(' ' FROM #{orgName})||'%' or "jgid" like
+			'%'||trim(' ' FROM #{orgName})||'%')
+		</if>
+		<if test="ryid!=null">
+			and "ryid" = #{ryid}
+		</if>
+		
+	</select>
+	
+	
+	<select id="selectEmployeeXm" resultType="String">
+ select decode(t.khxm,null,' ',t.khxm) from crm.T_KH_XX t where t.gtsj=#{bgdh} and t.zjlx=#{zjlb} and upper(t.zjhm)=#{sfzh}
+</select>
+
+<select id="selectJgType"  resultType="String">
+ select t.jg_type from  crm.l_Organization_Expand t where t.jgid=#{jgid}
+</select>
+
+<select id="selectBgdh" parameterType="Long" resultType="String">
+ select t.gtsj from  crm.T_KH_XX t where t.khid=#{khid}
+</select>
+<select id="selectSfzh" parameterType="Long" resultType="String">
+ select t.zjhm  from  crm.T_KH_XX t where t.khid=#{khid}
+</select>
+
+<select id="selectEmployeeRole" resultType="String">
+ select t.jg_type from crm.L_ORGANIZATION_EXPAND t where t.jgid=#{jgid}
+</select>
+<select id="selectKhzt" resultType="String">
+ select t.client_status from HS_USER.CLIENT  t where t.client_id=#{ryNum}
+</select>
+<select id="selectEmployeeXb" resultType="String">
+ select t.xb from crm.T_KH_XX t where upper(t.zjhm)=#{sfzh} and t.gtsj=#{bgdh}
+</select>
+	
+	<!-- 查询所有人员  -->
+	<select id="findAllRYExxn" parameterType="map"
+		resultType="map">
+		SELECT
+		"TO_CHAR"("ryid") "ryid",
+		"membername",
+		"jgid",
+		"orgname"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		ygztid,
+		current_type,
+		XM ||
+		'(' || ryid || ')' "membername",
+		JGID
+		"jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		)
+		"orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		/*LT*/
+		A
+		) A
+		WHERE
+		1 = 1 and ygztid in ('1','4','6') 
+<!-- 		and current_type not in ('15') -->
+		<if test="xm!=null">
+			and ("membername" like '%'||trim(' ' FROM #{xm})||'%' or "ryid" like
+			'%'||trim(' ' FROM #{xm})||'%')
+		</if>
+		<if test="orgName!=null">
+			and ("orgname" like '%'||trim(' ' FROM #{orgName})||'%' or "jgid" like
+			'%'||trim(' ' FROM #{orgName})||'%')
+		</if>
+		<if test="ryid!=null">
+			and "ryid" = #{ryid}
+		</if>
+	</select>
+	
+	<!-- 查询L_MEMBER所有人员 -->
+	<select id="findMemberForKf" parameterType="map"
+		resultType="map">
+		SELECT 
+		a.member_id "memberId",
+		a.member_name ||'(' || member_id || ')' "memberName" 
+		from L_MEMBER a 
+		where 1=1
+		<if test="memberName!=null">
+			and (a.member_name like '%'||trim(' ' FROM #{memberName})||'%' or a.member_id like
+			'%'||trim(' ' FROM #{memberName})||'%')
+		</if>
+	</select>
+	
+	<!-- 查询所有客服人员 -->
+	<select id="findMemberOfKf" parameterType="map"
+		resultType="map">
+		SELECT  
+          a.id,
+          a.account,
+          b.member_name
+       from L_MEMBER_KF a LEFT JOIN L_MEMBER b on a.id=b.member_id
+		where 1=1
+		<if test="memberName!=null">
+			and (b.member_name like '%'|| trim(' ' FROM #{memberName}) ||'%' or a.id like
+			'%'||trim(' ' FROM #{memberName})||'%')
+		</if>
+	</select>
+	
+	
+	
+	<!-- 查询所有客户 -->
+	<select id="findKhxxAllRY" parameterType="map" resultType="map">
+		select a.KHID "khid",a.KHXM "khxm"
+		from T_KH_XX a
+		where 1=1
+		<if test="khxm!=null">
+			(KHXM like '%'||#{khxm}||'%')
+		</if>
+		<if test="khid!=null">
+			and (KHID like '%'||#{khid}||'%')
+		</if>
+	</select>
+	<!--查询单个各户 -->
+	<select id="findKhById" parameterType="map" resultType="map">
+		select a.KHID "khid",a.KHXM "khxm"
+		from T_KH_XX a
+		where
+		<if test="khid!=null">
+			KHID=#{khid}
+		</if>
+	</select>
+	<select id="findMemberById" parameterType="map" resultType="map">
+		SELECT
+		"ryid",
+		"membername",
+		"jgid",
+		"orgname"
+		FROM
+		(
+		SELECT
+		RYID "ryid",
+		XM ||
+		'(' || ryid || ')' "membername",
+		JGID "jgid",
+		(
+		SELECT
+		org_name
+		FROM
+		L_ORGANIZATION
+		WHERE
+		ORG_ID = A .JGID
+		) "orgname"
+		FROM
+		T_EHR_JJR_JBXX
+		/*LT*/
+		A
+		) A
+		WHERE
+		1=1
+		<if test="xm!=null">
+			AND "ryid"=to_number(#{xm})
+		</if>
+	</select>
+	<!--根据证件类型、证件号码查询客户号 -->
+	<select id="selectKhInfoByZjlxAndZjhm" parameterType="com.linkstec.crm.employee.dto.EMP01A02InDto"
+		resultType="java.lang.Long">
+		select KHID from T_KH_XX WHERE ZJLX = #{zjlb} AND upper(zjhm) =
+		#{sfzh} AND GTSJ=trim(' ' FROM #{bgdh})
+	</select>
+	<!-- 根据人员id查询用户信息 -->
+	<select id="selectUserInfoByMemberId" resultType="map"
+		parameterType="java.lang.Long">
+		SELECT USER_Name "userName", USER_STATUS "userStatus",
+		user_id "userId"
+		FROM L_USER WHERE MEMBER_ID = #{memberId}
+	</select>
+	<!-- 查询渠道名称与编号 -->
+	<select id="findJGFromLorganization" parameterType="string"
+		resultType="com.linkstec.crm.system.dto.BaseJGDto">
+		select
+		'('||jg_code||')'|| jg_name "jg_name",
+		jg_code,
+		jgid
+		from
+		L_ORGANIZATION_EXPAND /*LT*/ a
+		where
+		jg_type = #{param} and JG_STATUS = '1'
+	</select>
+	<!-- 查询L_MEMBER表的MEMBER_TYPE -->
+	<select id="updateTYPEFromLmember" parameterType="map">
+		UPDATE
+		L_MEMBER
+		SET member_type = #{memberType}
+		WHERE
+		member_id =#{memberId}
+	</select>
+	<!-- 查询L_USER表的USER_STATUS -->
+	<select id="updateSTATUSFromLuser" parameterType="map">
+		UPDATE
+		L_USER
+		SET user_status = #{userStatus}
+		WHERE
+		user_id =#{userId}
+	</select>
+
+	<!-- 查询渠道ID -->
+	<select id="findJgid" parameterType="map"
+		resultType="com.linkstec.crm.system.dto.BaseJGDto">
+		select
+		jgid
+		from
+		L_ORGANIZATION_EXPAND
+		where
+		JG_STATUS = '1' and
+		JG_NAME=#{jgname}
+	</select>
+	<!-- 渠道变更一览展示 -->
+	<select id="findQdbg" parameterType="com.linkstec.crm.employee.dto.EMP01SQD02InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01SQD02Dto">
+		SELECT
+		orgY.jg_name yjgname,
+		orgN.jg_name jgname,
+		JBXX.XM,
+		JBXX.FLOW_STATUS flowStatus1,
+		JBXX.ZGLC_STATUS zglcStatus,
+		JBXX.ZX_STATUS zxStatus,
+		JBXX.CURRENT_PLEVEL,
+		JBXX.JGID yjgid,
+		REL.ID,
+		REL.INS_FINISH_TIME,
+		REL.INS_ID,
+		REL.JGID,
+		jbxx.RYID,
+		rel.FLOW_STATUS,
+		REL.BZ
+		FROM
+		T_EHR_JJR_JBXX /*LT*/ jbxx
+		LEFT JOIN T_MEMBER_ORG_REL_EXTEND rel ON
+		REL.RYID = JBXX.RYID
+		LEFT JOIN L_ORGANIZATION_EXPAND orgY ON orgY.jgid
+		= JBXX.JGID
+		LEFT JOIN L_ORGANIZATION_EXPAND orgN ON orgN.jgid =
+		rel.jgid
+
+		<where>
+			<if test="xm!=null">
+				and (jbxx.xm like '%'||trim(' ' FROM #{xm})||'%' or jbxx.ryid like
+				trim(' ' FROM #{xm}))
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and orgY.jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+				and orgY.jgid in (select jgid from l_organization_expand m start with m.jgid= #{jgid} connect by m.super_id=prior m.jgid)
+<!-- 				and (orgY.super_id = #{jgid} -->
+<!-- 				or orgY.jgid = #{jgid} ) -->
+
+			</if>
+			<if test="beginDate!=null">
+			and to_char(rel.INS_FINISH_TIME,'yyyyMMdd')&gt;=to_char(#{beginDate},'yyyyMMdd')
+		   </if>
+		   <if test="endDate!=null">
+			and to_char(rel.INS_FINISH_TIME,'yyyyMMdd')&lt;=to_char(#{endDate},'yyyyMMdd')
+		   </if>
+			and jbxx.FLOW_STATUS=3
+		</where>
+	</select>
+	<!-- 等级调整一览展示 -->
+	<select id="findUdj" parameterType="com.linkstec.crm.employee.dto.EMP01SQD02InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01S05Dto">
+		SELECT
+	"mt".RYID "ryid",
+	"mt".XM ,
+	"mt".JGID "jgid",
+	"mt".CURRENT_PLEVEL ,
+	"mt".LSGW ,
+	"mt".GWGXRQ ,
+	"mt".ZGLC "zglc",
+	"mt".zzrq,
+	"mt".ZGLC_STATUS ,
+	"mt".FLOW_STATUS "flowStatus1",
+	"mt".ZX_STATUS "zxStatus",
+	 rel.FLOW_STATUS ,
+	
+	"80024".JG_CODE "80024_80301",
+	"80024".JG_TYPE "80024_81031",
+	"80024".JG_NAME jgname
+FROM
+	T_EHR_JJR_JBXX /*LT*/ "mt"
+LEFT JOIN L_ORGANIZATION_EXPAND "80024" ON "80024".JGID = "mt".JGID
+LEFT JOIN T_MEMBER_ORG_REL_EXTEND rel ON REL.RYID = "mt".RYID
+
+
+		<where>
+			<if test="xm!=null">
+				and ("mt".xm like '%'||trim(' ' FROM #{xm})||'%' or "mt".ryid like
+				trim(' ' FROM #{xm}))
+			</if>
+			<if test="currentPlevel!=null">
+				and ( "mt".CURRENT_PLEVEL =#{currentPlevel})
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and "80024".jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+			and "80024".jgid in (select jgid from l_organization_expand m start with m.jgid= #{jgid} connect by m.super_id=prior m.jgid)
+<!-- 				and ("80024".super_id = #{jgid} -->
+<!-- 				or "80024".jgid = #{jgid} ) -->
+			</if>
+			<if test="beginDate!=null">
+			and to_char("mt".GWGXRQ,'yyyyMMdd')&gt;=to_char(#{beginDate},'yyyyMMdd')
+		   </if>
+		   <if test="endDate!=null">
+			and to_char("mt".GWGXRQ,'yyyyMMdd')&lt;=to_char(#{endDate},'yyyyMMdd')
+		   </if>
+			<if test="branchNo!=null">
+				and  "mt".jgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			and "mt".FLOW_STATUS=3
+		</where>
+<!-- 		<if test="orderStr!=null"> -->
+<!-- 		order by ${orderStr} -->
+<!-- 		</if> -->
+	</select>
+	
+	<!-- 经纪人注销一览展示 -->
+	<select id="findZx" parameterType="com.linkstec.crm.employee.dto.EMP01SQD02InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01S06Dto">
+		SELECT
+	"mt".RYID "ryid",
+	"mt".XM ,
+	"mt".JGID "jgid",
+	"mt".CURRENT_PLEVEL ,
+	"mt".LZRQ ,
+	"mt".LZLC "lzlc",
+	
+	"mt".ZX_STATUS ,
+	"mt".ZGLC_STATUS "zglcStatus",
+	"mt".FLOW_STATUS "flowStatus1",
+	rel.FLOW_STATUS ,   
+	    
+	"80024".JG_CODE "80024_80301",
+	"80024".JG_TYPE "80024_81031",
+	"80024".JG_NAME jgname
+FROM
+	T_EHR_JJR_JBXX /*LT*/ "mt"
+LEFT JOIN L_ORGANIZATION_EXPAND "80024" ON "80024".JGID = "mt".JGID
+LEFT JOIN T_MEMBER_ORG_REL_EXTEND rel ON REL.RYID = "mt".RYID
+
+
+		<where>
+			<if test="xm!=null">
+				and ("mt".xm like '%'|| trim(' ' FROM #{xm})||'%' or "mt".ryid like
+				trim(' ' FROM #{xm}))
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and "80024".jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+   and "80024".jgid in (select jgid from l_organization_expand m start with m.jgid= #{jgid} connect by m.super_id=prior m.jgid)			
+<!-- 				and ("80024".super_id = #{jgid} -->
+<!-- 	 			or "80024".jgid = #{jgid} ) -->
+			</if>
+			<if test="beginDate!=null">
+			and "mt".LZRQ&gt;=to_char(#{beginDate},'yyyyMMdd')
+		   </if>
+		   <if test="endDate!=null">
+			and "mt".LZRQ&lt;=to_char(#{endDate},'yyyyMMdd')
+		   </if>
+			<if test="branchNo!=null">
+				and  "mt".jgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			and "mt".FLOW_STATUS=3
+		</where>
+<!-- 		<if test="orderStr!=null"> -->
+<!-- 		order by ${orderStr} -->
+<!-- 		</if> -->
+	</select>
+	
+	<!-- 经纪人开户一览展示 -->
+	<select id="findKh" parameterType="com.linkstec.crm.employee.dto.EMP01SQD02InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01S07Dto">
+		SELECT
+	jjr.RYID,
+	jjr.XM  ,
+	jjr.RZRQ ,
+	jjr.CURRENT_TYPE ,
+	jjr.CURRENT_PLEVEL "currentPlevel",
+	jjr.FLOW_STATUS,
+	jjr.YGZTID "ygztid",
+	jjr.INS_ID "insId",
+	ext.JG_CODE "80024_80301",
+	ext.JG_TYPE "80024_81031",
+	ext.JG_NAME "jgname"
+FROM
+	T_EHR_JJR_JBXX /*LT*/ jjr
+LEFT JOIN L_ORGANIZATION_EXPAND ext ON ext.JGID = jjr.JGID
+
+		<where>
+			<if test="xm!=null">
+				and (jjr.xm like '%'|| trim(' ' FROM #{xm}) ||'%' or jjr.ryid like
+				trim(' ' FROM #{xm}))
+			</if>
+			<if test="currentPlevel!=null">
+				and ( jjr.CURRENT_PLEVEL =#{currentPlevel})
+			</if>
+			
+			<if test="ygztid!=null">
+				and ( jjr.ygztid =#{ygztid})
+			</if>
+			<if test="flowStatus!=null">
+				and ( jjr.FLOW_STATUS =#{flowStatus})
+			</if>
+			
+			<if test="currentType!=null">
+				and ( jjr.CURRENT_TYPE =#{currentType})
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and ext.jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+			and ext.jgid in (select jgid from l_organization_expand m start with m.jgid= #{jgid} connect by m.super_id=prior m.jgid)
+<!-- 				and (ext.super_id = #{jgid} -->
+<!-- 				or ext.jgid = #{jgid} ) -->
+			</if>
+			<if test="branchNo!=null">
+				and  jjr.jgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+		<if test="orderStr==null">
+		order by jjr.RYID desc,jjr.RZRQ desc
+		</if>
+		<if test="orderStr!=null">
+		order by ${orderStr}
+		</if>
+	</select>
+	<!-- 经纪人流水一览展示 -->
+	<select id="findLs" parameterType="com.linkstec.crm.employee.dto.EMP01SQD02InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01S08Dto">
+		SELECT
+	"mt".RYNUM "rynum",
+	"mt".RYID "ryid",
+	"mt".JGID "jgid",
+	"mt".SFZH "sfzh",
+	"mt".XB "xb",
+     (select  JG_NAME from L_ORGANIZATION_EXPAND where "mt".oldJgid=jgid) "oldjgName",
+	"mt".BGDH "bgdh",
+	"mt".RZRQ "rzrq",
+	"mt".YGZTID "ygztid",
+	"mt".CURRENT_TYPE ,
+	"mt".HTQDR "htqdr",
+	"mt".HTDQR "htdqr",
+	"mt".CURRENT_PLEVEL "currentPlevel",
+	"mt".ZJLB "zjlb",
+	"mt".ZBXZ "zbxz",
+	"mt".QYHT "qyht",
+	"mt".DLZT "dlzt",
+	"mt".HGBZ "hgbz",
+	"mt".XM ,
+	"mt".BGLX ,
+	"mt".BGRQ ,
+	"mt".BGR,
+	"mt". ID "id",
+decode("mt".bglx,1, "mt".flow_status,2,"mt".flow_status,3,"mt".flow_status,4,A.flow_status,5,"mt".zglc_status,6,"mt".zx_status) "flowStatus",
+  "80024".JG_CODE "80024_80301",
+	"80024".JG_TYPE "80024_81031",
+	"80024".JG_NAME "jgname",
+	rel.member_name "memberName","mt".INS_ID "insId"
+FROM
+	T_EHR_JJR_JBXX_LS "mt"
+LEFT JOIN L_ORGANIZATION_EXPAND "80024" ON "80024".JGID = "mt".JGID
+LEFT JOIN L_MEMBER rel ON REL.MEMBER_ID = "mt".BGR
+LEFT JOIN T_MEMBER_ORG_REL_EXTEND A ON "mt".RYID=A.RYID
+
+		<where>
+			<if test="xm!=null">
+				and ("mt".xm like '%'||trim(' ' FROM #{xm})||'%' or "mt".ryid like
+				trim(' ' FROM #{xm}))
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and "80024".jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+				and ("80024".super_id = #{jgid}
+				or "80024".jgid = #{jgid} )
+			</if>
+			
+			<if test="beginDate!=null">
+			and to_char("mt".BGRQ,'yyyyMMdd')&gt;=to_char(#{beginDate},'yyyyMMdd')
+		   </if>
+		   <if test="endDate!=null">
+			and to_char("mt".BGRQ,'yyyyMMdd')&lt;=to_char(#{endDate},'yyyyMMdd')
+		   </if>
+			<if test="bglx!=null">
+				and ( "mt".bglx =#{bglx})
+			</if>
+			<if test="branchNo!=null">
+				and  "mt".jgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+		order by "mt".rec_gen_time desc,"mt".RYID
+<!-- 		<if test="orderStr!=null"> -->
+<!-- 		order by ${orderStr} -->
+<!-- 		</if> -->
+	</select>
+	
+<!-- 新员工预约开户一览展示 -->
+	<select id="findYyKh" parameterType="com.linkstec.crm.employee.dto.EMP01S09InDto"
+		resultType="com.linkstec.crm.employee.dto.EMP01S09Dto">
+		SELECT
+	"mt".XM,
+	"mt".ID "id",
+	"mt".SFZH "sfzh",
+	"mt".ORDER_STATUS "orderStatus",
+	"mt".ORDER_USER "orderUser",
+	"mt".ORDER_TIME,
+	"mt".FLOW_STATUS,
+	"mt".YGZTID "ygztid",
+	"mt".INS_ID "insId",
+	"80024".JG_CODE "80024_80301",
+	"80024".JG_TYPE "80024_81031",
+	"80024".JG_NAME "jgname",
+	rel.member_name "memberName"
+FROM
+	T_EHR_JJR_JBXX_YY /*LT*/ "mt"
+LEFT JOIN L_ORGANIZATION_EXPAND "80024" ON "80024".JGID = "mt".JGID
+LEFT JOIN L_MEMBER rel ON REL.MEMBER_ID = "mt".ORDER_USER
+
+		<where>
+			<if test="xm!=null">
+				and ("mt".xm like '%'||trim(' ' FROM #{xm})||'%' or "mt".id like
+				trim(' ' FROM #{xm}))
+			</if>
+			<if test="ygztid!=null">
+				and ( "mt".ygztid =#{ygztid})
+			</if>
+			<if test="orderStatus!=null">
+				and ( "mt".ORDER_STATUS =#{orderStatus})
+			</if>
+
+			<if test="jgid==null and jgType!=null">
+				and "80024".jg_type = #{jgType}
+			</if>
+			<if test="jgid!=null">
+			and "80024".jgid in (select jgid from l_organization_expand m start with m.jgid= #{jgid} connect by m.super_id=prior m.jgid)
+<!-- 				and ("80024".super_id = #{jgid} -->
+<!-- 				or "80024".jgid = #{jgid} ) -->
+			</if>
+			<if test="branchNo!=null">
+				and  "mt".jgid in
+				<foreach collection="branchNo" open="(" separator="," close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="beginDate!=null">
+			and to_char("mt".ORDER_TIME,'yyyyMMdd')&gt;=to_char(#{beginDate},'yyyyMMdd')
+		   </if>
+		   <if test="endDate!=null">
+			and to_char("mt".ORDER_TIME,'yyyyMMdd')&lt;=to_char(#{endDate},'yyyyMMdd')
+		   </if>
+		</where>
+<!-- 		<if test="orderStr!=null"> -->
+<!-- 		order by ${orderStr} -->
+<!-- 		</if> -->
+	</select>	
+	<update id="UpJbxx" parameterType="map">
+		UPDATE T_EHR_JJR_JBXX
+		SET
+		INS_ID=#{insId}
+		where RYID=#{ryid}
+	</update>
+  
+  <update id="UpJbxxYy" parameterType="map">
+		UPDATE T_EHR_JJR_JBXX_YY
+		SET
+		INS_ID=#{insId}
+		where ID=#{id}
+	</update>
+  
+	<update id="UpJbxx1" parameterType="map">
+		UPDATE T_EHR_JJR_JBXX
+		SET
+		ZGLC=#{zglc}
+		where RYID=#{ryid}
+	</update>
+
+	<update id="UpJbxx2" parameterType="map">
+		UPDATE T_EHR_JJR_JBXX
+		SET
+		LZLC=#{lzlc}
+		where RYID=#{ryid}
+	</update>
+
+	<update id="UpExtend" parameterType="map">
+		UPDATE
+		T_MEMBER_ORG_REL_EXTEND
+		SET INS_ID=#{insId}
+		where RYID=#{ryid}
+	</update>
+
+
+	<!-- 更新审核状态状态 -->
+	<update id="updflowStatus" parameterType="map">
+		update T_EHR_JJR_JBXX
+		set flow_Status = #{flowStatus},REC_UPD_TIME =SYSDATE where RYID =
+		#{ryid}
+	</update>
+	
+	<!-- 更新新员工预约开户审核不通过审核状态状态 和预约状态-->
+	<update id="updYyflowStatusOrderStatus" parameterType="map">
+		update T_EHR_JJR_JBXX_YY
+		set flow_Status = #{flowStatus},REC_UPD_TIME =SYSDATE,order_Status = #{orderStatus} where ID =
+		#{id}
+	</update>
+  
+  <!-- 更新新员工预约开户审核通过时审核状态状态 -->
+	<update id="updYyflowStatus" parameterType="map">
+		update T_EHR_JJR_JBXX_YY
+		set flow_Status = #{flowStatus},REC_UPD_TIME =SYSDATE where ID =
+		#{id}
+	</update>
+ 
+	<!-- 更新等级调整审核状态 -->
+	<update id="updZglcStatus" parameterType="map">
+		update T_EHR_JJR_JBXX
+		set ZGLC_STATUS = #{zglcStatus},REC_UPD_TIME =SYSDATE where RYID =
+		#{ryid}
+	</update>
+
+	<!-- 更新渠道审核状态状态 -->
+	<update id="updflowStatus1" parameterType="map">
+		update
+		T_MEMBER_ORG_REL_EXTEND set flow_Status = #{flowStatus},REC_UPD_TIME
+		=SYSDATE where RYID = #{ryid}
+	</update>
+	
+	
+	 <update id="updateKhJgid" parameterType="map">
+	update T_KH_XX set orgid=#{jgid} where khid=#{khid}
+	</update>
+	 <update id="updateXnKhJgid" parameterType="map">
+	update T_KH_XX set orgid=#{jgid},khlx='00' where khid=#{khid}
+	</update>
+	 <update id="updateGxJgid" parameterType="map">
+	update T_GXGL_GXMX set orgid=#{jgid},ryid=#{ryid},ryxm=#{ryxm},fprq=#{fprq},gxly='4' where khid=#{khid} 
+	</update>
+	<update id="updateXnGxJgid" parameterType="map">
+	update T_GXGL_GXMX set orgid=#{jgid},ryid=#{ryid},ryxm=#{ryxm},fprq=#{fprq},gxly='4' where khid=#{khid} 
+	</update>
+	<update id="updateClientinfoxJgid" parameterType="map">
+	update jhdc.clientinfox  set branch_no=#{jgid} where client_id=#{khid} 
+	</update>
+	<update id="updateClientpropertyjourJgid" parameterType="map">
+	update jhdc.clientpropertyjour  set branch_no=#{jgid} where client_id=#{khid} 
+	</update>
+	
+		
+	<!-- 	根据ryid找到客户关系数据 -->
+	<select id="selectGxmxByKhRyGxlx" parameterType="map" resultType="com.linkstec.crm.custRelation.po.TGxglGxmx">
+	select * from T_GXGL_GXMX where RYID=#{ryid} 
+	</select>
+	<!-- 检查是否是分成关系 -->
+	<select id="selectFcCnt" parameterType="com.linkstec.crm.custRelation.po.TGxglGxmx" resultType="java.lang.Integer">
+	select count(1) from T_GXGL_FCGX  where FCRYID = #{ryid}
+	</select>
+	<!-- 	更新分成关系无效 -->
+	<update id="updateFcgxFalse" parameterType="com.linkstec.crm.custRelation.po.TGxglGxmx">
+	UPDATE T_GXGL_FCGX SET ZT = 0 where FCRYID = #{ryid}
+	</update>
+	
+	<!-- 	根据khid删除该客户人员关系-->
+	<select id="deleteGxmxByKhRyGxlxNew" parameterType="map" >
+	delete from T_GXGL_GXMX where RYID = #{ryid} 
+	</select>
+	<!--公共客户数据加工 -->
+	<insert id="insertXNGXByRy" parameterType="map">
+	INSERT INTO T_GXGL_GXMX
+	  (KHID,
+	   KHXM,
+	   RYID,
+	   RYXM,
+	   ORGID,
+	   GXLXBH,
+	   FPRQ,
+	   KHRQ,
+	   SHZT,
+	   GXZT,
+	   BZ,
+	   REC_UPD_TIME,
+	   GXLY,
+	   ZGX_FLAG,bl_fc)
+	   SELECT t2.KHID,
+	          t2.KHXM,
+	          M2.RYID,
+	          M2.XM AS RYXM,
+	          t2.ORGID AS ORGID,
+	          '1' AS GXLXBH,
+	          #{lzrq} AS FPRQ,
+	          t2.Khrq AS KHRQ,
+	          '2' AS SHZT,
+	          '1' AS GXZT,
+	          '公共客户' AS BZ,
+	          SYSDATE AS REC_UPD_TIME,
+	          '5' AS GXLY,
+	          '1' AS ZGX_FLAG,
+              t2.bl_fc AS bl_fc
+	     FROM (SELECT * FROM T_GXGL_GXMX WHERE RYID = #{ryid}) T2
+	    INNER JOIN T_KH_XX T1
+	       ON T2.KHID = T1.KHID
+	    INNER JOIN (SELECT * FROM T_EHR_JJR_JBXX WHERE CURRENT_TYPE = '15') M2
+	       ON T1.ORGID = M2.JGID
+	</insert>
+	<update id="">
+		update t_member_org_rel_extend set yjgid =#{} ,jgid =
+		,bz = ,,,,, where ryid
+		= #{ryid} and jgid = #{yjgid}
+	</update>
+	<select id = "selectJjrJbxxByRyid" parameterType="java.lang.Long" resultType="com.linkstec.crm.employee.po.TEhrJjrJbxx">
+	select * from t_ehr_jjr_jbxx  where ryid = #{ryid}
+	</select>
+	
+	<select id = "selectJjrJbxxYyById" parameterType="java.lang.Long" resultType="com.linkstec.crm.employee.dto.EMP01S09Dto">
+	select a.*,rel.member_name "memberName" from t_ehr_jjr_jbxx_yy a LEFT JOIN L_MEMBER rel ON REL.MEMBER_ID = a.ORDER_USER  where a.id = #{id}
+	</select>
+	
+	<select id = "selectLMemberKfById" parameterType="java.lang.Long" resultType="com.linkstec.crm.employee.dto.EMP01S11Dto">
+	select a.* from l_member_kf a where a.id= #{id}
+	</select>
+	
+</mapper>

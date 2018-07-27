@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.linkstec.lmspcom.salary.mapper.SalaryMapper">
+
+<!-- 查询考核月份 -->
+	<select id="selectYearMonth" resultType="map">
+		SELECT DISTINCT YEAR_MONTH yymm FROM SLR_ORG_BATCH ORDER BY YEAR_MONTH DESC
+	</select>
+
+	<!-- 查询人员 -->
+	<select id="getQueryMember"
+		parameterType="com.linkstec.lmspcom.salary.dto.QueryCalculateResultInDto"
+		resultType="map">
+		SELECT RYID memberId,RYID memberNum,XM memberName,BMMC,CURRENT_TYPE gw,CURRENT_PLEVEL jibie,RZRQ
+		FROM T_EHR_JJR_JBXX WHERE 1=1
+		<if test="memberNum!=null">
+			AND RYID LIKE '%'||#{memberNum}||'%'
+		</if>
+		<if test="memberName!=null">
+			AND XM LIKE '%'||#{memberName}||'%'
+		</if>
+		<if test="orgId!=null">
+			AND JGID = #{orgId}
+		</if>
+		<if test="dicTypeValue!=null">
+			AND CURRENT_TYPE = #{dicTypeValue}
+		</if>
+	</select>
+	
+		<!-- 查找客户经理人信息 -->
+	<select id="getMemberInfos" parameterType="map" resultType="com.linkstec.lmspcom.salary.dto.FindSalaryGroupIdDto">
+		SELECT DISTINCT a.JGID org_id,a.ryid member_id,b.SUPER_ID,a.current_type FROM T_EHR_JJR_JBXX a
+		LEFT JOIN L_ORGANIZATION b ON a.JGID = b.ORG_ID
+		WHERE a.ryid IN
+		<foreach collection="memberIds" separator="," open="(" close=")" item="memberId">
+			#{memberId}
+		</foreach>
+
+	</select>
+	
+	<!-- 查询可清算日期 -->
+	<select id="getAllYearMonths" resultType="map">
+		SELECT DISTINCT YF FROM T_XCJX_RYKH_YDMX ORDER BY YF DESC
+	</select>
+	
+	<!-- 考核结果查询 -->
+	<select id="getAssessResult" resultType="map">
+	select h.jg_name orgName,d.XM||'('||a.target_Id||')' XM,a.*,b.score khdf,f.DD_VALUE plevel,e.DD_VALUE ptype from 
+		(SELECT * FROM T_XC_ASSESS_RESULT WHERE IND_KEY!='ykhdf')a,
+		(SELECT * FROM T_XC_ASSESS_RESULT /*LT*/ WHERE IND_KEY='ykhdf')b,
+		T_EHR_JJR_JBXX d,
+    	(select DD_KEY,DD_VALUE from LMSP_DATADICT where dd_type='employeeType')e,
+		LMSP_DATADICT f,
+    	T_EHR_JJR_JBXX g,
+		L_ORGANIZATION_EXPAND h
+		where a.batch_id = b.batch_id and a.target_id = b.target_id
+		and a.target_id = d.ryid
+    	and d.CURRENT_TYPE = f.DD_TYPE and d.CURRENT_PLEVEL = f.DD_KEY
+		and d.CURRENT_TYPE = e.DD_KEY
+		and d.current_type in ('11','13')
+		and a.target_id = g.ryid and g.jgid = h.jgid
+		<if test="ryid!=null">
+			AND (a.target_id like '%'|| #{ryid}||'%' or d.XM like '%'|| #{ryid}||'%')
+		</if>
+		<if test="jydy!=null">
+			AND h.jydy_id = #{jydy}
+		</if>
+		<if test="jjrfl!=null">
+			AND d.current_type = #{jjrfl}
+		</if>
+		<if test="yf!=null">
+			AND a.yf = #{yf}
+		</if>
+		
+	</select>
+	
+	<!--风险金一览  -->
+	<select id="getFxjList" parameterType="map" resultType="map">
+			select m.* from 
+		(
+		select b.ryid,e.jg_name JYDY_NAME,c.jgid jydy_id,c.xm,b.LJFXJ,b.CAL_TIME_START,b.CAL_TIME_END ,b.BZ lsbz,rank()over(partition by b.RYID order by b.FSSJ desc)rn from T_XC_FXJ_LS /*LT*/ b
+		LEFT JOIN T_EHR_JJR_JBXX c ON b.ryid = c.ryid
+		LEFT JOIN L_ORGANIZATION_EXPAND e on c.jgid = e.jgid
+		)m where rn = 1
+		<if test="ry!=null">
+			and (m.ryid like '%'||#{ry}||'%' or m.xm like '%'||#{ry}||'%')
+		</if>
+		<if test="jydy!=null">
+			and m.jydy_id = #{jydy}
+		</if>
+	</select>
+	
+	<!-- 考核得分调整 -->
+	<select id="getkhdf" parameterType="map" resultType="map">
+SELECT
+	A .*, D .xm,
+	c.jg_name jydy_name
+FROM
+	T_XC_ASSESS_TZ A
+LEFT JOIN T_EHR_JJR_JBXX D ON A .ryid = D .ryid
+LEFT JOIN L_ORGANIZATION_EXPAND c ON c.jgid = D .JGID
+
+WHERE
+	1 = 1
+		<if test="ry!=null">
+			and a.ryid = #{ry}
+		</if>
+		<if test="jydy!=null">
+			and b.jydy_id = #{jydy}
+		</if>
+		<if test="yf!=null">
+			and a.oc_month = #{yf}
+		</if>
+	</select>
+	
+	<!-- 查询风险金 -->
+	<select id="listJydy" parameterType="map" resultType="map">
+	SELECT c.*,d.jg_name JYDY_NAME,e.XM FROM T_XC_JYDY_FXJ /*LT*/ c
+		LEFT JOIN L_ORGANIZATION_EXPAND d ON c.JYDY = d.jgid
+		LEFT JOIN T_EHR_JJR_JBXX e ON c.ryid = e.ryid
+		where 1=1
+		<if test="jydy!=null">
+			and c.jydy = #{jydy}
+		</if>
+		<if test="ryfl!=null">
+			and c.ryfl = #{ryfl}
+		</if>
+		<if test="ryjb!=null">
+			and c.ryjb = #{ryjb}
+		</if>
+		<if test="ryid!=null">
+			and c.ryid = #{ryid}
+		</if>
+		
+	</select>
+	
+	<!-- 考核方案适用对象查询 -->
+	<select id="getTplSearch" parameterType="map" resultType="map">
+	SELECT c.*,d.jg_name JYDY_NAME,e.xm,f.TPL_NAME FROM T_XC_ASSESS_USE c
+		LEFT JOIN T_XC_ASSESS_TPL f ON c.TPL_ID = f.ID
+		LEFT JOIN L_ORGANIZATION_EXPAND d ON c.JYDY = d.jgid
+		LEFT JOIN T_EHR_JJR_JBXX e ON c.jjr = e.ryid
+		where 1=1
+		<if test="jydy!=null">
+			and c.jydy = #{jydy}
+		</if>
+		<if test="jjrfl!=null">
+			and c.jjrfl = #{jjrfl}
+		</if>
+		<if test="jjr!=null">
+			and (e.xm like '%'||#{jjr}||'%'or c.jjr like '%'||#{jjr}||'%'
+		</if>
+		<if test="tplId!=null">
+			and c.tpl_id = #{tplId}
+		</if>
+	</select>
+	
+	<delete id="deleteAssessResult" parameterType="map">
+		DELETE FROM T_XC_ASSESS_RESULT where yf_Start = #{yfStart} and yf_End = #{yfEnd} and TARGET_ID = #{ryid} 
+	</delete>
+	
+	<select id="gettpl" resultType="map" parameterType="map">
+		select * from 
+		(
+		select distinct a.MEMBER_ID,a.JYDY_ID,b.tpl_id,c.CURRENT_TYPE,c.CURRENT_PLEVEL from L_MEMBER_JYDY_REL a 
+		INNER JOIN T_EHR_JJR_JBXX c on a.member_id = c.ryid
+		INNER JOIN T_XC_RATING_USE b on a.JYDY_ID = b.JYDY
+		and c.current_type = b.JJRFL
+		UNION ALL
+		select m.MEMBER_ID,m.JYDY_ID,t.tpl_id,n.CURRENT_TYPE,n.CURRENT_PLEVEL from L_MEMBER_JYDY_REL m
+		INNER JOIN T_EHR_JJR_JBXX n on m.member_id = n.RYID
+		INNER JOIN T_XC_RATING_USE t on t.jjrfl = n.current_type
+		) where 1=1
+		<if test="tplId!=null">
+			and tpl_id = #{tplId}
+		</if>
+		
+	</select>
+	
+	<delete id="deleteRatingData" parameterType="map">
+		delete from T_XC_RATING_RESULT a where a.yf = #{yf} and exists
+		(
+			select member_id from 
+			(
+			select distinct a.MEMBER_ID,a.JYDY_ID,b.tpl_id from L_MEMBER_JYDY_REL a 
+			INNER JOIN T_EHR_JJR_JBXX c on a.member_id = c.ryid
+			INNER JOIN T_XC_RATING_USE b on a.JYDY_ID = b.JYDY
+			and c.current_type = b.JJRFL
+			UNION ALL
+			select m.MEMBER_ID,m.JYDY_ID,t.tpl_id from L_MEMBER_JYDY_REL m
+			INNER JOIN T_EHR_JJR_JBXX n on m.member_id = n.RYID
+			INNER JOIN T_XC_RATING_USE t on t.jjrfl = n.current_type
+			) b where 1=1 and a.target_id = b.member_id
+			<if test="tplId!=null">
+				and tpl_id = #{tplId}
+			</if>
+		)
+	</delete>
+	
+	<select id="listRatingResult" parameterType="map" resultType="map">
+select a.*,c.jg_name jydy_name,e.dd_value as "TYPE",f.dd_value as "VALUE",d.xm,d.current_plevel as "level" from T_XC_RATING_RESULT /*LT*/ a
+		LEFT JOIN L_MEMBER_JYDY_REL b on a.TARGET_ID = b.MEMBER_ID
+		LEFT JOIN L_ORGANIZATION_EXPAND c on b.jydy_id = c.jgid
+		LEFT JOIN T_EHR_JJR_JBXX d on a.target_id = d.ryid
+		LEFT JOIN (select DD_KEY,DD_VALUE from LMSP_DATADICT where dd_type='employeeType')e ON to_char(d.current_type) = e.DD_KEY
+		LEFT JOIN LMSP_DATADICT f ON to_char(d.current_plevel) = f.DD_KEY ANd f.DD_TYPE = 'employeeDj'
+		where 1=1
+		and (d.ygztid in(1,4) or (d.ygztid not in (1,4) and SUBSTR(d.lzrq, 1, 6)=#{yf})) 
+		<if test="yf!=null">
+			and a.yf= #{yf}
+		</if>
+		<if test="ry!=null">
+			and (d.ryid like '%'||#{ry}||'%' or d.xm like '%'||#{ry}||'%')
+		</if>
+		<if test="jydy!=null">
+			and c.jgid= #{jydy}
+		</if>
+		<if test="jb!=null">
+			and d.current_plevel = #{jb}
+		</if>
+		<if test="isdj!=null">
+			and a.isdj = #{isdj}
+		</if>
+		
+		
+	</select>
+	
+	<select id="getLastFxj" resultType="com.linkstec.lmspcom.salary.po.TXcFxjLs" parameterType="map">
+		SELECT * FROM T_XC_FXJ_LS where CAL_TIME_START = #{calTimeStartLast} AND CAL_TIME_END = #{calTimeEndLast} and ryid = #{ryid} ORDER BY FSSJ DESC
+	</select>
+	
+	<select id="getIsJs" parameterType="map" resultType="map">
+		select * from T_XC_JS where MEMBER_ID = #{ryid}  AND YF_START  =#{calTimeStartLast} AND YF_END =#{calTimeEndLast} and fhzt = 1
+	</select>
+	
+	<select id="getJydyName" parameterType="map" resultType="java.lang.String">
+		select distinct JG_NAME as "jydyname" from L_ORGANIZATION_EXPAND where JG_STATUS=1 and JGID not in
+		<foreach collection="jydyIds" separator="," open="(" close=")" item="jydyId">
+			#{jydyId}
+		</foreach>
+		and jg_type_SUB !=5 
+	</select>
+	
+	<select id="listBankCards" parameterType="map" resultType="map">
+	select a.*,b.xm,d.jg_name jydy_name,e.member_name genUser,f.member_name updUser,b.current_type from T_XC_BANKCARD /*LT*/ a
+		LEFT JOIN T_EHR_JJR_JBXX b on a.ryid = b.RYID
+		LEFT JOIN L_MEMBER_JYDY_REL c on a.ryid = c.member_id
+		LEFT JOIN L_ORGANIZATION_EXPAND d on c.jydy_id = d.jgid
+		LEFT JOIN l_member e on a.rec_gen_user = e.member_id
+		LEFT JOIN l_member f on a.rec_upd_user = f.member_id
+		where 1=1
+		<if test="ry!=null">
+			and b.ryid like '%'||#{ry}||'%' or b.xm like '%'||#{ry}||'%'
+		</if>
+		<if test="jydy!=null">
+			and d.jgid = #{jydy}
+		</if>
+		<if test="bank!=null">
+			and a.bank_name = #{bank}
+		</if>
+		<if test="gw!=null">
+			and b.current_type = #{gw}
+		</if>
+	</select>
+	
+	<select id="queryAlreadyJs" parameterType="map" resultType="java.lang.String">
+			select JG_NAME JYDY_NAME from T_XC_JS,L_ORGANIZATION_EXPAND where JYDY = jgid 
+		AND JYDY in 
+		<foreach collection="jydy" open="(" separator="," close=")" item="item">
+			#{item}
+		</foreach>
+			and yf_start = #{calTimeStart} and yf_end = #{calTimeEnd} and fhzt!=2
+	</select>
+	
+	<select id="queryNotInliquidation" parameterType="map" resultType="java.lang.String">
+		select jg_name jydy_name FROM L_ORGANIZATION_EXPAND WHERE jgid IN
+		<foreach collection="jydy" open="(" separator="," close=")" item="item">
+			#{item}
+		</foreach>
+		AND jgid NOT IN (SELECT ORG_ID FROM T_XC_INLIQUIDATION_FLOW WHERE INLIQUIDATION_STATE = 2 
+		AND cal_time_start = #{calTimeStart} AND cal_time_end = #{calTimeEnd})
+	</select>
+	
+	<!-- 产品一览 -->
+	<select id="selectProductInfoForXc" parameterType="com.linkstec.lmspcom.salary.dto.QueryProductInfoInDto"
+		resultType="map">
+		select p.PRODUCT_CODE,p.PRODUCT_NAME||'('||p.PRODUCT_CODE||')' PRODUCT_NAME
+		from jhdc.productProperty p
+		where 1=1 
+			<if test="productType!=null">
+				AND p.product_type IN
+				<foreach collection="productType" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+			<if test="fundCompany!=null">
+				AND p.fund_company IN
+				<foreach collection="fundCompany" open="(" separator=","
+					close=")" item="item">
+					#{item}
+				</foreach>
+			</if>
+	</select>
+	
+<!-- 	查询判断清算表中如果有清算未结算，则不让再次发起清算 -->
+	<select id="selectIsqsAleardyjs" parameterType="map"
+		resultType="long">
+<!-- SELECT
+	A .BATCH_ID,
+	b.BATCH_ID BATCH_ID_B
+FROM
+	"CRM"."T_XC_INLIQUIDATION_FLOW" A
+LEFT JOIN T_XC_JS b ON A.BATCH_ID = b.BATCH_ID
+WHERE
+	A .ORG_ID = to_char(#{orgid})
+AND ROWNUM &lt;= 1
+AND FHZT !=1
+ORDER BY
+	A.REC_GEN_TIME DESC
+	 -->
+	SELECT count(*) cc FROM 
+	T_XC_JS 
+	WHERE
+		jydy = to_char(#{orgid})
+	AND ROWNUM &lt;= 1
+	AND FHZT != '1'
+		
+	</select>
+</mapper>

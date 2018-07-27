@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.linkstec.smsc.mapper.SM1001Mapper">
+	<select id="selectFsdxInfos" resultType="com.linkstec.smsc.dto.SM100102Dto"
+		parameterType="map">
+		<!-- 根据条件查询发送短信信息 -->
+		select
+		DISTINCT
+		A.LSH,
+		A.ZT,
+		A.FSDXGS,
+		A.DXNR,
+		length(A.DXNR) as NRCD,
+		A.NRLX,
+		B.RYID,
+		RTRIM(A.SHBZ) AS
+		SHBZ,
+		A.BHLY,
+		A.XXSCSJ,
+		B.XM,
+		A.DXTD,
+		A.JSLX,
+		A.YSRYID,
+		A.RSRYID,
+		A.YSJSID,
+		A.RSJSID,
+		A.JSID,
+		A.JSMC,
+		A.TGDXLX,
+		A.LJFS,
+		A.KFSBZ
+		from
+		<if test="cxdx == 'today' ">
+			T_XXFW_FSNR_TODAY /*LT*/ A
+		</if>
+		<if test="cxdx == 'history' ">
+			T_XXFW_FSNR /*LT*/ A
+		</if>
+		left join T_EHR_JJR_JBXX B on
+		B.RYID=A.FSYGID
+		where FSLX
+		in(0,2)
+		<if test="dxlx!=null">
+			AND A.DXLX = #{dxlx}
+		</if>
+		<!--<if test="jgid!=null"> and A.JGID=#{jgid} </if> -->
+		<if test="shbz!=null">
+			and RTRIM (A.SHBZ)=#{shbz}
+		</if>
+		<if test="fszt!=null">
+			and A.FSZT=#{fszt}
+		</if>
+		<if test="ygxm!=null">
+			and B.XM LIKE '%'||#{ygxm}||'%'
+		</if>
+
+		<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+		</if>
+		<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <=  #{zzsj} + 1
+           ]]>
+		</if>
+		<if test="source == 'quary' and shbz != 1 and shbz != null and shbz != ''">
+			UNION
+			SELECT
+			DISTINCT
+			A.LSH,
+			A.ZT,
+			A.FSDXGS,
+			A.DXNR,
+			length(A.DXNR)AS
+			NRCD,
+			A.NRLX,
+			x.RYID,
+			RTRIM(A.SHBZ)AS SHBZ,
+			A.BHLY,
+			A.XXSCSJ,
+			x.XM,
+			A.DXTD,
+			A.JSLX,
+			A.YSRYID,
+			A.RSRYID,
+			A.YSJSID,
+			A.RSJSID,
+			A.JSID,
+			A.JSMC,
+			A.TGDXLX,
+			A.LJFS,
+			A.KFSBZ
+			FROM
+			<if test="cxdx == 'today' ">
+				T_XXFW_FSNR_TODAY A
+			</if>
+			<if test="cxdx == 'history' ">
+				T_XXFW_FSNR A
+			</if>
+			INNER JOIN
+			T_EHR_JJR_JBXX /*LT*/ x
+			ON x.RYID =
+			A.FSYGID
+			WHERE
+			FSLX IN(0,
+			2)
+			<!-- AND A.FSYGID != #{shygid} -->
+			<!-- AND A.SHBZ IN(2, 3) -->
+
+			<if test="dxlx!=null">
+				AND A.DXLX = #{dxlx}
+			</if>
+			<if test="jgid!=null">
+				and A.JGID=#{jgid}
+			</if>
+			<if test="shbz!=null">
+				and RTRIM (A.SHBZ)=#{shbz}
+			</if>
+			<if test="fszt!=null">
+				and A.FSZT=#{fszt}
+			</if>
+			<if test="ygxm!=null">
+				and x.XM LIKE '%'||#{ygxm}||'%'
+			</if>
+			<if test="ygnotesId!=null">
+				and x.RYID LIKE '%'||#{ygnotesId}||'%'
+			</if>
+
+			<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+			</if>
+			<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <= #{zzsj} + 1
+           ]]>
+			</if>
+			
+		</if>
+		
+	</select>
+	<select id="selectFsdxtzjy" resultType="com.linkstec.smsc.dto.SM100102Dto"
+		parameterType="map">
+		SELECT
+		DISTINCT
+		A.LSH,
+		A.ZT,
+		A.FSDXGS,
+		A.DXNR,
+		length(A.DXNR) as
+		NRCD,
+		A.NRLX,
+		B.RYID NOTES_ID,
+		A.XXSCSJ,
+		C.YJID,
+		RTRIM(A.SHBZ) AS SHBZ,
+		A.BHLY,
+		B.XM,
+		D.MMFX,
+		D.JYJG,
+		D.JYCW,
+		D.ZSJ,
+		f_get_tzjy_stkname(c.YJID) AS
+		STK_NAME,
+		f_get_tzjy_stkcode(c.YJID) AS
+		STK_CODE
+		FROM
+		<if test="cxdx == 'today' ">
+			T_XXFW_FSNR_TODAY A
+		</if>
+		<if test="cxdx == 'history' ">
+			T_XXFW_FSNR A
+		</if>
+		LEFT JOIN T_EHR_JJR_JBXX B ON B.RYID = A.FSYGID
+		LEFT
+		JOIN
+		T_XXFW_FSNR_TZJY C ON A.LSH = C.LSH
+		LEFT JOIN T_MGR_RWZQZL D ON
+		C.ZLID =
+		D.ZLID
+		WHERE FSLX = '0'
+		<if test="shbz == null or shbz == ''">
+			and RTRIM (A.SHBZ)='1'
+		</if>
+		AND
+		A.DXLX = '1'
+		<if test="jgid!=null">
+			and A.JGID=#{jgid}
+		</if>
+		<if test="shbz!=null">
+			and RTRIM (A.SHBZ)=#{shbz}
+		</if>
+		<if test="fszt">
+			and A.FSZT=#{fszt}
+		</if>
+		<if test="mmfx!=null">
+			and D.MMFX=#{mmfx}
+		</if>
+		<if test="ygxm!=null">
+			and B.XM LIKE '%'||#{ygxm}||'%'
+		</if>
+		<if test="notesId!=null">
+			and B.NOTES_ID LIKE '%'||#{notesId}||'%'
+		</if>
+		<if test="stkname!=null">
+			and D.STK_NAME LIKE '%'||#{stkname}||'%'
+		</if>
+		<if test="stkcode!=null">
+			and D.STK_CODE LIKE '%'||#{stkcode}||'%'
+		</if>
+		<if test="zt!=null">
+			and A.ZT LIKE '%'||#{zt}||'%'
+		</if>
+		<if test="jyjgxs!=null">
+           <![CDATA[
+              and D.JYJG >= #{jyjgxs,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="jyjgsx!=null">
+           <![CDATA[
+              and D.JYJG <= #{jyjgsx,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="jycwxs!=null">
+           <![CDATA[
+              and D.JYCW >= #{jycwxs,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="jycwsx!=null">
+           <![CDATA[
+              and D.JYCW <= #{jycwsx,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="zsjxs!=null">
+           <![CDATA[
+              and D.ZSJ >= #{zsjxs,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="zsjsx!=null">
+           <![CDATA[
+              and D.ZSJ <= #{zsjsx,jdbcType=NUMERIC}
+           ]]>
+		</if>
+		<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+		</if>
+		<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <= #{zzsj} + 1
+           ]]>
+		</if>
+		<if test="source == 'quary' and shbz != 1 and shbz != null and shbz != ''">
+			UNION
+			SELECT
+			A.LSH,
+			A.ZT,
+			A.FSDXGS,
+			A.DXNR,
+			length(A.DXNR) as NRCD,
+			A.NRLX,
+			x.NOTES_ID,
+			A.XXSCSJ,
+			C.YJID,
+			RTRIM(A.SHBZ) AS SHBZ,
+			A.BHLY,
+			x.XM,
+			D.MMFX,
+			D.JYJG,
+			D.JYCW,
+			D.ZSJ,
+			f_get_tzjy_stkname(c.YJID) AS STK_NAME,
+			f_get_tzjy_stkcode(c.YJID) AS STK_CODE
+			FROM
+			<if test="cxdx == 'today' ">
+				T_XXFW_FSNR_TODAY A
+			</if>
+			<if test="cxdx == 'history' ">
+				T_XXFW_FSNR A
+			</if>
+			INNER JOIN T_EHR_JJR_JBXX /*LT*/ x
+			ON x.RYID =
+			A.FSYGID
+			LEFT
+			JOIN
+			T_XXFW_FSNR_TZJY C ON A.LSH = C.LSH
+			LEFT
+			JOIN
+			T_MGR_RWZQZL D ON
+			C.ZLID =
+			D.ZLID
+			WHERE FSLX = '0'
+			AND
+			A.DXLX = '1'
+			<if test="jgid!=null">
+				and A.JGID=#{jgid}
+			</if>
+			<if test="shbz!=null">
+				and RTRIM (A.SHBZ)=#{shbz}
+			</if>
+			<if test="mmfx!=null">
+				and D.MMFX=#{mmfx}
+			</if>
+			<if test="ygxm!=null">
+				and x.XM LIKE '%'||#{ygxm}||'%'
+			</if>
+			<if test="notesId!=null">
+				and x.NOTES_ID LIKE '%'||#{notesId}||'%'
+			</if>
+			<if test="stkname!=null">
+				and D.STK_NAME LIKE '%'||#{stkname}||'%'
+			</if>
+			<if test="stkcode!=null">
+				and D.STK_CODE LIKE '%'||#{stkcode}||'%'
+			</if>
+			<if test="zt!=null">
+				and A.ZT LIKE '%'||#{zt}||'%'
+			</if>
+			<if test="jyjgxs!=null">
+           <![CDATA[
+              and D.JYJG >= #{jyjgxs,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="jyjgsx!=null">
+           <![CDATA[
+              and D.JYJG <= #{jyjgsx,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="jycwxs!=null">
+           <![CDATA[
+              and D.JYCW >= #{jycwxs,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="jycwsx!=null">
+           <![CDATA[
+              and D.JYCW <= #{jycwsx,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="zsjxs!=null">
+           <![CDATA[
+              and D.ZSJ >= #{zsjxs,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="zsjsx!=null">
+           <![CDATA[
+              and D.ZSJ <= #{zsjsx,jdbcType=NUMERIC}
+           ]]>
+			</if>
+			<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+			</if>
+			<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <= #{zzsj} + 1
+           ]]>
+			</if>
+		</if>
+	</select>
+	<select id="selectCountByLsh" parameterType="map" resultType="java.lang.Long">
+		select count(*) from T_XXFW_FSNR_TODAY where LSH=#{lsh} and SHBZ='1'
+	</select>
+	<!-- 更新审核标志 -->
+	<update id="updateShbzByLsh" parameterType="map">
+		<if test="lshList!=null">
+			update T_XXFW_FSNR_TODAY set
+			SHBZ=#{shbz},BHLY=#{bhly},SHYGID=#{shygid},SHSJ = #{shsj}, KFSBZ =
+			#{kfsbz}
+			where LSH in
+			<foreach collection="lshList" item="item" open="(" separator=","
+				close=")">
+				#{item}
+			</foreach>
+		</if>
+	</update>
+
+	<select id="getFsdxInfo" parameterType="map" resultType="map">
+		SELECT
+		A.FSLSH,
+		CASE WHEN TO_CHAR(A .KHID) IS NULL THEN TO_CHAR(B.RYID)
+		ELSE
+		TO_CHAR(A .KHID) END DXID,
+		CASE WHEN A.KHXM IS NULL THEN YHXM ELSE
+		KHXM
+		END DXXM,
+		A.LXHM,
+		A.BZXX,
+		A.FSZT,
+		A.FSRQ,
+		A.FSSJ
+		FROM
+		<if test="source =='today'">
+			T_XXFW_FSNR_FSDX_TODAY
+		</if>
+		<if test="source =='history'">
+			T_XXFW_FSNR_FSDX
+		</if>
+		A LEFT JOIN
+		T_EHR_JJR_JBXX B ON A.RYID = B.RYID
+		WHERE
+		FSLX IN (0,2)
+		and
+		FSLSH =
+		#{lsh}
+	</select>
+
+	<select id="selectDeparts" resultType="String" parameterType="map">
+		<!--WITH DEPART AS( SELECT a.JGID FROM T_JG a WHERE a.JGID = #{jgid} UNION 
+			ALL SELECT b.JGID FROM T_JG /*LT*/ b, DEPART d WHERE b.SJJGID = d.JGID) select 
+			* from DEPART -->
+		WITH DEPART AS( SELECT DISTINCT a.JGID FROM T_JG /*LT*/ a START WITH
+		a.SJJGID = #{jgid} OR a.JGID=#{jgid} CONNECT BY PRIOR a.JGID =
+		a.SJJGID ORDER BY a.JGID)
+		select *
+		from DEPART
+	</select>
+
+	<select id="selectFsdxForSys" resultType="com.linkstec.smsc.dto.SM100102Dto"
+		parameterType="map">
+		<!-- 根据条件查询发送短信信息 -->
+		SELECT DISTINCT
+		A.LSH lsh,
+		A.ZT zt,
+		A.FSDXGS fsdxgs,
+		A.DXNR
+		dxnr,
+		length(A.DXNR)AS nrcd,
+		A.NRLX nrlx,
+
+		B.NOTES_ID,
+		A.XXSCSJ xxscsj,
+		RTRIM(A.SHBZ)AS shbz,
+		A.BHLY bhly,
+		B.XM xm,
+		A.LYID
+		lyid,
+		A.JSLX,
+		A.YSRYID,
+		A.RSRYID,
+		A.YSJSID,
+		A.RSJSID,
+		A.JSID,
+		A.JSMC,
+		A.TGDXLX,
+		A.LJFS,
+		A.KFSBZ
+		FROM
+		T_XXFW_FSNR_TODAY A
+		INNER JOIN T_EHR_JJR_JBXX B ON
+		B.RYID
+		=
+		A.FSYGID
+		<!-- INNER JOIN T_XXFW_SHR C ON A.FSYGID = C.RYID -->
+		WHERE
+		FSLX IN(0, 2)
+		AND A.SJLY = '00'
+		<if test="shbz == null or shbz == ''">
+			and RTRIM (A.SHBZ)='1'
+		</if>
+		AND A.DXLX = '0'
+		<if test="jgids!=null">
+			and A.JGID IN ${jgids}
+		</if>
+		<if test="shbz!=null">
+			and RTRIM (A.SHBZ)=#{shbz}
+		</if>
+		<if test="fszt!=null">
+			and A.FSZT=#{fszt}
+		</if>
+		<if test="dxlx!=null">
+			and A.LYID=#{dxlx}
+		</if>
+		<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+		</if>
+		<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <= #{zzsj,jdbcType=DATE} + 1
+           ]]>
+		</if>
+	</select>
+
+
+	<!-- 根据审核流水号查询，审核 -->
+	<select id="selectFsdxInfosByLsh" resultType="com.linkstec.smsc.dto.SM100102Dto"
+		parameterType="map">
+		<!-- 根据条件查询发送短信信息 -->
+		select
+		DISTINCT
+		A.LSH,
+		A.ZT,
+		A.FSDXGS,
+		A.DXNR,
+		length(A.DXNR) as NRCD,
+		A.NRLX,
+		B.NOTES_ID,
+		RTRIM(A.SHBZ) AS
+		SHBZ,
+		A.BHLY,
+		A.XXSCSJ,
+		B.XM,
+		A.DXTD,
+		A.FSYGID,
+		A.JSLX,
+		A.YSRYID,
+		A.RSRYID,
+		A.YSJSID,
+		A.RSJSID,
+		A.JSID,
+		A.JSMC,
+		A.TGDXLX,
+		A.LJFS,
+		A.KFSBZ
+		from
+		<if test="cxdx == 'today' ">
+			T_XXFW_FSNR_TODAY /*LT*/ A
+		</if>
+		<if test="cxdx == 'history' ">
+			T_XXFW_FSNR /*LT*/ A
+		</if>
+		inner join T_EHR_JJR_JBXX B on
+		B.RYID=A.FSYGID
+		where FSLX
+		in(0,2)
+		AND
+		A.DXLX = '0'
+		AND LSH in
+		<foreach collection="lshList" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+		<if test="jgid!=null">
+			and A.JGID=#{jgid}
+		</if>
+		<if test="shbz!=null">
+			and RTRIM (A.SHBZ)=#{shbz}
+		</if>
+		<if test="fszt!=null">
+			and A.FSZT=#{fszt}
+		</if>
+		<if test="ygxm!=null">
+			and B.XM LIKE '%'||#{ygxm}||'%'
+		</if>
+		<if test="ygnotesId!=null">
+			and B.NOTES_ID LIKE '%'||#{ygnotesId}||'%'
+		</if>
+
+		<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+		</if>
+		<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <=  #{zzsj} + 1
+           ]]>
+		</if>
+		<if test="source == 'quary' and shbz != 1 and shbz != null and shbz != ''">
+			UNION
+			SELECT
+			DISTINCT
+			A.LSH,
+			A.ZT,
+			A.FSDXGS,
+			A.DXNR,
+			length(A.DXNR)AS
+			NRCD,
+			A.NRLX,
+			x.NOTES_ID,
+			RTRIM(A.SHBZ)AS SHBZ,
+			A.BHLY,
+			A.XXSCSJ,
+			x.XM,
+			A.DXTD,
+			A.FSYGID,
+			A.JSLX,
+			A.YSRYID,
+			A.RSRYID,
+			A.YSJSID,
+			A.RSJSID,
+			A.JSID,
+			A.JSMC,
+			A.TGDXLX,
+			A.LJFS,
+			A.KFSBZ
+			FROM
+			<if test="cxdx == 'today' ">
+				T_XXFW_FSNR_TODAY A
+			</if>
+			<if test="cxdx == 'history' ">
+				T_XXFW_FSNR A
+			</if>
+			INNER JOIN
+			T_EHR_JJR_JBXX /*LT*/ x
+			ON x.RYID =
+			A.FSYGID
+			WHERE
+			FSLX IN(0,
+			2)
+			<!-- AND A.FSYGID != #{shygid} -->
+			<!-- AND A.SHBZ IN(2, 3) -->
+
+			AND A.DXLX = '0'
+			AND LSH in
+			<foreach collection="lshList" item="item" open="(" separator=","
+				close=")">
+				#{item}
+			</foreach>
+			<if test="jgid!=null">
+				and A.JGID=#{jgid}
+			</if>
+			<if test="shbz!=null">
+				and RTRIM (A.SHBZ)=#{shbz}
+			</if>
+			<if test="fszt!=null">
+				and A.FSZT=#{fszt}
+			</if>
+			<if test="ygxm!=null">
+				and x.XM LIKE '%'||#{ygxm}||'%'
+			</if>
+			<if test="ygnotesId!=null">
+				and x.NOTES_ID LIKE '%'||#{ygnotesId}||'%'
+			</if>
+
+			<if test="qssj!=null">
+           <![CDATA[
+              and A.XXSCSJ >= #{qssj,jdbcType=DATE}
+           ]]>
+			</if>
+			<if test="zzsj!=null">
+           <![CDATA[
+              and A.XXSCSJ <= #{zzsj} + 1
+           ]]>
+			</if>
+		</if>
+	</select>
+
+	<select id="searchshinfos" resultType="com.linkstec.smsc.dto.SM100108Dto"
+		parameterType="map">
+		select *
+		from (select b.khid,
+		b.khxm,
+		b.lxhm,
+		a.shsj,
+		a.shygxm,
+		a.fsygxm,
+		a.bhly,
+		a.dxnr,
+		a.shbz,
+		a.lsh
+		from T_XXFW_FSNR_SHLS a ,t_xxfw_fsnr_fsdx_today b
+		where a.lsh =b.fslsh
+		union all
+		select c.khid,
+		c.khxm,
+		c.lxhm,
+		a.shsj,
+		a.shygxm,
+		a.fsygxm,
+		a.bhly,
+		a.dxnr,
+		a.shbz,
+		a.lsh
+		from T_XXFW_FSNR_SHLS a,t_xxfw_fsnr_fsdx c
+		where a.lsh = c.fslsh
+		) a
+		where 1 = 1
+		<if test="shzt!=null">
+			and shbz=#{shzt}
+		</if>
+		<if test="shrxm!=null">
+			and a.shygxm like '%'||#{shrxm}||'%'
+		</if>
+		<if test="fsr!=null">
+			and a.fsygxm like '%'||#{fsr}||'%'
+		</if>
+		<if test="dxnr!=null">
+			and a.dxnr like '%'||#{dxnr}||'%'
+		</if>
+		<if test="kssj!=null">
+			and a.shsj >=#{kssj}
+		</if>
+		<if test="jssj!=null">
+			<![CDATA[
+              and a.shsj < #{jssj}
+           ]]>
+		</if>
+		order by a.shsj desc
+	</select>
+</mapper>

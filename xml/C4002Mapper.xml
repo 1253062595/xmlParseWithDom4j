@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.msp.customer.mapper.C4002Mapper">
+<!-- mot专属关系-大数据客户 -->
+<select id="motDsjkhzx" parameterType="map" resultType="map">
+
+SELECT
+	a.KHID "khid"
+	,a.khXM "xm",
+	b.ORG_NAME "orgName"
+FROM
+	T_KH_XX a
+LEFT JOIN L_ORGANIZATION /*LT*/ b ON a.ORGID = b.ORG_ID	
+WHERE
+	KHID NOT IN (
+		SELECT
+			KHID
+		FROM
+			T_GXGL_GXMX
+		WHERE
+			1=1 
+			and ((GXZT = 1 AND SHZT = 2)
+               OR GXZT = 2
+               OR (GXZT = 3 AND SHZT != 2 ))
+			and gxlxbh in (1,2,3,5,6)
+	) 	
+	<if test="khid!=null">
+		and a.KHID like '%'||#{khid}||'%'
+	</if>
+	<if test="xm!=null">
+		and a.XM like '%'||#{xm}||'%'
+	</if>
+	<if test="orgId!=null">
+	 and a.ORGID = #{orgId}
+	</if>
+
+</select>
+<!-- 查询客户的客户数和未指定服务人员的客户数 -->
+<select id="countOrgCustNum" parameterType="map" resultType="java.lang.Long">
+SELECT "COUNT"(1) "num" FROM T_KH_XX /*LT*/ T_KH_XX 
+
+<!-- INNER JOIN T_GXGL_GXMX T_GXGL_GXMX ON T_KH_XX.KHID = T_GXGL_GXMX.KHID -->
+
+WHERE 1=1 and 
+exists(select 1 
+		from T_GXGL_GXMX 
+		where T_GXGL_GXMX.gxlxbh in (1,2,3,5,6,8 ) 
+		and T_KH_XX.KHID = T_GXGL_GXMX.KHID 
+		AND ((T_GXGL_GXMX.GXZT = 1 AND T_GXGL_GXMX.SHZT = 2)
+               OR T_GXGL_GXMX.GXZT = 2
+               OR (T_GXGL_GXMX.GXZT = 3 AND T_GXGL_GXMX.SHZT != 2 )))
+<!-- T_GXGL_GXMX.gxlxbh in (1,2,3,5,6,8 ) -->
+	<if test="deptId != 1">
+	   and ORGID = #{deptId}
+	</if>
+	AND T_KH_XX.ZHZT != 'C'
+	
+UNION ALL
+SELECT "COUNT"(1) "num" FROM T_KH_XX  /*LT*/ T_KH_XX
+WHERE 1=1 
+	<if test="deptId != 1">
+	 and ORGID = #{deptId}
+	</if>
+	AND T_KH_XX.ZHZT != 'C'
+AND KHID NOT IN(
+
+	SELECT
+			"mt".KHID "mt_10152"
+		FROM
+			T_GXGL_GXMX "mt"
+		WHERE
+			(
+			1=1 and "mt".gxlxbh in (1,2,3,5,6,8 )
+			AND  (("mt".GXZT = 1 AND "mt".SHZT = 2)
+               OR "mt".GXZT = 2
+               OR ("mt".GXZT = 3 AND "mt".SHZT != 2 )))
+)
+<!-- UNION ALL -->
+
+<!-- 	SELECT "COUNT"(1) "num" FROM( -->
+<!-- SELECT -->
+<!-- 			DISTINCT xx.KHID -->
+<!-- 		FROM -->
+<!-- 			T_GXGL_GXMX "mt" inner join T_KH_XX xx on "mt".khid = xx.khid -->
+<!-- 		WHERE		 -->
+<!-- 			1=1 and "mt".gxlxbh in (1,2,3,5,6,8 ) -->
+<!-- 			and ryid = #{ryid} -->
+<!-- 				<if test="deptId != 1"> -->
+<!-- 	 and ORGID = #{deptId} -->
+<!-- 	</if> -->
+<!-- ) info -->
+</select>
+<!-- 我服务的客户数，具体到关系 -->
+<select id="selcetMySrvCustNum" parameterType="map" resultType="map">
+SELECT
+	"COUNT" (1) "num",T_GXGL_GXMX.gxlxbh "gxlxbh"
+FROM
+	T_KH_XX 
+INNER JOIN T_GXGL_GXMX T_GXGL_GXMX ON T_KH_XX.KHID = T_GXGL_GXMX.KHID
+WHERE
+ RYID = #{ryid}
+AND T_GXGL_GXMX.gxlxbh IN (1, 2, 3, 5, 6, 8)
+AND T_KH_XX.ZHZT != 'C'
+AND ((T_GXGL_GXMX.GXZT = 1 AND T_GXGL_GXMX.SHZT = 2)
+               OR T_GXGL_GXMX.GXZT = 2
+               OR (T_GXGL_GXMX.GXZT = 3 AND T_GXGL_GXMX.SHZT != 2 ))
+GROUP BY T_GXGL_GXMX.gxlxbh
+</select>
+
+</mapper>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.linkstec.cfs.salary.base.mapper.B100103Mapper">
+	
+	<select id ="selectJjrInfo" parameterType="map" resultType="map">
+	select "mt".RYID "mt_10169",'('||"mt".RYID||')'||"mt".XM "mt_10462" from T_EHR_JJR_JBXX /*LT*/ "mt" 
+	<where>
+		<if test="xm!=null">
+			or "mt".XM  like '%'||#{xm}||'%'
+		</if>
+		<if test="ryid!=null">
+			or "mt".RYID like #{ryid}
+		</if>
+	</where>
+	 order by "mt_10169"
+	</select>
+</mapper>
