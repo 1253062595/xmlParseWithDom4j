@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.TaskMapper">
+<select id="queryAllTaskInfo" resultType="TaskDetailInfoDto">
+    select t.task_id taskId,t.task_name taskName,fn_get_dictvalue('10029',t.task_group) taskGroup
+    ,fn_get_dictvalue('10025',t.task_type) taskType,fn_get_dictvalue('10021',t.task_status) taskStatus
+    ,t.task_cron taskCron,t.last_result lastResult,t.next_execute_time nextExecuteTime
+    from sys_task_info /*lt*/ t where 1=1
+    <if test="dto.taskName != null and dto.taskName != ''">
+        and ((t.task_id = #{dto.taskName}) or (t.task_name like "%"#{dto.taskName}"%"))
+    </if>
+    <if test="dto.taskGroup != null and dto.taskGroup != ''">
+        and t.task_group = #{dto.taskGroup}
+    </if>
+    <if test="dto.taskStatus != null and dto.taskStatus != ''">
+        and t.task_status = #{dto.taskStatus}
+    </if>
+    <if test="dto.taskType != null and dto.taskType != ''">
+        and t.task_type = #{dto.taskType}
+    </if>
+    order by t.task_id desc
+</select>
+
+<select id="queryTaskDetailInfo" resultType="TaskDetailInfoDto">
+        select * from sys_task_info /*lt*/ t where t.task_id = #{taskId}
+    </select>
+
+<insert id="insertTask">
+        insert into sys_task_info (task_id,task_name,task_group,task_type,task_status,task_executor,task_params,
+        task_cron,task_frequency,task_sundry,last_result,next_execute_time,begin_time,end_time,effect_time,dead_time
+        ,cron_type,task_setting,remark,rec_gen_time)
+        values
+        (nextval('taskId_seq'),#{dto.taskName},#{dto.taskGroup},#{dto.taskType},#{dto.taskStatus},#{dto.taskExecutor}
+        ,#{dto.taskParams},#{dto.taskCron},#{dto.taskFrequency},#{dto.taskSundry}
+        ,#{dto.lastResult},#{dto.nextExecuteTime},#{dto.beginTime},#{dto.endTime},#{dto.effectTime},#{dto.deadTime},#{dto.cronType}
+        ,#{dto.taskSetting},#{dto.remark},sysdate())
+    </insert>
+
+<update id="updateTask">
+        update sys_task_info set task_name = #{dto.taskName} , task_group = #{dto.taskGroup} ,
+        task_type = #{dto.taskType} , task_status = #{dto.taskStatus} , task_executor = #{dto.taskExecutor} ,
+        task_params = #{dto.taskParams} , task_cron = #{dto.taskCron}, task_frequency = #{dto.taskFrequency} ,
+        task_sundry = #{dto.taskSundry} , last_result = #{dto.lastResult},next_execute_time = #{dto.nextExecuteTime}
+        ,begin_time = #{dto.beginTime},end_time = #{dto.endTime},effect_time= #{dto.effectTime},dead_time=#{dto.deadTime}
+        ,cron_type= #{dto.cronType},task_setting = #{dto.taskSetting},remark = #{dto.remark},rec_upd_time = sysdate()
+        where task_id = #{dto.taskId}
+    </update>
+
+<delete id="deleteTask">
+        delete from sys_task_info where task_id = #{taskId}
+    </delete>
+
+<select id="queryAllTaskLogInfo" resultType="TaskLogInfoDto">
+    select t.task_time taskTime,fn_get_dictvalue('10028',t.task_result) taskResult
+    ,t.task_id taskId,s.task_name  taskName,fn_get_dictvalue('10029',s.task_group) taskGroup
+    ,fn_get_dictvalue('10025',s.task_type) taskType ,t.execute_time executeTime,t.failed_reason failedReason
+    from sys_task_log  t  LEFT JOIN sys_task_info s on s.TASK_ID = t.TASK_ID
+    where 1=1
+    <if test="dto.taskName != null and dto.taskName != ''">
+        and ((s.task_id = #{dto.taskName}) or (s.task_name like "%"#{dto.taskName}"%"))
+    </if>
+    <if test="dto.taskGroup != null and dto.taskGroup != ''">
+        and s.task_group = #{dto.taskGroup}
+    </if>
+    <if test="dto.taskType != null and dto.taskType != ''">
+        and s.task_type = #{dto.taskType}
+    </if>
+</select>
+
+<insert id="insertTaskLog">
+        insert into sys_task_log (task_id,task_time,task_result,execute_time,failed_reason,rec_gen_time)
+        values
+        (#{dto.taskId},sysdate(),#{dto.taskResult},#{dto.executeTime},#{dto.failedReason},sysdate())
+    </insert>
+
+<select id="queryTaskId" resultType="string">
+        select task_id from sys_task_info where task_name = #{taskName} and task_group = #{taskGroup}
+    </select>
+    
+    <select id="callProcedure" parameterType="map" statementType="CALLABLE" resultType="map">
+        ${sql}
+    </select>
+
+</mapper>

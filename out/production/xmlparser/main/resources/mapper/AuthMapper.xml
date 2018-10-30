@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.AuthMapper">
+	<select id="queryColInfoList" resultType="TableColInfoDto">
+		SELECT
+			column_name 'column',
+			data_type 'dataType',
+			column_comment 'columnName'
+		FROM
+			information_schema.columns
+		WHERE
+			table_schema = #{schema}
+			AND table_name = #{table}
+	</select>
+	<select id="queryRowAuthCntByName" resultType="int">
+		SELECT
+		COUNT(1) count
+		FROM
+		sys_perm_row
+		WHERE
+		row_name LIKE #{rowName}
+		<if test="id!=null and id!=''">
+			and id &lt;&gt; #{id}
+		</if>
+	</select>
+	<insert id="addRowAuth" parameterType="AddRowAuthReqDto">
+		<selectKey keyProperty="req.id" order="BEFORE" resultType="java.lang.String">
+			select nextval('auth_row') from DUAL
+		</selectKey>
+		INSERT INTO sys_perm_row (id,row_table,row_name,row_type,
+		row_order,row_remark,row_set_type,row_set,rec_gen_time)
+		VALUES(#{req.id},#{req.rowTable},#{req.rowName},#{req.rowType},
+		#{req.rowOrder},#{req.rowRemark},#{req.rowSetType},#{req.rowSet},sysdate()
+		)
+	</insert>
+	<select id="queryPermRowTree" resultType="PermRowTreeDto">
+		SELECT
+			row_table, row_name, id 'rowId'
+		FROM
+			sys_perm_row
+	</select>
+	<select id="queryPermRowList" resultType="SimpleRowAuthInfoDto">
+		SELECT
+		row_table,
+		row_name,
+		id 'authId',
+		fn_get_dictvalue('10012',row_type) row_type,
+		row_remark,
+		ROW_ORDER
+		FROM
+		sys_perm_row
+		<where>
+			<if test="rowTable!=null and rowTable!=''">
+				row_table = #{rowTable}
+			</if>
+			<if test="rowType!=null and rowType!=''">
+				and row_type = #{rowType}
+			</if>
+			<if test="rowName!=null and rowName!=''">
+				and row_name like "%"#{rowName}"%"
+			</if>
+			<if test="authId!=null and authId!=''">
+				and id = #{authId}
+			</if>
+		</where>
+	</select>
+	<select id="queryRowAuthInfo" resultType="RowAuthInfoDto">
+		SELECT
+			Id 'authId',
+			ROW_TABLE,
+			ROW_NAME,
+			ROW_TYPE,
+			ROW_ORDER,
+			ROW_REMARK,
+			ROW_SET_TYPE,
+			ROW_SET
+		FROM
+			sys_perm_row
+		WHERE
+			id = #{authId}
+	</select>
+	<update id="editRowAuth">
+		update sys_perm_row set row_name = #{req.rowName},row_type = #{req.rowType},
+			row_order = #{req.rowOrder},row_remark = #{req.rowRemark},ROW_SET_TYPE = #{req.rowSetType},
+			ROW_SET = #{rowSet},rec_upd_time = sysdate()
+		  where id = #{req.authId}
+	</update>
+	<select id="queryPermCountByIdAndType" resultType="java.lang.Integer">
+		select count(1) from sys_perm_data t where t.data_type = #{dataType} and data_id = #{dataId}
+		and  sysdate() between t.PERM_TIME_BEGIN and t.PERM_TIME_END
+	</select>
+	<delete id="deletePermRowByIdAndType">
+		DELETE FROM sys_perm_row
+		WHERE
+			id =  #{authId}
+    </delete>
+	<select id="queryColumnAuthList" resultType="SimpleColumnAuthInfoDto">
+		SELECT
+		id 'authId', COL_NAME, col_set, col_remark, col_order,fn_get_dictvalue('10014',col_type) col_type
+		FROM
+		sys_perm_col
+		<where>
+			<if test="colMethod!=null and colMethod!=''">
+				col_set LIKE "%"#{colMethod}"%"
+			</if>
+			<if test="colType!=null and colType!=''">
+				col_type =#{colType}
+			</if>
+			<if test="colName!=null and colName!=''">
+				COL_NAME LIKE "%"#{colName}"%"
+			</if>
+		</where>
+	</select>
+	<select id="queryColAuthCntByName" resultType="int">
+		SELECT
+		COUNT(1) count
+		FROM
+		sys_perm_col
+		WHERE
+		col_name LIKE #{colName}
+		<if test="id!=null and id!=''">
+			and id &lt;&gt; #{id}
+		</if>
+	</select>
+	<insert id="addColumnAuth">
+		<selectKey keyProperty="req.id" order="BEFORE" resultType="java.lang.String">
+			select nextval('auth_col') from DUAL
+		</selectKey>
+		insert into sys_perm_col(id,col_name,col_type,col_remark,col_set,rec_gen_time,col_order)
+		VALUES(#{req.id},#{req.colName},#{req.colType},#{req.colRemark},
+		#{colSet},sysdate(),'1'
+		)
+	</insert>
+	<select id="queryColumnAuthInfo" resultType="ColumnAuthInfoDto">
+		select id 'authId',col_name,col_type,col_remark,col_set, col_order from sys_perm_col
+		where id = #{authId}
+	</select>
+	<delete id="deleteColumnAuth">
+		 delete from sys_perm_col where id = #{authId}
+	</delete>
+	<update id="editColumnAuth">
+		update sys_perm_col set col_name =#{req.colName},col_type=#{req.colType},
+		  col_set = #{colSet} ,col_remark = #{req.colRemark},col_order = #{req.colOrder},
+		  rec_upd_time = sysdate()
+		  where id = #{req.authId}
+	</update>
+</mapper>

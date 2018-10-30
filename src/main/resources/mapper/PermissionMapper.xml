@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.PermissionMapper">
+	<select id="querySourceTree" resultType="ResourceInfoTreeDto">
+    SELECT
+	t.RES_ID,
+	t.RES_NAME,
+	t.PARENT_ID,
+	'0' flag
+    FROM
+	sys_resource /*LT*/ t
+    WHERE
+	t.RES_TYPE =#{resType} and res_status='0'
+    ORDER BY
+	t.PARENT_ID,t.RES_ORDER
+    </select>
+	<select id="querySourceRoleList" resultType="PermAllowByResourceInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.res_id,
+		b.res_name,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10017', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') REC_GEN_TIME
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.res_id,
+		t.res_name
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		<if test="resId!=null and resId!=''">
+			and t.res_id =#{resId}
+		</if>
+		) b
+		left JOIN sys_allow_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<select id="queryRoleInfo" resultType="RoleInfoListDto">
+		select role_id,role_name,role_remark from sys_role /*LT*/ m where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (role_name like "%"#{roleName}"%")
+		</if>
+	</select>
+
+	<select id="queryRoleInfoByIds" resultType="RoleInfoListDto">
+		select role_id,role_name,role_remark from sys_role where
+		role_id in
+		<foreach collection="roleIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</select>
+
+	<insert id="addPermAllowSetByResource">
+		insert into
+		sys_allow_res(res_id,allow_time_begin,allow_time_end,rec_gen_time,role_id)
+		<foreach collection="roleIds" separator="union all" index="index" item="item">
+			select #{res},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_allow_res where res_id=#{res} and role_id=#{item})
+		</foreach>
+	</insert>
+
+	<select id="queryPermAllowById" resultType="PermAllowByIdInfoDto">
+	SELECT
+		b.res_id,
+		b.res_name,
+		b.role_id,
+		b.role_name,
+		(case when c.RES_ID is not null and c.role_id is not null then '0' else '1'  end)allow_status,
+        c.ALLOW_TIME_BEGIN,
+        c.ALLOW_TIME_END
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		and a.role_id =#{roleId} and RES_ID=#{resId}
+		) b
+		left JOIN sys_allow_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+	</select>
+
+	<select id="selectCount" resultType="int">
+		select count(*)
+		from sys_allow_res t  where t.res_id=#{resId} and t.role_id=#{roleId}
+	</select>
+
+	<update id="updatePermAllowById">
+		update  sys_allow_res set allow_time_begin=#{allowTimeBegin},allow_time_end=#{allowTimeEnd},
+		rec_upd_time=sysdate()
+		where role_id = #{roleId} and res_id=#{resId}
+	</update>
+
+	<insert id="insertPermAllowById">
+		INSERT INTO sys_allow_res (role_id,res_id,allow_time_begin,allow_time_end,REC_GEN_TIME)
+		VALUES(#{roleId},#{resId},#{allowTimeBegin},#{allowTimeEnd},sysdate() )
+	</insert>
+
+	<delete id="delPermAllById">
+        delete from sys_allow_res where role_id = #{roleId} and res_id=#{resId}
+    </delete>
+
+	<select id="selectParentId" resultType="String">
+		select res_id From sys_resource where FIND_IN_SET(res_id, getResParentLst(#{resId}));
+	</select>
+
+	<select id="selectChildId" resultType="String">
+		select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{resId})) and res_id!=#{resId};
+	</select>
+
+	<select id="selectCountResId" resultType="int">
+		select count(*)
+		from sys_allow_res t where t.res_id in
+		<foreach collection="resIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+
+	</select>
+
+	<delete id="delResRoleIds">
+		delete from sys_allow_res where res_id=#{resId} and role_id in
+		<foreach collection="roleIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="queryPermAllowByRole" resultType="PermAllowByRoleInfoDto">
+		SELECT
+		b.res_id,
+		b.res_name,
+		b.RES_REMARK,
+		b.RES_TYPE,
+		b.PARENT_ID,
+		b.role_id,
+		b.role_name,
+		b.res_order,
+		'0' flag,
+		FN_GET_DICTVALUE('10017', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		t.RES_ORDER
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id =#{roleId}
+		</if>
+		) b
+		left JOIN sys_allow_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="resType!=null and resType!=''">
+			and b.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and b.PARENT_ID in (select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by b.res_order,(case when c.RES_ID is not null and c.role_id is not null then '0' else '1'
+		end),b.role_id,b.res_id
+	</select>
+
+	<insert id="addPermAllowSetByRole">
+		insert into
+		sys_allow_res(role_id,allow_time_begin,allow_time_end,rec_gen_time,res_id)
+		<foreach collection="resIds" separator="union all" index="index" item="item">
+			select #{re.roleId},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_allow_res where res_id=#{item} and role_id=#{re.roleId})
+		</foreach>
+	</insert>
+
+	<select id="queryResSourceTree" resultType="ResourceInfoTreeDto">
+    SELECT
+	t.RES_ID,
+	t.RES_NAME,
+	t.PARENT_ID
+    FROM
+	sys_resource t
+    WHERE
+	t.RES_TYPE =#{resType} and t.PARENT_ID!=-1
+    ORDER BY
+	t.RES_ID
+    </select>
+
+	<select id="queryPermSetByResource" resultType="PermSetByResourceInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.res_id,
+		b.res_name,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) perm_date,
+		c.RULE,
+		FN_GET_DICTVALUE('10018', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.res_id,
+		t.res_name
+		FROM
+		sys_resource t
+		JOIN sys_role /*LT*/ a
+		where 1=1
+		<if test="resId!=null and resId!=''">
+			and t.res_id =#{resId}
+		</if>
+		) b
+		left JOIN sys_perm_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<insert id="addPermSetByResource">
+		insert into
+		sys_perm_res(res_id,perm_time_begin,perm_time_end,rule,rec_gen_time,role_id)
+		<foreach collection="roleIds" separator="union all" index="index" item="item">
+			select #{res},#{re.dateBegin},#{re.dateEnd},#{re.rule},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_perm_res where res_id=#{res} and role_id=#{item})
+		</foreach>
+
+	</insert>
+
+	<select id="queryPermSetByRole" resultType="PermSetByRoleInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.RES_REMARK,
+		b.RES_TYPE,
+		b.PARENT_ID,
+		b.res_id,
+		b.res_name,
+		b.res_order,
+		'0' flag,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) perm_date,
+		c.RULE,
+		FN_GET_DICTVALUE('10018', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		t.RES_ORDER
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id =#{roleId}
+		</if>
+		) b
+		left JOIN sys_perm_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="resType!=null and resType!=''">
+			and b.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and b.PARENT_ID in (select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by b.res_order,(case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end),b.res_id
+	</select>
+
+	<insert id="permSetByRole">
+		insert into
+		sys_perm_res(role_id,perm_time_begin,perm_time_end,rule,rec_gen_time,res_id)
+		<foreach collection="resIds" separator="union all" index="index" item="item">
+			select #{re.roleId},#{re.dateBegin},#{re.dateEnd},#{re.rule},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_perm_res where res_id=#{item} and role_id=#{re.roleId})
+		</foreach>
+	</insert>
+
+	<select id="queryPermSetById" resultType="PermSetByIdInfoDto">
+	SELECT
+		b.role_id,
+		b.role_name,
+		b.res_id,
+		b.res_name,
+        c.PERM_TIME_BEGIN date_begin,
+        c.PERM_TIME_END  date_end,
+		c.RULE,
+		 (case when c.RES_ID is not null and c.role_id is not null then '0' else '1'  end) status
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.res_id,
+		t.res_name
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+			and a.role_id =#{roleId} and t.res_id=#{resId}
+		) b
+		left JOIN sys_perm_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+	</select>
+
+	<select id="selectCountPerm" resultType="int">
+		select count(*)
+		from sys_perm_res t  where t.res_id=#{resId} and t.role_id=#{roleId}
+	</select>
+
+	<update id="updatePermSetById">
+		update  sys_perm_res set perm_time_begin=#{dateBegin},perm_time_end=#{dateEnd},rule=#{rule},
+		rec_upd_time=sysdate()
+		where role_id = #{roleId} and res_id=#{resId}
+	</update>
+
+	<insert id="insertPermSetById">
+		INSERT INTO sys_perm_res (role_id,res_id,perm_time_begin,perm_time_end,rule,REC_GEN_TIME)
+		VALUES(#{roleId},#{resId},#{dateBegin},#{dateEnd},#{rule},sysdate() )
+	</insert>
+
+	<select id="selectCountPermId" resultType="int">
+		select count(*)
+		from sys_perm_res t where t.res_id in
+		<foreach collection="resIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</select>
+
+	<delete id="delPermSetById">
+        delete from sys_perm_res where role_id = #{roleId} and res_id=#{resId}
+    </delete>
+
+	<delete id="delPermSetByIds">
+		delete from sys_perm_res where res_id=#{resId} and role_id in
+		<foreach collection="roleIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="delResRoleByResListIds">
+		delete from sys_allow_res where role_id=#{roleId} and res_id in
+		<foreach collection="resIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="delPermSetByResListId">
+		delete from sys_perm_res where role_id=#{roleId} and res_id in
+		<foreach collection="resIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="queryUserPermInfo" resultType="UserPermInfoDto">
+		SELECT
+		t.LOGIN_ID,
+		t.LOGIN_NAME,
+		t.USER_ID,
+		a.USER_NAME,
+		(select b.ORG_NAME from sys_org b where b.ORG_ID=a.BRANCH_NO and b.ORG_TYPE='2') as branch_name
+		FROM
+		sys_login t
+		LEFT JOIN sys_user a ON t.USER_ID = a.USER_ID
+		<where>
+		<if test="userName!=null and userName!=''">
+			(a.USER_NAME like "%"#{userName}"%") or (t.login_name like "%"#{userName}"%")
+		</if>
+		</where>
+		order by t.LOGIN_ID
+	</select>
+
+	<select id="queryPermResourceSet" resultType="PermSetByLoginResourceInfoDto">
+		SELECT
+		info.res_id,
+		info.res_name,
+		info.res_remark,
+		info.PARENT_ID,
+		'0' flag,
+		FN_GET_DICTVALUE('10018', status) status
+		FROM
+		(SELECT
+		e.LOGIN_ID,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		CASE
+		WHEN e.cnum IS NOT NULL THEN 0
+		ELSE 1
+		END status,t.RES_ORDER
+		FROM
+		sys_resource t
+		LEFT JOIN (SELECT
+		COUNT(1) cnum, t2.LOGIN_ID, c.RES_ID
+		FROM
+		sys_perm_res c, sys_role_login t2
+		WHERE 1=1
+		<if test="loginId!=null and loginId!=''">
+			and t2.LOGIN_ID =#{loginId}
+		</if>
+		AND c.ROLE_ID = t2.ROLE_ID
+		AND SYSDATE() BETWEEN c.PERM_TIME_BEGIN AND c.PERM_TIME_END
+		GROUP BY t2.LOGIN_ID , c.RES_ID) e ON e.res_id = t.res_id
+		WHERE 1=1
+		<if test="resType!=null and resType!=''">
+			and t.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and t.PARENT_ID in
+			(select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		) info
+		<where>
+			<if test="status!=null and status!=''">
+				and info.status=#{status}
+			</if>
+		</where>
+		ORDER BY info.status , info.PARENT_ID,info.RES_ORDER
+	</select>
+
+	<select id="selectAll" resultType="ResourceInfoTreeDto">
+		select RES_ID,RES_NAME,PARENT_ID,'0' flag from sys_resource /*LT*/ t
+		 where RES_TYPE_top=#{resTypeTop}
+		  and RES_TYPE=#{resType} and res_status='0'
+	</select>
+
+	<select id="selectAllMenu" resultType="ResourceInfoTreeDto">
+		SELECT DISTINCT a.PARENT_ID res_id,
+       (select RES_NAME from sys_resource t where t.res_id=a.PARENT_ID) RES_NAME,'0' flag
+        FROM sys_resource /*LT*/ a WHERE
+	a.RES_TYPE_top =#{resTypeTop}
+    AND a.RES_TYPE = #{resType}
+    AND a.PARENT_ID != '-1'
+    AND a.PARENT_ID != #{resType}
+	</select>
+
+	<select id="selectAllowRoleAllMenu" resultType="PermAllowByRoleInfoDto">
+		select distinct d.parent_id res_id,
+		(select RES_NAME from sys_resource t where t.res_id=d.PARENT_ID) RES_NAME,
+		'0' flag
+		from (
+
+		SELECT
+		b.res_id,
+		b.res_name,
+		b.RES_REMARK,
+		b.RES_TYPE,
+		b.PARENT_ID,
+		b.role_id,
+		b.role_name,
+		b.RES_TYPE_TOP,
+		FN_GET_DICTVALUE('10017', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		(case when c.REC_UPD_TIME is null then c.REC_GEN_TIME else c.REC_UPD_TIME end) operate_time
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		t.RES_TYPE_TOP
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id =#{roleId}
+		</if>
+		) b
+		left JOIN sys_allow_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="resType!=null and resType!=''">
+			and b.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and b.PARENT_ID in (select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}</if>)
+		d
+		WHERE
+		d.RES_TYPE_top =#{resTypeTop}
+		AND d.RES_TYPE =#{resType}
+		AND d.PARENT_ID != '-1'
+		AND d.PARENT_ID !=#{resType}
+	</select>
+
+	<select id="selectPermRoleAllMenu" resultType="PermSetByRoleInfoDto">
+		select distinct d.parent_id res_id,
+		(select RES_NAME from sys_resource t where t.res_id=d.PARENT_ID) RES_NAME,
+		'0' flag
+		from (
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.RES_REMARK,
+		b.RES_TYPE,
+		b.PARENT_ID,
+		b.res_id,
+		b.res_name,
+		b.RES_TYPE_TOP,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) perm_date,
+		c.RULE,
+		FN_GET_DICTVALUE('10018', (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end))
+		status,
+		(case when c.REC_UPD_TIME is null then c.REC_GEN_TIME else c.REC_UPD_TIME end)operate_time
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		t.RES_TYPE_TOP
+		FROM
+		sys_resource t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id =#{roleId}
+		</if>
+		) b
+		left JOIN sys_perm_res c ON b.res_id = c.res_id and b.role_id=c.role_id
+		where 1=1
+		<if test="resType!=null and resType!=''">
+			and b.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and b.PARENT_ID in (select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.RES_ID is not null and c.role_id is not null then '0' else '1' end) =#{status}</if>)
+		d
+		WHERE
+		d.RES_TYPE_top =#{resTypeTop}
+		AND d.RES_TYPE =#{resType}
+		AND d.PARENT_ID != '-1'
+		AND d.PARENT_ID !=#{resType}
+	</select>
+
+	<delete id="delResListByRole">
+        DELETE
+  FROM
+	sys_allow_res
+WHERE
+	role_id = (
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					distinct t.role_id
+				FROM
+					sys_allow_res t
+				INNER JOIN sys_resource a ON a.res_id = t.res_id
+				WHERE
+					t.role_id = #{roleId}
+				AND a.res_type = #{resType}
+			) AS temp
+	)
+	and res_id IN (
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					t.res_id
+				FROM
+					sys_allow_res t
+				INNER JOIN sys_resource a ON a.res_id = t.res_id
+				WHERE
+					t.role_id = #{roleId}
+				AND a.res_type = #{resType}
+			) AS temp
+	)
+
+    </delete>
+
+	<delete id="delPermResListByRole">
+ DELETE
+  FROM
+	sys_perm_res
+WHERE
+	role_id = (
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+				distinct t.role_id
+				FROM
+					sys_perm_res t
+				INNER JOIN sys_resource a ON a.res_id = t.res_id
+				WHERE
+					t.role_id = #{roleId}
+				AND a.res_type = #{resType}
+			) AS temp
+	)
+	and res_id IN (
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					t.res_id
+				FROM
+					sys_perm_res t
+				INNER JOIN sys_resource a ON a.res_id = t.res_id
+				WHERE
+					t.role_id = #{roleId}
+				AND a.res_type = #{resType}
+			) AS temp
+	)
+    </delete>
+
+	<select id="selectResourceSetAllMenu" resultType="PermSetByLoginResourceInfoDto">
+		select distinct d.parent_id res_id,
+		(select RES_NAME from sys_resource t where t.res_id=d.PARENT_ID) RES_NAME,
+		'0' flag
+		from (
+
+		SELECT
+		info.res_id,
+		info.res_name,
+		info.res_remark,
+		info.PARENT_ID,
+		'0' flag,
+		info.RES_TYPE_TOP,
+		info.RES_TYPE,
+		FN_GET_DICTVALUE('10018', status) status
+		FROM
+		(SELECT
+		e.LOGIN_ID,
+		t.RES_REMARK,
+		t.res_id,
+		t.res_name,
+		t.RES_TYPE,
+		t.PARENT_ID,
+		t.RES_TYPE_TOP,
+		CASE
+		WHEN e.cnum IS NOT NULL THEN 0
+		ELSE 1
+		END status,t.RES_ORDER
+		FROM
+		sys_resource t
+		LEFT JOIN (SELECT
+		COUNT(1) cnum, t2.LOGIN_ID, c.RES_ID
+		FROM
+		sys_perm_res c, sys_role_login t2
+		WHERE 1=1
+		<if test="loginId!=null and loginId!=''">
+			and t2.LOGIN_ID =#{loginId}
+		</if>
+		AND c.ROLE_ID = t2.ROLE_ID
+		AND SYSDATE() BETWEEN c.PERM_TIME_BEGIN AND c.PERM_TIME_END
+		GROUP BY t2.LOGIN_ID , c.RES_ID) e ON e.res_id = t.res_id
+		WHERE 1=1
+		<if test="resType!=null and resType!=''">
+			and t.RES_TYPE=#{resType}
+		</if>
+		<if test="parentRes!=null and parentRes!=''">
+			and t.PARENT_ID in
+			(select res_id From sys_resource where FIND_IN_SET(res_id, getResChildLst(#{parentRes})))
+		</if>
+		) info
+		<where>
+			<if test="status!=null and status!=''">
+				and info.status=#{status}
+			</if>
+		</where>
+		ORDER BY info.status , info.PARENT_ID,info.RES_ORDER)d
+		WHERE
+		d.RES_TYPE_top =#{resTypeTop}
+		AND d.RES_TYPE =#{resType}
+		AND d.PARENT_ID != '-1'
+		AND d.PARENT_ID !=#{resType}
+	</select>
+
+</mapper>

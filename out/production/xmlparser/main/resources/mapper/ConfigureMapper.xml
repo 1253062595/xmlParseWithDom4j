@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.ConfigureMapper">
+    <select id="queryDictList" resultType="DictEntryInfoDto">
+        select t.dict_entry,t.entry_name dict_name from dictentry t where 1=1 and t.dict_status='0'
+        <if test="dictName!=null and dictName!=''">
+            and (t.entry_name like "%"#{dictName}"%")
+        </if>
+    </select>
+
+    <select id="queryDictKeysByType" resultType="DictKeysInfoDto">
+   SELECT
+	t.dict_entry,
+	t.subentry dict_key,
+	t.dict_prompt dict_value,
+	t.access_level dict_order,
+	FN_GET_DICTVALUE ( '10019', t.dict_status ) dict_status
+    FROM
+	sysdictionary t where t.dict_entry=#{dictEntry}
+	</select>
+
+    <select id="selectDictInfo" resultType="DictInfoReqDto">
+		select t.dict_entry,t.entry_name dict_name from dictentry t where t.dict_entry=#{dictEntry}
+	</select>
+
+    <select id="selectDictInfoDetial" resultType="DictDetailInfoDto">
+   SELECT
+	t.subentry dict_key,
+	t.dict_prompt dict_value,
+	t.access_level dict_order,
+	t.dict_status
+    FROM
+	sysdictionary t where t.dict_entry=#{dictEntry}
+	</select>
+
+    <insert id="insertDictentry" parameterType="DictInfoReqDto">
+        <selectKey keyProperty="dictEntry" order="BEFORE" resultType="java.lang.String">
+            select nextval('dic_seq') from DUAL
+        </selectKey>
+        INSERT INTO dictentry (dict_entry,add_enable,entry_name,access_level,dict_type)
+        VALUES(#{dictEntry},'0',#{dictName},'1','0')
+    </insert>
+
+    <insert id="insertSysdictinfo" parameterType="java.util.List">
+        insert into sysdictionary(
+        dict_entry,
+        dict_type,
+        subentry,
+        access_level,
+        dict_prompt,
+        dict_status
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{dictEntry},
+            '0',
+            #{item.dictKey},
+            #{item.dictOrder},
+            #{item.dictValue},
+            #{item.dictStatus}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateSysdictionaryStatus">
+		update  sysdictionary set dict_status='1'
+		where dict_entry = #{dictEntry}
+	</update>
+
+    <update id="updateDictentry">
+		update  dictentry set entry_name=#{dictName}
+		where dict_entry = #{dictEntry}
+	</update>
+
+    <delete id="delSysdictionary">
+        delete from sysdictionary where dict_entry = #{dictEntry}
+    </delete>
+
+    <select id="selectDictName" resultType="int">
+    select count(*) from dictentry where entry_name=#{dictName} and dict_entry!=#{dictEntry}
+    </select>
+
+    <select id="selectAddDictName" resultType="int">
+    select count(*) from dictentry where entry_name=#{dictName}
+    </select>
+
+    <update id="updateDictentryStatus">
+		update  dictentry set dict_status='1'
+		where dict_entry = #{dictEntry}
+	</update>
+
+    <insert id="addConfigSet">
+    insert into sys_config(CONFIG_CODE,CONFIG_NAME,CONFIG_TYPE,DATA_TYPE,
+    INT_CONFIG,STR_CONFIG,CONFIG_STATUS
+    ,CONFIG_REMARK,rec_gen_time)
+    VALUES(#{configCode},#{configName},#{configType},#{dataType},
+     case when #{dataType}='0' then #{dataValue} else null end ,
+     case when #{dataType}='1' then #{dataValue} when #{dataType}='2' then #{dataValue} else null end ,
+     '0', #{configRemark} ,sysdate())
+	</insert>
+
+    <select id="selectConfigSetName" resultType="int">
+    select count(1) from sys_config where config_code=#{configCode} or config_name=#{configName}
+    </select>
+
+    <select id="queryConfigList" resultType="ConfigListInfoDto">
+        SELECT
+        t.CONFIG_CODE,
+        t.CONFIG_NAME,
+        FN_GET_DICTVALUE ( '10024', t.config_type ) config_type,
+        FN_GET_DICTVALUE ('10023', t.data_type) data_type,
+        FN_GET_DICTVALUE ( '10019', t.config_status ) config_status,
+		CASE
+		WHEN t.data_type = '0' THEN 0 + CONVERT( t.INT_CONFIG , CHAR)
+		ELSE t.STR_CONFIG
+		END data_value,
+        t.CONFIG_REMARK
+        FROM
+        sys_config t
+        where 1=1
+        <if test="configType!=null and configType!=''">
+            and t.config_type =#{configType}
+        </if>
+        <if test="configName!=null and configName!=''">
+            and t.CONFIG_NAME like "%"#{configName}"%"
+        </if>
+        ORDER BY t.CONFIG_name
+    </select>
+
+    <select id="queryConfigDetail" resultType="ConfigDetailReqDto">
+	  SELECT
+    t.CONFIG_CODE,
+    t.CONFIG_NAME,
+    t.config_type ,
+    t.data_type,
+	CASE
+	WHEN t.data_type = '0' THEN 0 + CONVERT( t.INT_CONFIG , CHAR)
+	ELSE t.STR_CONFIG
+	END data_value,
+	t.CONFIG_REMARK
+   FROM
+	sys_config t where t.CONFIG_CODE=#{configCode}
+	</select>
+
+    <update id="delConfigSet">
+		update  sys_config set config_status='1'
+		where CONFIG_CODE=#{configCode}
+	</update>
+
+    <select id="selectEditConfigSetName" resultType="int">
+    select count(1) from sys_config where config_name=#{configName} and config_code!=#{configCode}
+    </select>
+
+    <update id="editConfigSet">
+		update  sys_config set config_name=#{configName},config_type=#{configType},data_type=#{dataType},
+		config_remark=#{configRemark},
+		int_config=(case #{dataType} when '0' then #{dataValue} end),
+		str_config=(case #{dataType} when '1' then #{dataValue}
+		                             when '2' then #{dataValue} end)
+		,rec_upd_time=sysdate()
+		where config_code=#{configCode}
+	</update>
+</mapper>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.MeMapper">
+
+
+	<!--  根据用户编号、名片类型查询名片信息 -->
+	<select id="queryBusinessCardInfo" resultType="BusinesscardInfo">
+        SELECT t.mobile_tel as mobileTel,
+               t.wechat as wechat,
+               t.qq as qq,
+               t.card_type as cardType,
+               b.user_name as userName,
+               b.stock_lce as securityCertNum,
+               b.fund_lce as fundCertNum,
+               trim(case
+                 when t.card_type = 'a' then
+                  t.user_id
+                 when t.card_type = 'b' then
+                  c.short_url
+                 when t.card_type = 'c' then
+                  c.friend_id
+               end) as referNum
+          FROM businesscard t
+          left join userinfo b
+            on (t.user_id = b.user_id)
+          left join accountrelation c
+            on (t.user_id = c.user_id)
+         WHERE t.user_id = #{userId}
+           and t.card_type = #{cardType}
+    </select>
+
+	<!--  修改名片信息 -->
+	<update id="updateBusinssCardInfo">
+        update businesscard t
+        set t.rec_upd_time = SYSDATE ,
+            t.mobile_tel = nvl(#{mobileTel},' '),
+            t.wechat = nvl(#{wechat},' '),
+            t.qq = nvl(#{qq},' ')
+        where t.user_id = #{userId}
+          and t.card_type = #{cardType}
+    </update>
+
+
+</mapper>

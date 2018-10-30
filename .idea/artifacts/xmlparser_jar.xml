@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="xmlparser:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/xmlparser_jar</output-path>
+    <root id="root">
+      <element id="archive" name="xmlparser.jar">
+        <element id="module-output" name="xmlparser" />
+      </element>
+      <element id="file-copy" path="$USER_HOME$/tools/jars/dom4j-2.1.1.jar" />
+    </root>
+  </artifact>
+</component>

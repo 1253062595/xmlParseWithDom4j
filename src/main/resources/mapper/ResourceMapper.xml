@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.ResourceMapper">
+	<select id="QueryResInfoByLoginId" resultType="MenuTreeDto">
+		SELECT distinct
+			t2.RES_ID 'menuId',
+			t2.RES_URL 'url',
+			t2.PARENT_ID,
+			t2.RES_ORDER,
+			t2.RES_ICON 'icon',
+			t2.RES_NAME 'title',
+			t2.RES_TIP
+		FROM
+			sys_perm_res t1
+				LEFT JOIN
+			sys_resource t2 ON t1.RES_ID = t2.RES_ID
+				LEFT JOIN
+			sys_role_login t3 ON t1.ROLE_ID = t3.ROLE_ID
+		WHERE
+			t3.LOGIN_ID = #{loginId} AND t2.RES_TYPE =#{resType}
+				AND t2.RES_STATUS = '0'
+				AND SYSDATE() BETWEEN t1.PERM_TIME_BEGIN AND t1.PERM_TIME_END
+			order by t2.res_order
+	</select>
+	<select id="QueryResInfoByLoginId1" resultType="ResourceInfoDto">
+		SELECT
+			t2.RES_ID,
+			t2.RES_URL,
+			t2.PARENT_ID,
+			t2.RES_ORDER,
+			t2.RES_ICON,
+			t2.RES_NAME,
+			t2.RES_TIP
+		FROM
+			sys_perm_res t1
+				LEFT JOIN
+			sys_resource t2 ON t1.RES_ID = t2.RES_ID
+				LEFT JOIN
+			sys_role_login t3 ON t1.ROLE_ID = t3.ROLE_ID
+		WHERE
+			t3.LOGIN_ID = #{loginId} AND t2.RES_TYPE =#{resType}
+				AND t2.RES_STATUS = '1'
+				AND SYSDATE() BETWEEN t1.PERM_TIME_BEGIN AND t1.PERM_TIME_END
+	</select>
+
+	<select id="queryResourceType" resultType="ResourceTypeTreeDto">
+  select t.RES_TYPE_TOP,t.RES_NAME type_name,t.res_id type_id ,t.res_url relate_type,'0'flag from sys_resource t where t.PARENT_ID='-1' and res_status='0'
+    </select>
+
+	<select id="queryResourceTypeDetail" resultType="ResourceTypeInfoDto">
+  select t.RES_TYPE_TOP RES_TYPE,t.res_id,t.RES_NAME,t.RES_REMARK,t.res_url relate_type from sys_resource t where t.res_id=#{resId}
+    </select>
+
+	<insert id="addResourceTypeMenu" parameterType="ResourceTypeInfoDto">
+		<selectKey keyProperty="resId" order="BEFORE" resultType="java.lang.String">
+			select nextval('menu_seq') from DUAL
+		</selectKey>
+		INSERT INTO sys_resource (res_id,res_type,res_type_top,res_name,res_remark,parent_id,res_status,REC_GEN_TIME)
+		VALUES(#{resId},#{resId},#{resType},#{resName},#{resRemark},'-1' ,'1',sysdate())
+	</insert>
+
+	<insert id="addResourceTypeFunction" parameterType="ResourceTypeInfoDto">
+		<selectKey keyProperty="resId" order="BEFORE" resultType="java.lang.String">
+			select nextval('function_seq') from DUAL
+		</selectKey>
+		INSERT INTO sys_resource
+		(res_id,res_type,res_type_top,res_name,res_remark,parent_id,res_status,res_url,REC_GEN_TIME)
+		VALUES(#{resId},#{resId},#{resType},#{resName},#{resRemark},'-1' ,'1',#{relateType},sysdate())
+	</insert>
+
+	<insert id="addResourceTypeInterface" parameterType="ResourceTypeInfoDto">
+		<selectKey keyProperty="resId" order="BEFORE" resultType="java.lang.String">
+			select nextval('interface_seq') from DUAL
+		</selectKey>
+		INSERT INTO sys_resource (res_id,res_type,res_type_top,res_name,res_remark,parent_id,res_status,REC_GEN_TIME)
+		VALUES(#{resId},#{resId},#{resType},#{resName},#{resRemark},'-1' ,'1',sysdate())
+	</insert>
+
+	<update id="updateResourceType">
+		update  sys_resource set res_name=#{resName},res_remark=#{resRemark},rec_upd_time=sysdate()
+		where res_id = #{resId}
+	</update>
+
+	<select id="selectSysResource" resultType="int">
+  select count(*) from sys_resource where PARENT_ID=#{resId}
+    </select>
+
+	<select id="selectSyspermRes" resultType="int">
+  select count(*) from sys_perm_res where RES_ID=#{resId}
+    </select>
+
+	<delete id="delSysResource">
+       delete from sys_resource where res_id=#{resId}
+    </delete>
+
+	<delete id="delSysAllowRes">
+       delete  from sys_allow_res where RES_ID=#{resId}
+    </delete>
+
+	<select id="queryResourceDetail" resultType="ResourceInfoDto">
+  select PARENT_ID,RES_NAME,RES_URL,RES_ICON,RES_TIP,RES_STATUS,RES_REMARK,RES_TYPE,RES_ID,RES_OUT from sys_resource where res_id=#{resId}
+    </select>
+
+	<insert id="addResourceInfo" parameterType="ResourceInfoDto">
+		<selectKey keyProperty="resId" order="BEFORE" resultType="java.lang.String">
+			select nextval(CONCAT(#{resType},'_seq')) from DUAL
+		</selectKey>
+		INSERT INTO sys_resource
+		(res_id,parent_id,res_name,res_url,res_icon,res_tip,res_status,res_remark,res_type,res_type_top,res_order,res_out,REC_GEN_TIME)
+		VALUES(#{resId},#{parentId},#{resName},#{resUrl},#{resIcon},#{resTip},#{resStatus},#{resRemark},#{resType},#{resTypeTop},'1',#{resOut},sysdate())
+	</insert>
+
+	<insert id="insertSequence">
+		INSERT INTO sys_sequence (name,current_value,increment)
+		VALUES(CONCAT(#{resId},'_seq'),#{resId},'1')
+	</insert>
+
+	<update id="updateResourceInfo">
+		update  sys_resource set parent_id=#{parentId},res_name=#{resName},res_url=#{resUrl},res_icon=#{resIcon},res_tip=#{resTip},res_remark=#{resRemark},
+		res_status=#{resStatus},res_out=#{resOut},rec_upd_time=sysdate()
+		where res_id = #{resId}
+	</update>
+
+	<delete id="delSequence">
+       delete from sys_sequence where name=CONCAT(#{resId},'_seq')
+    </delete>
+
+	<select id="queryResourceParentMenu" resultType="ResourceInfoSimpleDto">
+    select RES_ID,RES_NAME from sys_resource where RES_TYPE_top='0' and PARENT_ID='-1'
+    </select>
+
+	<select id="queryResourceRelateMenu" resultType="ResourceInfoTreeDto">
+    select RES_ID,RES_NAME,PARENT_ID from sys_resource where RES_TYPE=#{relateType} and RES_ID!=#{relateType} and res_status='0'
+    </select>
+
+	<update id="updateSysResourceList">
+		update  sys_resource set res_order=#{resOrder},parent_id=#{parentId}
+		where res_id = #{resId}
+	</update>
+
+
+	<select id="queryButtonSetInfoByMenuId" resultType="ButtonSetDetailDto">
+		SELECT
+			t.button_id,
+			CASE
+				WHEN t2.res_type = t2.parent_id THEN '0'
+				ELSE '1'
+			END flag
+		FROM
+			sys_menu_button_rel t
+				INNER JOIN
+			sys_resource t2 ON (t.button_id = t2.res_id
+				AND t2.res_type_top = 1
+				AND t2.res_type IN (SELECT
+					res_id
+				FROM
+					sys_resource tn
+				WHERE
+					tn.res_url = #{resType}))
+		WHERE
+			t.menu_id = #{menuId}
+		ORDER BY t.button_id
+	</select>
+	<delete id="deleteMenuButtonByMenuId">
+		delete from sys_menu_button_rel
+		where menu_id =#{menuId}
+	</delete>
+	<delete id="deleteMenuButtonByButtonId">
+		delete from sys_menu_button_rel
+		where button_id =#{buttonId}
+	</delete>
+	<insert id="insertMenuButton">
+		insert into
+		sys_menu_button_rel(menu_id,button_id )
+		values
+		<foreach collection="list" item="item" index="index" separator=",">
+			( #{item.menuId}, #{item.buttonId} )
+		</foreach>
+	</insert>
+	<delete id="deleteMenuButtonByIds">
+		delete from sys_menu_button_rel where
+		<foreach collection="list" index="index" item="dto" separator="or" >
+			( menu_id = #{dto.menuId} and button_id = #{dto.buttonId})
+		</foreach>
+	</delete>
+	<select id="queryPubButton" resultType="ButtonInfoDto">
+		SELECT
+			t1.res_id 'buttonId',t1.res_name 'buttonName'
+		FROM
+			sys_resource t1
+		WHERE
+			res_type_top = 1 AND  res_type IN (SELECT
+					res_id
+				FROM
+					sys_resource t2
+				WHERE
+					t2.res_url = #{resType})
+			  AND t1.parent_id = t1.res_type
+	</select>
+	<select id="queryCustomButtonByMenuId" resultType="ButtonInfoDto">
+		SELECT
+			t1.res_id 'buttonId',t1.res_name 'buttonName'
+		FROM
+			sys_resource t1
+		WHERE
+			res_type_top = 1
+			AND  res_type IN (SELECT
+					res_id
+				FROM
+					sys_resource t2
+				WHERE
+					t2.res_url = #{resType})
+			AND t1.parent_id = #{menuId}
+	</select>
+	<select id="queryResourceTreeInfo" resultType="ResourceTreeInfo">
+		SELECT
+			t1.res_id, t1.res_name, t1.parent_id
+		FROM
+			sys_resource t1
+		WHERE
+			res_type = #{resType}
+		<if test="parentRes!=null and parentRes!=''">
+				AND parent_id IN (SELECT
+					res_id
+				FROM
+					sys_resource
+				WHERE
+					FIND_IN_SET(res_id, GETRESCHILDLST(#{parentRes})))
+		</if>
+		ORDER BY t1.res_order
+	</select>
+	<select id="queryButtonSetList" resultType="ButtonSetInfoListDto">
+		SELECT
+			t1.menu_id,
+			t1.button_id,
+			CASE
+				WHEN t2.res_type = t2.parent_id THEN '0'
+				ELSE '1'
+			END flag,
+			t2.res_name 'buttonName'
+		FROM
+			sys_menu_button_rel t1
+				inner JOIN
+			sys_resource t2 ON t1.button_id = t2.res_id
+		WHERE
+			t2.res_type IN (SELECT
+					res_id
+				FROM
+					sys_resource t3
+				WHERE
+					t3.res_url = #{resType})
+	</select>
+	<insert id="insertPubButtonByMenuId">
+		insert into
+		sys_menu_button_rel(menu_id,button_id )
+			SELECT
+				#{resId}, res_id
+			FROM
+				sys_resource t1
+			WHERE
+				t1.RES_TYPE_TOP = '1'
+					AND t1.RES_TYPE = t1.PARENT_ID
+					AND t1.RES_TYPE IN (SELECT
+						res_id
+					FROM
+						sys_resource t3
+					WHERE
+						t3.res_url = #{resType})
+	</insert>
+</mapper>

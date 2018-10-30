@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.SysResourceMapper">
+	<select id="QueryAllResPermSet" resultType="ResourcePermSetDto">
+		SELECT
+			t2.res_id,t2.RES_URL, GROUP_CONCAT(t1.ROLE_ID) ROLE_IDS
+		FROM
+			sys_perm_res /*lt*/ t1
+				LEFT JOIN
+			sys_resource t2 ON t1.RES_ID = t2.RES_ID
+		WHERE
+			t2.res_type_top = '1'
+				AND t2.RES_STATUS = '1'
+			   	AND t2.res_url IS NOT NULL
+				AND SYSDATE() BETWEEN t1.PERM_TIME_BEGIN AND t1.PERM_TIME_END
+		GROUP BY t2.res_id,t2.RES_URL
+	</select>
+	<sql id="resPermSet">
+		SELECT
+		t1.res_id, t1.role_id ,t1.rule 'resRule'
+		FROM
+		sys_perm_res t1
+		WHERE
+		SYSDATE() BETWEEN t1.perm_time_begin AND t1.perm_time_end
+	</sql>
+	<select id="queryRoleResPermSet" resultType="ResRolePermSetDto">
+		<include refid="resPermSet" />
+		<if test="list!=null">
+			and t1.role_id IN
+			<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+				#{id}
+			</foreach>
+		</if>
+	</select>
+    <select id="queryLoginRoles" resultType="LoginRolesDto">
+        select s.LOGIN_ID loginId,GROUP_CONCAT(s.ROLE_ID) roleIds
+        from sys_role_login s where 1=1
+         GROUP BY s.LOGIN_ID
+    </select>
+
+    <select id="queryLoginRolesById" resultType="LoginRolesDto">
+        select s.LOGIN_ID loginId,GROUP_CONCAT(s.ROLE_ID) roleIds
+        from sys_role_login s where 1=1
+            and s.login_id = #{loginId}
+        GROUP BY s.LOGIN_ID
+    </select>
+</mapper>

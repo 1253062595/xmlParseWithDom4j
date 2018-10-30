@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.LoginMapper">
+	<select id="queryDictByType" resultType="DictInfoDto">
+	SELECT
+		subentry 'key', dict_prompt 'value'
+	FROM
+		DP_DATA.sysdictionary
+	WHERE
+		dict_entry = #{type} order by access_level
+	</select>
+	<select id="queryUserInfo" resultType="UserInfoResDto">
+		SELECT
+			info.user_name, info.user_id, info.mobile_tel, info.sex
+		FROM
+			sys_user /*LT*/ info
+		WHERE
+			info.user_id = #{userId}
+	</select>
+	<select id="queryUserLoginInfo" resultType="UserLoginInfoDto">
+		SELECT
+			t1.user_id,
+			t1.USER_NAME,
+			t1.status,
+			t2.login_id,
+			t2.LOGIN_STATUS,
+			t1.branch_no,
+			t1.group_no
+		FROM
+			sys_user t1
+				JOIN
+			sys_login t2 ON t1.USER_ID = t2.USER_ID
+		WHERE
+			t2.LOGIN_NAME = #{loginName}
+				AND t2.LOGIN_PASSWORD = #{password}
+	</select>
+	<select id="queryThirdLoginInfo" resultType="ThirdLoginInfoDto">
+		SELECT
+			t1.user_id, t1.auth_sign,t2.login_id
+		FROM
+			sys_user t1
+				JOIN
+			sys_login t2 ON t1.user_id = t2.user_id
+		WHERE
+			t2.login_id = #{loginId} AND t1.user_type = '1'
+			and t1.STATUS = '2'
+			and t2.LOGIN_STATUS = '0'
+	</select>
+</mapper>

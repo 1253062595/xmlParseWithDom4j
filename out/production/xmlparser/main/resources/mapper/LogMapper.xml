@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.LogMapper">
+    <select id="queryLogList" resultType="LogInfoDto">
+        SELECT
+        DATE_FORMAT(t.REC_GEN_TIME,'%Y-%m-%d %T')log_time,
+        t.LOGIN_NAME login,
+        concat(t.USER_NAME,concat('(',concat(t.USER_ID,')'))) user,
+        FN_GET_DICTVALUE('10020', t.LOG_TYPE) LOG_TYPE,
+        t.LOG_DETAIL
+        FROM
+        sys_log t
+        where 1=1
+        <if test="startTime!=null and startTime!='' ">
+            and DATE_FORMAT(t.REC_GEN_TIME,'%Y-%m-%d') &gt;=#{startTime}
+        </if>
+        <if test="endTime!=null and endTime!='' ">
+            and DATE_FORMAT(t.REC_GEN_TIME,'%Y-%m-%d') &lt;=#{endTime}
+        </if>
+        <if test="logType!=null and logType!=''">
+            and t.LOG_TYPE =#{logType}
+        </if>
+        <if test="user!=null and user!=''">
+            and (t.USER_NAME like "%"#{user}"%" or t.USER_ID=#{user})
+        </if>
+        <if test="login!=null and login!=''">
+            and (t.LOGIN_NAME like "%"#{login}"%" or t.LOGIN_ID=#{login})
+        </if>
+        <if test="keys!=null and keys!=''">
+            and (t.LOG_DETAIL like "%"#{keys}"%" )
+        </if>
+        ORDER BY t.REC_GEN_TIME desc
+    </select>
+    <insert id="addLog" parameterType="LogInfo">
+      insert into sys_log(id,login_id,login_name,user_id,user_name,log_type,log_detail,rec_gen_time)
+      values(nextval('log_seq'),#{loginId},#{loginName},#{userId},#{userName},#{logType},
+        #{logDetail},sysdate())
+    </insert>
+    <select id="queryUserInfoByLoginId" resultType="UserLoginInfo">
+        SELECT
+            t2.user_id, t2.user_name, t1.login_name
+        FROM
+            sys_login t1
+                LEFT JOIN
+            sys_user t2 ON t1.user_id = t2.user_id
+        WHERE
+            t1.login_id = #{loginId}
+    </select>
+
+    <select id="queryColumnList" resultType="string">
+		SELECT
+	t1.column_name
+    FROM
+	(
+		SELECT
+			column_name
+		FROM
+			information_schema. COLUMNS
+		WHERE
+			table_schema =#{schema}
+		AND table_name = #{tableName}) t1
+		INNER JOIN (
+			SELECT
+				column_name
+			FROM
+				information_schema. COLUMNS
+			WHERE
+				table_schema =#{schema}
+			AND table_name = #{hisTable}) t2 ON t1.column_name = t2.column_name
+
+	</select>
+
+    <insert id="insertHisList">
+          ${sql}
+    </insert>
+
+
+</mapper>

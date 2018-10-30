@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.DataPermissionMapper">
+	<select id="queryDataPermColTree" resultType="DataTreeDto">
+  select COL_TYPE type,COL_NAME data_name,ID data_id,'0' flag from sys_perm_col /*LT*/ t
+    </select>
+
+	<select id="queryDataPermRowTree" resultType="DataTreeDto">
+  select ROW_TYPE type,ROW_NAME data_name,ID data_id,'0' flag from sys_perm_row /*LT*/ t
+    </select>
+
+	<select id="dataPermCollist" resultType="DataAllowByDataInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.id data_id,
+		b.COL_NAME data_name,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10017', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.id,
+		t.COL_NAME
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+		<if test="dataId!=null and dataId!=''">
+			and t.id =#{dataId}
+		</if>
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<select id="dataPermRowlist" resultType="DataAllowByDataInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.id data_id,
+		b.ROW_NAME data_name,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10017', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.id,
+		t.ROW_NAME
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+		<if test="dataId!=null and dataId!=''">
+			and t.id =#{dataId}
+		</if>
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<insert id="addDataPermAllowSetByData">
+		insert into
+		sys_allow_data(data_id,data_type,allow_time_begin,allow_time_end,rec_gen_time,role_id)
+		<foreach collection="roleIds" separator="union all" index="index" item="item">
+			select #{re.dataId},#{re.dataType},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_allow_data where data_id=#{re.dataId} and role_id=#{item} and
+			data_type=#{re.dataType})
+		</foreach>
+	</insert>
+
+	<delete id="delDataPermAllowByRoleIds">
+		delete from sys_allow_data where data_id=#{re.dataId} and data_type=#{re.dataType} and role_id in
+		<foreach collection="roleIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="dataPermColRolelist" resultType="DataPermByRoleInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.COL_REMARK data_remark,
+		b.id data_id,
+		b.COL_NAME data_name,
+		b.col_type busi_type,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10017', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.COL_REMARK,
+		t.id,
+		t.COL_NAME,
+		FN_GET_DICTVALUE('10014', t.col_type) col_type
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id=#{roleId}
+		</if>
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="dataName!=null and dataName!=''">
+			and (b.COL_NAME like "%"#{dataName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.col_type
+	</select>
+
+	<select id="dataPermRowRolelist" resultType="DataPermByRoleInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROW_REMARK data_remark,
+		b.id data_id,
+		b.ROW_NAME data_name,
+		b.row_type busi_type,
+		concat(DATE_FORMAT(c.ALLOW_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.ALLOW_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10017', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.ROW_REMARK,
+		t.id,
+		t.ROW_NAME,
+		FN_GET_DICTVALUE('10012', t.row_type) row_type
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id=#{roleId}
+		</if>
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="dataName!=null and dataName!=''">
+			and (b.ROW_NAME like "%"#{dataName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.row_type
+	</select>
+
+	<insert id="addDataPermAllowSetByRole">
+		insert into
+		sys_allow_data(role_id,data_type,allow_time_begin,allow_time_end,rec_gen_time,data_id)
+		<foreach collection="dataIds" separator="union all" index="index" item="item">
+			select #{re.roleId},#{re.dataType},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_allow_data where role_id=#{re.roleId} and data_id=#{item} and
+			data_type=#{re.dataType})
+		</foreach>
+	</insert>
+
+	<delete id="delDataPermAllowByDataIds">
+		delete from sys_allow_data where role_id=#{re.roleId} and data_type=#{re.dataType} and data_id in
+		<foreach collection="dataIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="queryDataPermColAllowById" resultType="DataPermAllowByIdInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.id data_id,
+		b.COL_NAME data_name,
+        c.ALLOW_TIME_BEGIN date_begin,
+        c.ALLOW_TIME_END date_end,
+		(case when c.data_id is not null and c.role_id is not null then '0' else '1'  end) allow_status,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.id,
+		t.COL_NAME
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+			and t.id =#{dataId} and a.ROLE_ID=#{roleId}
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+        left join sys_role d on c.ROLE_ID=d.ROLE_ID
+	</select>
+
+	<select id="queryDataPermRowAllowById" resultType="DataPermAllowByIdInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.id data_id,
+		b.ROW_NAME data_name,
+    c.ALLOW_TIME_BEGIN date_begin,
+    c.ALLOW_TIME_END date_end,
+		(case when c.data_id is not null and c.role_id is not null then '0' else '1'  end) allow_status,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.id,
+		t.ROW_NAME
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+			and t.id =#{dataId} and a.ROLE_ID=#{roleId}
+		) b
+		left JOIN sys_allow_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+        left join sys_role d on c.ROLE_ID=d.ROLE_ID
+	</select>
+
+	<select id="selectCountPermAllowById" resultType="int">
+		select count(*)
+		from sys_allow_data t  where t.data_id=#{dataId} and t.role_id=#{roleId} and t.data_type=#{dataType}
+	</select>
+
+	<update id="updateDataPermAllowById">
+		update  sys_allow_data set allow_time_begin=#{dateBegin},allow_time_end=#{dateEnd},
+		rec_upd_time=sysdate()
+		where role_id = #{roleId} and data_id=#{dataId} and data_type=#{dataType}
+	</update>
+
+	<insert id="insertDataPermAllowById">
+		INSERT INTO sys_allow_data (role_id,data_id,data_type,allow_time_begin,allow_time_end,REC_GEN_TIME)
+		VALUES(#{roleId},#{dataId},#{dataType},#{dateBegin},#{dateEnd},sysdate() )
+	</insert>
+
+	<delete id="delDataPermAllowById">
+        delete from sys_allow_data where role_id = #{roleId} and data_id=#{dataId} and data_type=#{dataType}
+    </delete>
+
+	<select id="dataPermSetCollist" resultType="DataByDataInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.id data_id,
+		b.COL_NAME data_name,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10018', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.id,
+		t.COL_NAME
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+		<if test="dataId!=null and dataId!=''">
+			and t.id =#{dataId}
+		</if>
+
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<select id="dataPermSetRowlist" resultType="DataByDataInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROLE_REMARK,
+		b.id data_id,
+		b.ROW_NAME data_name,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) allow_date,
+		FN_GET_DICTVALUE('10018', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		allow_status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		a.ROLE_REMARK,
+		t.id,
+		t.ROW_NAME
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+		<if test="dataId!=null and dataId!=''">
+			and t.id =#{dataId}
+		</if>
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (b.role_name like "%"#{roleName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.role_id
+	</select>
+
+	<insert id="addDataPermSetByData">
+		insert into
+		sys_perm_data(data_id,data_type,perm_time_begin,perm_time_end,rec_gen_time,role_id)
+		<foreach collection="roleIds" separator="union all" index="index" item="item">
+			select #{re.dataId},#{re.dataType},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_perm_data where data_id=#{re.dataId} and role_id=#{item} and
+			data_type=#{re.dataType})
+		</foreach>
+	</insert>
+
+	<delete id="delDataPermSetByRoleIds">
+		delete from sys_perm_data where data_id=#{re.dataId} and data_type=#{re.dataType} and role_id in
+		<foreach collection="roleIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="dataPermSetColRolelist" resultType="PermByRoleInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.COL_REMARK data_remark,
+		b.id data_id,
+		b.COL_NAME data_name,
+		b.col_type busi_type,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) perm_date,
+		FN_GET_DICTVALUE('10018', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.COL_REMARK,
+		t.id,
+		t.COL_NAME,
+		FN_GET_DICTVALUE('10014', t.col_type) col_type
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id=#{roleId}
+		</if>
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="dataName!=null and dataName!=''">
+			and (b.COL_NAME like "%"#{dataName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.col_type
+	</select>
+
+	<select id="dataPermSetRowRolelist" resultType="PermByRoleInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.ROW_REMARK data_remark,
+		b.id data_id,
+		b.ROW_NAME data_name,
+		b.row_type busi_type,
+		concat(DATE_FORMAT(c.PERM_TIME_BEGIN,'%Y%m%d') ,'~',DATE_FORMAT(c.PERM_TIME_END,'%Y%m%d')) perm_date,
+		FN_GET_DICTVALUE('10018', (case when c.data_id is not null and c.role_id is not null then '0' else '1' end))
+		status,
+		DATE_FORMAT((
+		CASE
+		WHEN c.REC_UPD_TIME IS NULL THEN
+		c.REC_GEN_TIME
+		ELSE
+		c.REC_UPD_TIME
+		END
+		),'%Y-%m-%d %T') operate_time,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.ROW_REMARK,
+		t.id,
+		t.ROW_NAME,
+		FN_GET_DICTVALUE('10012', t.row_type) row_type
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+		<if test="roleId!=null and roleId!=''">
+			and a.role_id=#{roleId}
+		</if>
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+		where 1=1
+		<if test="dataName!=null and dataName!=''">
+			and (b.ROW_NAME like "%"#{dataName}"%")
+		</if>
+		<if test="status!=null and status!=''">
+			and (case when c.data_id is not null and c.role_id is not null then '0' else '1' end) =#{status}
+		</if>
+		order by (case when c.data_id is not null and c.role_id is not null then '0' else '1' end),b.row_type
+	</select>
+
+	<insert id="addDataPermSetByRole">
+		insert into
+		sys_perm_data(role_id,data_type,perm_time_begin,perm_time_end,rec_gen_time,data_id)
+		<foreach collection="dataIds" separator="union all" index="index" item="item">
+			select #{re.roleId},#{re.dataType},#{re.dateBegin},#{re.dateEnd},sysdate(),#{item}
+			from dual where not exists(select 1 from sys_perm_data where role_id=#{re.roleId} and data_id=#{item} and
+			data_type=#{re.dataType})
+		</foreach>
+	</insert>
+
+	<delete id="delDataPermSetByDataIds">
+		delete from sys_perm_data where role_id=#{re.roleId} and data_type=#{re.dataType} and data_id in
+		<foreach collection="dataIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="queryDataPermColById" resultType="DataPermByIdReqInfoDto">
+       SELECT
+		b.role_id,
+		b.role_name,
+		b.id data_id,
+		b.COL_NAME data_name,
+       c.PERM_TIME_BEGIN date_begin,
+        c.PERM_TIME_END date_end,
+		(case when c.data_id is not null and c.role_id is not null then '0' else '1'  end) allow_status,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.id,
+		t.COL_NAME
+		FROM
+		sys_perm_col t
+		JOIN sys_role a
+		where 1=1
+			and t.id =#{dataId} and a.ROLE_ID=#{roleId}
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+left join sys_role d on c.ROLE_ID=d.ROLE_ID
+	</select>
+
+	<select id="queryDataPermRowById" resultType="DataPermByIdReqInfoDto">
+		SELECT
+		b.role_id,
+		b.role_name,
+		b.id data_id,
+		b.ROW_NAME data_name,
+    c.PERM_TIME_BEGIN date_begin,
+    c.PERM_TIME_END date_end,
+		(case when c.data_id is not null and c.role_id is not null then '0' else '1'  end) allow_status,
+		c.DATA_TYPE
+		FROM
+		(
+		SELECT
+		a.role_id,
+		a.role_name,
+		t.id,
+		t.ROW_NAME
+		FROM
+		sys_perm_row t
+		JOIN sys_role a
+		where 1=1
+		and t.id =#{dataId} and a.ROLE_ID=#{roleId}
+		) b
+		left JOIN sys_perm_data c ON b.id = c.data_id and b.role_id=c.role_id and c.DATA_TYPE=#{dataType}
+left join sys_role d on c.ROLE_ID=d.ROLE_ID
+	</select>
+
+	<select id="selectCountDataPermAllowById" resultType="int">
+		select count(*)
+		from sys_perm_data t  where t.data_id=#{dataId} and t.role_id=#{roleId} and t.data_type=#{dataType}
+	</select>
+
+	<update id="updateDataPermById">
+		update  sys_perm_data set perm_time_begin=#{dateBegin},perm_time_end=#{dateEnd},
+		rec_upd_time=sysdate()
+		where role_id = #{roleId} and data_id=#{dataId} and data_type=#{dataType}
+	</update>
+
+	<insert id="insertDataPermById">
+		INSERT INTO sys_perm_data (role_id,data_id,data_type,perm_time_begin,perm_time_end,REC_GEN_TIME)
+		VALUES(#{roleId},#{dataId},#{dataType},#{dateBegin},#{dateEnd},sysdate() )
+	</insert>
+
+	<delete id="delDataPermById">
+        delete from sys_perm_data where role_id = #{roleId} and data_id=#{dataId} and data_type=#{dataType}
+    </delete>
+
+	<select id="queryDataPermSetColList" resultType="DataSetInfoDto">
+		SELECT
+		info2.LOGIN_ID,
+		info2.COL_REMARK data_remark,
+		info2.id data_id,
+		info2.COL_NAME data_name,
+		info2.COL_TYPE BUSI_TYPE_ID,
+		FN_GET_DICTVALUE('10014', info2.COL_TYPE) busi_type,
+		FN_GET_DICTVALUE('10018', info2.flag) allow_status
+		FROM
+		(SELECT
+		info1.*,
+		b.*,
+		CASE
+		WHEN b.cnum IS NOT NULL THEN 0
+		ELSE 1
+		END flag
+		FROM
+		(SELECT
+		t.COL_REMARK, t.id, t.COL_NAME, t.COL_TYPE
+		FROM
+		sys_perm_col t) info1
+		LEFT JOIN (SELECT DISTINCT
+		COUNT(1) cnum, t2.LOGIN_ID, t1.data_id
+		FROM
+		sys_perm_data t1, sys_role_login t2
+		WHERE
+		t1.DATA_TYPE = #{dataType}
+		<if test="loginId!=null and loginId!=''">
+			and t2.LOGIN_ID=#{loginId}
+		</if>
+		AND t1.ROLE_ID = t2.ROLE_ID
+		AND SYSDATE() BETWEEN t1.PERM_TIME_BEGIN AND t1.PERM_TIME_END
+		GROUP BY t2.LOGIN_ID , t1.data_id) b ON info1.id = b.data_id) info2
+		<where>
+			<if test="status!=null and status!=''">
+				and info2.flag =#{status}
+			</if>
+		</where>
+		ORDER BY info2.flag , info2.col_type
+	</select>
+
+	<select id="queryDataPermSetRowList" resultType="DataSetInfoDto">
+		SELECT
+		info2.LOGIN_ID,
+		info2.ROW_REMARK data_remark,
+		info2.id data_id,
+		info2.ROW_NAME data_name,
+		info2.ROW_TYPE BUSI_TYPE_ID,
+		FN_GET_DICTVALUE('10012', info2.ROW_type) busi_type,
+		FN_GET_DICTVALUE('10018', info2.flag) allow_status
+		FROM
+		(SELECT
+		info1.*,
+		b.*,
+		CASE
+		WHEN b.cnum IS NOT NULL THEN 0
+		ELSE 1
+		END flag
+		FROM
+		(SELECT
+		t.ROW_REMARK, t.id, t.ROW_NAME, t.ROW_type
+		FROM
+		sys_perm_row t) info1
+		LEFT JOIN (SELECT DISTINCT
+		COUNT(1) cnum, t2.LOGIN_ID, t1.data_id
+		FROM
+		sys_perm_data t1, sys_role_login t2
+		WHERE
+		t1.DATA_TYPE = #{dataType}
+		<if test="loginId!=null and loginId!=''">
+			and t2.LOGIN_ID=#{loginId}
+		</if>
+		AND t1.ROLE_ID = t2.ROLE_ID
+		AND SYSDATE() BETWEEN t1.PERM_TIME_BEGIN AND t1.PERM_TIME_END
+		GROUP BY t2.LOGIN_ID , t1.data_id) b ON info1.id = b.data_id) info2
+		<where>
+			<if test="status!=null and status!=''">
+				and info2.flag =#{status}
+			</if>
+		</where>
+		ORDER BY info2.flag , info2.ROW_type
+	</select>
+
+</mapper>

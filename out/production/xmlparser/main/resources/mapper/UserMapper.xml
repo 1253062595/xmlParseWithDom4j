@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.UserMapper">
+	<select id="queryUserList" resultType="UserInfoDto">
+		SELECT
+		t.USER_ID,
+		t.USER_NAME,
+		t.MOBILE_TEL,
+		t.BRANCH_NO,
+		(select a.ORG_NAME from sys_org a where a.ORG_ID=t.BRANCH_NO and a.ORG_TYPE&lt;&gt;'3') as ORG_NAME,
+		t.GROUP_NO,
+		(select a.ORG_NAME from sys_org a where a.ORG_ID=t.GROUP_NO and a.ORG_TYPE='3') as GROUP_NAME,
+		FN_GET_DICTVALUE('10001', t.USER_TYPE) USER_TYPE,
+		t.HIRE_DATE,
+		t.TERM_DATE
+		FROM
+		sys_user /*LT*/ t
+		where 1=1
+		<if test="userName!=null and userName!=''">
+			and (t.user_name like "%"#{userName}"%")
+		</if>
+		<if test="userType!=null and userType!=''">
+			and t.user_type =(#{userType})
+		</if>
+		<if test="mobileTel!=null and mobileTel!=''">
+			and t.mobile_tel =(#{mobileTel})
+		</if>
+		<if test="branchNo!=null and branchNo!=''">
+			and t.branch_no =(#{branchNo})
+		</if>
+		<if test="status!=null and status!=''">
+			and t.status =(#{status})
+		</if>
+		<if test="orgParent!=null and orgParent!=''">
+			and(
+			t.branch_no in (select t.org_id from sys_org_scheme t where FIND_IN_SET(t.org_id,
+			getOrgChildLst(#{orgParent},'0'))  )
+			or t.GROUP_NO in (select t.org_id from sys_org_scheme t where FIND_IN_SET(t.org_id,
+			getOrgChildLst(#{orgParent},'0'))  )
+			)
+		</if>
+
+		order by t.USER_ID
+	</select>
+	<select id="queryUserInfo" resultType="UserInfoDto">
+    SELECT
+	t.USER_ID,
+	t.USER_NAME,
+	 t.USER_TYPE,
+	t.BRANCH_NO,
+	t.GROUP_NO,
+	t.MOBILE_TEL,
+	t.ID_NO,
+	t.ID_KIND,
+	t.AUTH_KEY,
+	t.AUTH_SIGN,
+	t.HIRE_DATE,
+	t.user_phone
+    FROM
+	sys_user t
+	where t.USER_ID=#{userId}
+    </select>
+	<insert id="insertUserInfo" parameterType="UserInfoDto">
+        <selectKey keyProperty="userId" order="BEFORE" resultType="java.lang.String">
+            select nextval('user_seq')  from DUAL
+        </selectKey>
+		INSERT INTO sys_user (user_id,user_name,user_type,branch_no,
+		group_no,mobile_tel,id_kind,id_no,auth_sign,auth_key,hire_date,status,user_phone,REC_GEN_TIME)
+		VALUES(#{userId},#{userName},#{userType},#{branchNo},#{groupNo} ,#{mobileTel},
+		#{idKind},#{idNo},#{authSign},#{authKey},#{hireDate},#{status},#{userPhone},#{recGenTime}
+		)
+	</insert>
+	<update id="updateUserInfo">
+		update  sys_user set user_name=#{userName},user_type=#{userType},branch_no=#{branchNo},
+		group_no=#{groupNo},mobile_tel=#{mobileTel},id_kind=#{idKind},id_no=#{idNo},auth_sign=#{authSign},
+		auth_key=#{authKey},hire_date=#{hireDate},user_phone=#{userPhone},rec_upd_time=#{recUpdTime}
+		where user_id = #{userId}
+	</update>
+	<update id="updateDelUserInfo">
+		update  sys_user set term_date=#{t.termDate},term_remark=#{t.termRemark},status=#{status},rec_upd_time=sysdate()
+		where user_id = #{t.userId}
+	</update>
+
+	<update id="updateLoginStatusByUserId">
+		update  sys_login set login_status=#{loginStatus},rec_upd_time=sysdate()
+		where user_id = #{userId}
+	</update>
+
+	<select id="queryLoginList" resultType="SimpleLoginInfoDto">
+		SELECT
+		a.USER_NAME,
+		t.LOGIN_ID,
+		t.LOGIN_NAME,
+		FN_GET_DICTVALUE ( '10001', a.USER_TYPE ) USER_TYPE,
+		FN_GET_DICTVALUE ( '10005', t.LOGIN_STATUS ) LOGIN_STATUS,
+		DATE_FORMAT(t.REC_GEN_TIME,'%Y-%m-%d %T') REC_GEN_TIME,
+		d.role_name
+		FROM
+		sys_login t
+		LEFT JOIN sys_user a ON t.USER_ID = a.USER_ID
+		LEFT JOIN
+		(SELECT
+		GROUP_CONCAT(ROLE_NAME) AS role_name, b.LOGIN_ID
+		FROM
+		sys_role_login b, sys_role c
+		WHERE
+		c.ROLE_ID = b.ROLE_ID
+		GROUP BY b.LOGIN_ID) d ON t.LOGIN_ID = d.LOGIN_ID
+		where 1=1
+		<if test="userName!=null and userName!=''">
+			and (a.USER_NAME like "%"#{userName}"%")
+		</if>
+		<if test="loginName!=null and loginName!=''">
+			and (t.LOGIN_NAME like "%"#{loginName}"%")
+		</if>
+		<if test="roleId!=null and roleId!=''">
+			AND EXISTS( SELECT
+			1
+			FROM
+			sys_role_login e
+			WHERE
+			t.login_id = e.LOGIN_ID
+			AND e.role_id = #{roleId})
+		</if>
+		order by a.USER_ID,t.LOGIN_ID
+	</select>
+
+	<select id="queryLoginInfo" resultType="LoginInfoDto">
+   SELECT
+	t.LOGIN_ID,
+	t.USER_ID,
+	t.LOGIN_NAME,
+	t.LOGIN_STATUS ,
+    t1.user_name
+	FROM
+    sys_login t inner join sys_user t1 on t.user_id = t1.user_id
+	where t.LOGIN_ID=#{loginId}
+    </select>
+
+	<select id="queryRolelistInfo" resultType="String">
+    SELECT
+	t.ROLE_ID
+    FROM
+    sys_role_login t
+	where t.LOGIN_ID=#{loginId}
+    </select>
+
+	<insert id="insertLoginInfo" parameterType="AddLoginReqDto">
+		<selectKey keyProperty="loginId" order="BEFORE" resultType="java.lang.String">
+			select nextval('login_seq') from DUAL
+		</selectKey>
+		INSERT INTO sys_login (login_id,user_id,login_name,login_status,login_password,failed_times,REC_GEN_TIME)
+		VALUES(#{loginId},#{userId},#{loginName},#{loginStatus},MD5((select STR_CONFIG from sys_config where CONFIG_CODE='password')),'0',sysdate()
+		)
+	</insert>
+
+	<insert id="insertRoleLoginInfo">
+		insert into
+		sys_role_login(login_id,rec_gen_time,role_id)
+		<foreach collection="roleIds" separator="union all" index="index" item="item">
+			select #{loginId},sysdate(),#{item}
+			from dual
+		</foreach>
+	</insert>
+
+	<select id="selectLoginname" resultType="java.lang.String">
+    select login_id from sys_login where LOGIN_NAME=#{loginName}
+    </select>
+
+	<update id="updateLoginInfo">
+		update  sys_login set login_name=#{loginName},login_status=#{loginStatus},rec_upd_time=sysdate()
+		where login_id = #{loginId}
+	</update>
+
+	<delete id="delLoginRoleInfo">
+        delete from sys_role_login where login_id = #{loginId}
+    </delete>
+
+	<update id="updateLoginStatusByLoginId">
+		update  sys_login set login_status=#{loginStatus},rec_upd_time=sysdate()
+		where login_id = #{loginId}
+	</update>
+
+	<update id="updateRoleLoginMm">
+		update  sys_login set login_password=MD5(#{loginPassword}),rec_upd_time=sysdate()
+		where login_id = #{loginId}
+	</update>
+
+	<select id="queryRoleInfo" resultType="SimpleRoleInfoDto">
+		SELECT
+		t.ROLE_ID,
+		t.ROLE_NAME,
+		t.ROLE_REMARK
+		FROM
+		sys_role /*LT*/ t
+		where 1=1
+		<if test="roleName!=null and roleName!=''">
+			and (t.ROLE_NAME like "%"#{roleName}"%")
+		</if>
+		order by t.ROLE_ID
+	</select>
+
+	<select id="queryRoleorgIdInfo" resultType="RoleOrgDto">
+    select t.ROLE_ID,a.ORG_NAME,t.ORG_ID from sys_role_org  t left join sys_org a on t.ORG_ID=a.ORG_ID
+    </select>
+
+	<select id="queryRoleDtoInfo" resultType="RoleInfoDto">
+   select t.ROLE_ID,t.ROLE_NAME,t.ROLE_REMARK  from sys_role t where t.ROLE_ID=#{roleId}
+    </select>
+
+	<select id="queryOrglistInfo" resultType="String">
+    select ORG_ID from sys_role_org where ROLE_ID=#{roleId}
+    </select>
+
+	<select id="selectRoleName" resultType="int">
+    select count(*) from sys_role where ROLE_NAME=#{roleName}
+    </select>
+
+	<select id="selectRoleNameEdit" resultType="int">
+    select count(*) from sys_role where ROLE_NAME=#{roleName} and role_id!=#{roleId}
+    </select>
+
+	<insert id="insertRoleInfo" parameterType="AddRoleReqDto">
+		<selectKey keyProperty="roleId" order="BEFORE" resultType="java.lang.String">
+			select nextval('role_seq') from DUAL
+		</selectKey>
+		INSERT INTO sys_role (role_id,role_name,role_remark,CREATOR_ID,REC_GEN_TIME)
+		VALUES(#{roleId},#{roleName},#{roleRemark},#{userId},sysdate())
+	</insert>
+
+	<insert id="insertRoleOrgInfo">
+		insert into
+		sys_role_org(role_id,rec_gen_time,org_id)
+		<foreach collection="orgIds" separator="union all" index="index" item="item">
+			select #{roleId},sysdate(),#{item}
+			from dual
+		</foreach>
+	</insert>
+
+	<insert id="insertPermResInfo">
+    insert into sys_perm_res(role_id,res_id,perm_time_begin,perm_time_end,rec_gen_time)
+    select #{roleId},res_id,perm_time_begin,perm_time_end,sysdate() from  sys_perm_res where role_id=#{sourceRole}
+	</insert>
+
+	<insert id="insertPermDataInfo">
+    insert into sys_perm_data(role_id,data_id,data_type,perm_time_begin,perm_time_end,rec_gen_time)
+    select #{roleId},data_id,data_type,perm_time_begin,perm_time_end,sysdate() from  sys_perm_data where role_id=#{sourceRole}
+    </insert>
+
+	<update id="updateRoleInfo">
+		update  sys_role set role_name=#{roleName},role_remark=#{roleRemark},rec_upd_time=sysdate()
+		where role_id = #{roleId}
+	</update>
+
+	<delete id="delRoleOrgInfo">
+        delete from sys_role_org where role_id = #{roleId}
+    </delete>
+
+	<select id="selectNum" resultType="int">
+    select count(*) from sys_role_login where role_id=#{roleId}
+    </select>
+
+	<delete id="delRoleInfo">
+        delete from sys_role where role_id = #{roleId}
+    </delete>
+
+	<delete id="delRoleOrg">
+        delete from sys_role_org where role_id = #{roleId}
+    </delete>
+
+	<delete id="delPermRes">
+        delete from sys_perm_res where role_id = #{roleId}
+    </delete>
+
+	<delete id="delPermData">
+        delete from sys_perm_data where role_id = #{roleId}
+    </delete>
+
+	<delete id="delAllowRes">
+        delete from sys_allow_res where role_id = #{roleId}
+    </delete>
+
+	<delete id="delAllowData">
+        delete from sys_allow_data where role_id = #{roleId}
+    </delete>
+
+	<select id="queryUserInfoNotInRole" resultType="SUserInfoDto">
+		SELECT
+		c.USER_ID,
+		c.USER_NAME,
+		FN_GET_DICTVALUE ( '10001', c.USER_TYPE ) USER_TYPE,
+		c.BRANCH_NO,
+		( SELECT d.ORG_NAME FROM sys_org d WHERE d.ORG_ID = c.BRANCH_NO AND d.ORG_TYPE = '2' ) AS ORG_NAME
+		FROM
+		sys_user c
+		WHERE 1=1 and c.STATUS='2'
+		and c.USER_ID in (
+		select t2.USER_ID from sys_login t2 where not exists (
+		select 1 from sys_role_login t1 where t1.ROLE_ID  = #{roleId}  and t2.LOGIN_ID = t1.login_id
+		) and t2.login_status='0'
+		)
+		<if test="userName!=null and userName!=''">
+			and (c.USER_NAME like "%"#{userName}"%")
+		</if>
+
+		<if test="branchNo!=null and branchNo!=''">
+			and c.BRANCH_NO =(#{branchNo})
+		</if>
+		ORDER BY
+		c.USER_ID
+	</select>
+
+	<select id="queryLoginUserInfoDto" resultType="LoginInfoDto">
+    SELECT
+	t.USER_ID,
+	a.USER_NAME,
+	t.LOGIN_ID,
+	t.LOGIN_NAME
+    FROM
+	sys_login t
+	LEFT JOIN sys_user a ON t.USER_ID = a.USER_ID
+	where t.LOGIN_STATUS='0' and a.STATUS='2'
+	and t.LOGIN_ID  not in (SELECT a.LOGIN_ID FROM sys_role_login a WHERE a.ROLE_ID =#{roleId})
+	order by t.USER_ID
+
+    </select>
+
+	<select id="queryUserLoginMapInfo" resultType="UserLoginMapDto">
+    SELECT
+	t.USER_ID,
+	b.USER_NAME,
+	t.login_id,
+	t.LOGIN_NAME
+    FROM
+	sys_login t
+	LEFT JOIN sys_user b ON t.user_id = b.USER_ID
+    WHERE
+	t.login_id IN ( SELECT a.LOGIN_ID FROM sys_role_login a WHERE a.ROLE_ID =#{roleId} )
+	and t.LOGIN_STATUS='0' and b.STATUS='2'
+    ORDER BY
+	t.USER_ID,t.LOGIN_ID
+    </select>
+
+	<insert id="insertRoleAndLoginInfo">
+		insert into
+		sys_role_login(role_id,rec_gen_time,login_id)
+		<foreach collection="loginIds" separator="union all" index="index" item="item">
+			select #{roleId},sysdate(),#{item}
+			from dual
+		</foreach>
+	</insert>
+
+	<delete id="delRoleAndLoginInfo">
+        delete from sys_role_login where role_id = #{roleId}
+    </delete>
+	<select id="queryUserInfoForChoose" resultType="UserChooseInfoDto">
+		SELECT
+		t1.user_id, t1.user_name, t2.org_name 'branchName', t2.org_id
+		FROM
+		sys_user t1
+		LEFT JOIN
+		sys_org t2 ON t1.branch_no = t2.org_id
+		<where>
+			<if test="userName!=null and userName!=''">
+				and (t1.user_name like "%"#{userName}"%")
+			</if>
+			<if test="branchNo!=null and branchNo!=''">
+				and t2.org_id = #{branchNo}
+			</if>
+		</where>
+	</select>
+	<select id="queryLoginIdsByRole" resultType="java.lang.String">
+		SELECT
+			login_id
+		FROM
+			sys_role_login
+		WHERE
+			role_id = #{roleId}
+	</select>
+
+
+	<select id="selectLogin" resultType="java.lang.String">
+		SELECT
+			login_id
+		FROM
+			sys_login
+		WHERE
+			user_id = #{userId}
+	</select>
+
+	<insert id="insertHisLogin" >
+        INSERT INTO his_sys_login (ID,LOGIN_ID,USER_ID,LOGIN_NAME,LOGIN_PASSWORD,
+        LOGIN_STATUS,FAILED_TIMES,LOCK_TIME_BEGIN,LOCK_TIME_END,LAST_TIME,DRIVER_TYPE,DRIVER_SNO
+        ,REC_GEN_TIME,operate_login_id,operate_login_name,operate_type)
+        select nextval('his_login_seq'),t.LOGIN_ID,t.USER_ID,t.LOGIN_NAME,t.LOGIN_PASSWORD,t.LOGIN_STATUS ,t.FAILED_TIMES,
+        t.LOCK_TIME_BEGIN,t.LOCK_TIME_END,t.LAST_TIME,t.DRIVER_TYPE,t.DRIVER_SNO,
+        sysdate(), #{operateLoginId},#{operateLoginName},#{operateType}from sys_login t
+        where t.LOGIN_ID=#{loginId}
+    </insert>
+
+</mapper>

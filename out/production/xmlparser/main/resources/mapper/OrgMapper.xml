@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.OrgMapper">
+    <select id="queryOrgTree" resultType="OrgNodeInfoDto">
+    SELECT
+	t.ORG_ID,
+	t.ORG_NAME,
+	FN_GET_DICTVALUE ( '10007', t.ORG_TYPE ) ORG_TYPE,
+	a.ORG_PARENT
+    FROM
+	sys_org t
+	LEFT JOIN sys_org_scheme a ON t.ORG_ID = a.ORG_ID
+	where a.SCHEME_TYPE=#{schemeType}
+	order by t.ORG_ID
+    </select>
+
+	<select id="queryOrgList" resultType="SimpleOrgInfoDto">
+		SELECT
+		t.ORG_ID,
+		t.ORG_CODE,
+		t.ORG_NAME,
+		FN_GET_DICTVALUE ( '10007', t.ORG_TYPE ) ORG_TYPE,
+		FN_GET_DICTVALUE ( '10008', t.ORG_STATUS ) ORG_STATUS,
+		(case when a.ORG_PARENT='-1' then t.ORG_NAME else
+		(select b.ORG_NAME from sys_org b where a.ORG_PARENT=b.ORG_ID)
+		end) ORG_PARENT,
+		t.ORG_MANAGER from
+		sys_org t
+		LEFT JOIN sys_org_scheme a ON t.ORG_ID = a.ORG_ID
+	    where 1=1
+		<if test="re.orgName!=null and re.orgName!=''">
+			and (t.ORG_NAME like "%"#{re.orgName}"%")
+		</if>
+		<if test="re.orgId!=null and re.orgId!=''">
+			and t.ORG_ID =(#{re.orgId})
+		</if>
+		<if test="re.orgType!=null and re.orgType!=''">
+			and t.ORG_TYPE =(#{re.orgType})
+		</if>
+		<if test="re.orgStatus!=null and re.orgStatus!=''">
+			and t.ORG_STATUS =(#{re.orgStatus})
+		</if>
+		<if test="re.schemeType!=null and re.schemeType!=''">
+			and a.SCHEME_TYPE =(#{re.schemeType})
+		</if>
+		<if test="orgParent!=null and orgParent!=''and treeSchemeType!=null and treeSchemeType!=''">
+			 and t.ORG_ID in (select t.ORG_ID from sys_org_scheme t where FIND_IN_SET(t.ORG_ID, getOrgChildLst(#{orgParent},#{treeSchemeType})) and a.scheme_type=#{treeSchemeType})
+		</if>
+		ORDER BY t.ORG_ID
+    </select>
+
+	<select id="querySimpleOrg" resultType="OrgInfoDto">
+    SELECT
+	t.ORG_ID,
+	t.ORG_CODE,
+	t.ORG_NAME,
+	t.ORG_TYPE ,
+	(case when a.ORG_PARENT='-1' then t.ORG_ID else
+	(select b.ORG_ID from sys_org b where a.ORG_PARENT=b.ORG_ID)
+	end) ORG_PARENT,
+	t.ORG_MANAGER,
+	t.ORG_CONTACT,
+	t.ORG_CONTACT_NUM,
+	t.ORG_LOCATION,
+	t.ORG_REMARK,
+	t.org_phone,
+	t.org_flag,
+	t.entity_code,
+	t.entity_type
+    FROM
+	sys_org t
+	LEFT JOIN sys_org_scheme a ON t.ORG_ID = a.ORG_ID
+	where t.ORG_ID=#{orgId} and a.scheme_type='0'
+    </select>
+
+	<insert id="insertSimpleOrg"  parameterType="AddOrgReqDto" >
+		<selectKey keyProperty="orgId" order="BEFORE" resultType="java.lang.String">
+			select nextval('org_seq')  from DUAL
+		</selectKey>
+		INSERT INTO sys_org (org_id,org_code,org_name,org_type,org_manager,org_contact,org_contact_num,org_location,org_remark,org_order,org_status,org_phone,org_flag,entity_code,entity_type,REC_GEN_TIME)
+		VALUES(#{orgId},#{orgCode},#{orgName},#{orgType},#{orgManager},#{orgContact},#{orgContactNum},#{orgLocation},#{orgRemark},'1','0',#{orgPhone},#{orgFlag},#{entityCode},#{entityType},sysdate()
+		)
+	</insert>
+
+	<insert id="insertOrgScheme"  >
+		INSERT INTO sys_org_scheme (scheme_type,org_id,org_parent,org_order,REC_GEN_TIME)
+		VALUES('0',#{orgId},#{orgParent},'1',sysdate()
+		)
+	</insert>
+
+	<update id="updateSimpleOrg">
+		update  sys_org set org_code=#{orgCode},org_name=#{orgName},org_type=#{orgType},org_manager=#{orgManager},
+		org_contact=#{orgContact},org_contact_num=#{orgContactNum},org_location=#{orgLocation},org_remark=#{orgRemark},
+		org_phone=#{orgPhone},rec_upd_time=sysdate(),org_flag=#{orgFlag},entity_code=#{entityCode},entity_type=#{entityType}
+		where org_id = #{orgId}
+	</update>
+
+	<update id="updateOrgScheme">
+		update  sys_org_scheme set org_parent=#{orgParent},
+		rec_upd_time=sysdate()
+		where org_id = #{orgId} and scheme_type='0'
+	</update>
+
+	<select id="queryDelOrgList" resultType="OrgInfoDto">
+    select t.org_id,a.org_name from sys_org_scheme t left join sys_org a on t.ORG_ID=a.ORG_ID
+	where  FIND_IN_SET(t.org_id, getOrgChildLst(#{orgId},#{schemeType})) and t.scheme_type=#{schemeType}
+	order by t.ORG_ID
+    </select>
+
+	<select id="selectOrgName" resultType="java.lang.String">
+    select a.ORG_NAME from  sys_org a where a.ORG_ID=#{orgId}
+    </select>
+
+	<select id="selectCountUser" resultType="int">
+   SELECT
+	count( * )
+    FROM
+	sys_user t
+    WHERE
+	t.BRANCH_NO=#{id}
+	OR t.GROUP_NO =#{id}
+    </select>
+
+	<update id="updateOrgStatus">
+		update  sys_org set org_status='1',
+		rec_upd_time=sysdate()
+		where org_id in
+		<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</update>
+
+	<!--<update id="uodateOrgScheme">-->
+		<!--update  sys_org_scheme set org_parent=#{orgParent},-->
+		<!--rec_upd_time=sysdate()-->
+		<!--where org_id = #{orgId}-->
+	<!--</update>-->
+
+	<delete id="delOrgSchemeType" >
+        delete from sys_org_scheme where scheme_type = #{schemeType}
+    </delete>
+
+	<insert id="insertOrgSchemeList"  >
+		INSERT INTO sys_org_scheme (scheme_type,org_id,org_parent,org_order,REC_GEN_TIME)
+		VALUES(#{schemeType},#{org.orgId},#{org.orgParent},#{org.orgOrder},sysdate()
+		)
+	</insert>
+
+    <insert id="insertSysdictionary"  parameterType="AddOrgListReqDto" >
+        <selectKey keyProperty="subentry" order="BEFORE" resultType="java.lang.String">
+            select nextval('schemeType_seq')  from DUAL
+        </selectKey>
+        INSERT INTO sysdictionary (dict_entry,dict_type,subentry,access_level,dict_prompt)
+        VALUES('10009','0',#{subentry},'1',#{schemeName})
+    </insert>
+
+	<insert id="insertOrgSchemeCopy"  >
+    insert into sys_org_scheme(scheme_type,org_id,org_parent,org_order,rec_gen_time)
+    select #{schemeType},org_id,org_parent,org_order,sysdate() from  sys_org_scheme where scheme_type='0'
+	</insert>
+
+	<insert id="insertOrgSchemeOneType">
+		insert into
+		sys_org_scheme(scheme_type,org_id,org_parent,org_order,rec_gen_time)
+		<foreach collection="orgIds" separator="union all" index="index"
+				 item="item">
+			select #{schemeType},#{item},#{orgParent},'1',sysdate()
+			from dual
+		</foreach>
+	</insert>
+
+	<select id="selectIdName" resultType="OrgInfoDto">
+   SELECT
+	t.ORG_ID,
+	a.ORG_NAME
+    FROM
+	sys_org_scheme t
+	LEFT JOIN sys_org a ON t.ORG_ID = a.org_id
+	where t.SCHEME_TYPE=#{schemeType} and t.ORG_ID in
+		<foreach collection="orgIds" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+    </select>
+
+	<delete id="delOrgScheme" >
+        delete from sys_org_scheme where 1=1 and scheme_type!=0 and ORG_ID  in
+		<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+    </delete>
+
+	<delete id="delOrgSchemeNo" >
+		delete from sys_org_scheme where 1=1 and scheme_type=#{schemeType} and ORG_ID  in
+		<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="selectBranchList" resultType="OrgNodeInfoDto">
+   SELECT
+	t.ORG_ID,
+	t.ORG_NAME,
+	FN_GET_DICTVALUE ( '10007', t.ORG_TYPE ) ORG_TYPE,
+	a.ORG_PARENT
+    FROM
+	sys_org t
+	LEFT JOIN sys_org_scheme a ON t.ORG_ID = a.ORG_ID
+	where a.SCHEME_TYPE='0'
+	and org_type != '3'
+	order by t.ORG_ID
+	</select>
+
+	<select id="selectBranchListBySchemeType" resultType="OrgNodeInfoDto">
+   SELECT
+	t.ORG_ID,
+	t.ORG_NAME,
+	FN_GET_DICTVALUE ( '10007', t.ORG_TYPE ) ORG_TYPE,
+	a.ORG_PARENT
+    FROM
+	sys_org t
+	LEFT JOIN sys_org_scheme a ON t.ORG_ID = a.ORG_ID
+	where a.SCHEME_TYPE=#{schemeType}
+	and org_type != '3'
+	order by t.ORG_ID
+	</select>
+
+	<select id="selectGroupList" resultType="SimpleOrgInfoDto">
+	SELECT
+	a.ORG_ID,
+	t.ORG_NAME
+    FROM
+	 sys_org_scheme a left join sys_org t  on t.ORG_ID=a.ORG_ID
+    WHERE
+	org_type = '3' and FIND_IN_SET(t.ORG_ID, getOrgChildLst(#{orgId},'0'))
+	and  a.SCHEME_TYPE='0'
+	ORDER BY t.ORG_ID
+	</select>
+</mapper>

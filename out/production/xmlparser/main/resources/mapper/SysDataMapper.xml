@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?><!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jinhui365.crm.appserver.dao.main.resources.mapper.SysDataMapper">
+	<sql id="permRowSet">
+		SELECT
+		sd.role_id roleId, sd.DATA_ID id, t1.ROW_TABLE
+		FROM
+		(SELECT
+		*
+		FROM
+		sys_perm_data
+		WHERE
+		DATA_TYPE = '1') sd
+		LEFT JOIN
+		sys_perm_row t1 ON sd.data_id = t1.ID
+	</sql>
+	<select id="queryAllRowSet" resultType="SysRowPermSetDto">
+		<include refid="permRowSet" />
+		<if test="list!=null">
+			<where>
+				sd.role_id IN
+				<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</where>
+		</if>
+	</select>
+	<select id="queryPermRowSetByLoginIds" resultType="SysRowPermSetDto">
+		<include refid="permRowSet" />
+		INNER JOIN
+		sys_role_login s2 ON sd.role_id = s2.role_id
+		<if test="list!=null">
+			<where>
+				s2.login_id IN
+				<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</where>
+		</if>
+	</select>
+	<select id="queryAllRowDefine" resultType="SysRowDefineDto">
+		SELECT
+		spr.ROW_TABLE ,
+		spr.ID ,
+		spr.ROW_SET ,
+		spr.ROW_SET_TYPE
+		FROM
+		sys_perm_row spr
+		where spr.ROW_SET is not null
+	</select>
+
+	<select id="queryAllRowDefineById" resultType="SysRowDefineDto">
+		SELECT
+		spr.ROW_TABLE ,
+		spr.ID ,
+		spr.ROW_SET ,
+		spr.ROW_SET_TYPE
+		FROM
+		sys_perm_row spr
+		where spr.ROW_SET is not null
+			and spr.id = #{id}
+ 	</select>
+	<select id="queryAllPermColDefine" resultType="SysColDefineDto">
+		select id 'authId' ,col_set from sys_perm_col
+	</select>
+	<select id="queryPermColDefineById" resultType="SysColDefineDto">
+		select id 'authId' ,col_set from sys_perm_col where id = #{authId}
+	</select>
+	<sql id="permColSql">
+	SELECT
+    *
+	FROM
+		(SELECT
+			role_id, group_concat(data_id) 'dataIds'
+		FROM
+			sys_perm_data
+		WHERE
+			DATA_TYPE = '0'
+		  group by role_id) sl
+	</sql>
+	<select id="queryPermColSet" resultType="SysColPermSetDto">
+		<include refid="permColSql" />
+		<if test="list!=null">
+			<where>
+				sl.role_id IN
+				<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</where>
+		</if>
+	</select>
+	<select id="queryPermColSetByLoginIds" resultType="SysColPermSetDto">
+		<include refid="permColSql"></include>
+		INNER JOIN
+		sys_role_login s2 ON sl.ROLE_ID = s2.role_id
+		<if test="list!=null">
+			<where>
+				s2.login_id IN
+				<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+					#{id}
+				</foreach>
+			</where>
+		</if>
+	</select>
+
+	<select id="queryLoginIdsByRoleId" resultType="java.lang.String">
+	select distinct login_id from sys_role_login where role_id IN
+	<foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+		#{id}
+	</foreach>
+</select>
+</mapper>
